@@ -3,8 +3,9 @@
  * TEP-74 Jetton Transfer Broadcaster on TON Blockchain
  */
 
+const nodeCrypto = require('crypto');
 const { TonClient, WalletContractV4, WalletContractV5R1, internal, toNano, beginCell, Address } = require('@ton/ton');
-const { mnemonicToPrivateKey } = require('@ton/crypto');
+const { mnemonicToPrivateKey, deriveEd25519Path, keyPairFromSeed } = require('@ton/crypto');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -31,6 +32,43 @@ async function getSenderJettonWallet(client, masterAddress, senderAddress) {
   const cell = beginCell().storeAddress(owner).endCell();
   const res = await callWithRetry(() => client.runMethod(master, 'get_wallet_address', [{ type: 'slice', cell }]));
   return res.stack.readAddress();
+}
+
+/**
+ * Universal Key Deriver:
+ * - Supports Tonkeeper 12-word BIP-39 HD path (m/44'/607'/0')
+ * - Matches ADMIN_WALLET automatically if configured
+ * - Falls back to TON legacy 24-word PBKDF2 derivation
+ */
+async function getWalletKeyPair(mnemonic) {
+  const wordsArr = Array.isArray(mnemonic) ? mnemonic : mnemonic.trim().split(/\s+/);
+  const adminWallet = (process.env.ADMIN_WALLET || '').trim();
+
+  // 1. Try Tonkeeper BIP-39 path (m/44'/607'/0')
+  try {
+    const mnemonicStr = wordsArr.join(' ').trim();
+    const seed = nodeCrypto.pbkdf2Sync(mnemonicStr, 'mnemonic', 2048, 64, 'sha512');
+    const derivedKey = await deriveEd25519Path(seed, [44, 607, 0]);
+    const kpBip39 = keyPairFromSeed(derivedKey);
+
+    if (adminWallet) {
+      const w5 = WalletContractV5R1.create({ publicKey: kpBip39.publicKey, workchain: 0 });
+      const w4 = WalletContractV4.create({ publicKey: kpBip39.publicKey, workchain: 0 });
+      if (adminWallet === w5.address.toString({ bounceable: false }) || adminWallet === w5.address.toString({ bounceable: true }) ||
+          adminWallet === w4.address.toString({ bounceable: false }) || adminWallet === w4.address.toString({ bounceable: true })) {
+        return kpBip39;
+      }
+    }
+
+    if (wordsArr.length === 12) {
+      return kpBip39;
+    }
+  } catch(e) {
+    console.error('BIP-39 derivation check error:', e.message);
+  }
+
+  // 2. Legacy TON 24-word derivation
+  return await mnemonicToPrivateKey(wordsArr);
 }
 
 /**
@@ -100,7 +138,7 @@ async function getBotWalletInfo() {
     const apiKey = process.env.TON_API_KEY || undefined;
     const client = new TonClient({ endpoint, apiKey });
 
-    const keyPair = await mnemonicToPrivateKey(mnemonic.trim().split(/\s+/));
+    const keyPair = await getWalletKeyPair(mnemonic);
     const { wallet, version, w4, w5 } = await resolveWalletContract(client, keyPair);
     const walletContract = client.open(wallet);
 
@@ -155,7 +193,7 @@ async function sendOnChainRexPayout({ recipientAddress, amountRex, memo = 'REX W
   const apiKey = process.env.TON_API_KEY || undefined;
   const client = new TonClient({ endpoint, apiKey });
 
-  const keyPair = await mnemonicToPrivateKey(mnemonic.trim().split(/\s+/));
+  const keyPair = await getWalletKeyPair(mnemonic);
   const { wallet: senderWallet, version } = await resolveWalletContract(client, keyPair);
   const senderContract = client.open(senderWallet);
 
