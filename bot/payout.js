@@ -3,7 +3,7 @@
  * TEP-74 Jetton Transfer Broadcaster on TON Blockchain
  */
 
-const { TonClient, WalletContractV5R1, internal, toNano, beginCell, Address } = require('@ton/ton');
+const { TonClient, WalletContractV4, WalletContractV5R1, internal, toNano, beginCell, Address } = require('@ton/ton');
 const { mnemonicToPrivateKey } = require('@ton/crypto');
 
 function sleep(ms) {
@@ -33,6 +33,59 @@ async function getSenderJettonWallet(client, masterAddress, senderAddress) {
   return res.stack.readAddress();
 }
 
+/**
+ * Resolves whether to use WalletContractV4 (v4R2) or WalletContractV5R1 (W5).
+ * - Honors PAYOUT_WALLET_VERSION ('v4', 'v4r2', 'v5', 'w5') if configured in .env
+ * - Matches ADMIN_WALLET if it corresponds to v4 or v5
+ * - Auto-detects on-chain balance (prefers the one with active TON)
+ * - Defaults to v4R2 (standard mobile wallet default in Tonkeeper & Telegram Wallet)
+ */
+async function resolveWalletContract(client, keyPair, requestedVersion = null) {
+  const req = (requestedVersion || process.env.PAYOUT_WALLET_VERSION || '').toLowerCase().trim();
+  const w4 = WalletContractV4.create({ publicKey: keyPair.publicKey, workchain: 0 });
+  const w5 = WalletContractV5R1.create({ publicKey: keyPair.publicKey, workchain: 0 });
+
+  if (req === 'v4' || req === 'v4r2' || req === 'v4_r2') {
+    return { wallet: w4, version: 'v4R2', w4, w5 };
+  }
+  if (req === 'v5' || req === 'v5r1' || req === 'w5') {
+    return { wallet: w5, version: 'W5', w4, w5 };
+  }
+
+  // 1. Check if ADMIN_WALLET matches v4 or v5
+  const adminWallet = (process.env.ADMIN_WALLET || '').trim();
+  if (adminWallet) {
+    if (adminWallet === w4.address.toString({ bounceable: false }) || adminWallet === w4.address.toString({ bounceable: true })) {
+      return { wallet: w4, version: 'v4R2', w4, w5 };
+    }
+    if (adminWallet === w5.address.toString({ bounceable: false }) || adminWallet === w5.address.toString({ bounceable: true })) {
+      return { wallet: w5, version: 'W5', w4, w5 };
+    }
+  }
+
+  // 2. On-chain balance detection (check which wallet is funded)
+  if (client) {
+    try {
+      const c4 = client.open(w4);
+      const b4 = await callWithRetry(() => c4.getBalance(), 2, 800);
+      if (Number(b4) > 0) {
+        return { wallet: w4, version: 'v4R2', w4, w5 };
+      }
+    } catch (_) {}
+
+    try {
+      const c5 = client.open(w5);
+      const b5 = await callWithRetry(() => c5.getBalance(), 2, 800);
+      if (Number(b5) > 0) {
+        return { wallet: w5, version: 'W5', w4, w5 };
+      }
+    } catch (_) {}
+  }
+
+  // 3. Mobile standard default (Tonkeeper / MyTonWallet / @wallet) is v4R2
+  return { wallet: w4, version: 'v4R2', w4, w5 };
+}
+
 async function getBotWalletInfo() {
   const mnemonic = process.env.PAYOUT_MNEMONIC || process.env.MNEMONIC;
   if (!mnemonic || !mnemonic.trim()) {
@@ -48,7 +101,7 @@ async function getBotWalletInfo() {
     const client = new TonClient({ endpoint, apiKey });
 
     const keyPair = await mnemonicToPrivateKey(mnemonic.trim().split(/\s+/));
-    const wallet = WalletContractV5R1.create({ publicKey: keyPair.publicKey, workchain: 0 });
+    const { wallet, version, w4, w5 } = await resolveWalletContract(client, keyPair);
     const walletContract = client.open(wallet);
 
     let tonBalance = 0;
@@ -74,8 +127,11 @@ async function getBotWalletInfo() {
 
     return {
       configured: true,
+      version,
       address: wallet.address.toString({ bounceable: false }),
       address_bounceable: wallet.address.toString({ bounceable: true }),
+      address_v4: w4.address.toString({ bounceable: false }),
+      address_v5: w5.address.toString({ bounceable: false }),
       jetton_wallet: senderJwStr,
       ton_balance: tonBalance,
       rex_balance: rexBalance,
@@ -100,7 +156,7 @@ async function sendOnChainRexPayout({ recipientAddress, amountRex, memo = 'REX W
   const client = new TonClient({ endpoint, apiKey });
 
   const keyPair = await mnemonicToPrivateKey(mnemonic.trim().split(/\s+/));
-  const senderWallet = WalletContractV5R1.create({ publicKey: keyPair.publicKey, workchain: 0 });
+  const { wallet: senderWallet, version } = await resolveWalletContract(client, keyPair);
   const senderContract = client.open(senderWallet);
 
   // 1. Check TON balance for gas

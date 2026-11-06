@@ -530,11 +530,13 @@
           <div>
             <div style="font-weight: 800; font-size: 15px; color: var(--gold-lt); display: flex; align-items: center; gap: 8px;">
               <span>محفظة البوت للصرف الآلي على TON</span>
+              <span id="botWalletVersion" class="badge-blue" style="font-size: 10px; display: none; background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4); padding: 1px 6px; border-radius: 4px;">v4R2</span>
               <span id="botWalletBadge" class="badge-gold" style="font-size: 11px;">جاري الفحص...</span>
             </div>
             <div style="color: var(--muted); font-size: 12px; margin-top: 4px; font-family: monospace;">
               العنوان: <span id="botWalletAddress" style="color: var(--cyan); user-select: all;">—</span>
             </div>
+            <div id="botWalletOtherVersions" style="color: #64748b; font-size: 10.5px; margin-top: 3px; font-family: monospace; display: none;"></div>
           </div>
         </div>
         <div style="display: flex; gap: 20px; align-items: center;">
@@ -1257,17 +1259,32 @@
     try {
       const res = await api('/api/admin/bot-wallet');
       const badge = document.getElementById('botWalletBadge');
+      const vBadge = document.getElementById('botWalletVersion');
       const addr = document.getElementById('botWalletAddress');
+      const otherVersions = document.getElementById('botWalletOtherVersions');
       const ton = document.getElementById('botWalletTon');
       const rex = document.getElementById('botWalletRex');
 
       if (!res || !res.configured) {
         if (badge) { badge.className = 'badge-red'; badge.textContent = 'غير متصلة (يلزم MNEMONIC)'; }
+        if (vBadge) vBadge.style.display = 'none';
+        if (otherVersions) otherVersions.style.display = 'none';
         if (addr) addr.textContent = res?.error || 'غير مهيأة';
         return;
       }
 
+      if (vBadge) {
+        vBadge.textContent = res.version || 'v4R2';
+        vBadge.style.display = 'inline-block';
+      }
+
       if (addr) addr.textContent = res.address;
+
+      if (otherVersions && res.address_v4 && res.address_v5) {
+        otherVersions.style.display = 'block';
+        otherVersions.innerHTML = `<span>إصدارات العقد لنفس المحفظة:</span> <span style="color:#94a3b8;">v4R2:</span> <code style="color:#38bdf8;">${res.address_v4}</code> | <span style="color:#94a3b8;">W5:</span> <code style="color:#f59e0b;">${res.address_v5}</code>`;
+      }
+
       if (ton) ton.textContent = `${Number(res.ton_balance).toFixed(3)} TON`;
       if (rex) rex.textContent = `${Number(res.rex_balance).toLocaleString()} REX`;
 
