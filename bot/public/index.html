@@ -1284,19 +1284,11 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; text-align: center;">
-          <div>
-            <div style="font-size: 10px; color: var(--muted);" id="mChartLiqLabel">💧 السيولة</div>
-            <div id="modalLiquidity" style="font-family: Orbitron; font-size: 11.5px; font-weight: 800; color: #fff;">$105.23</div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 11.5px; color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <span>🏛️</span> <span id="mChartFdvLabel">القيمة السوقية (Market Cap):</span>
           </div>
-          <div>
-            <div style="font-size: 10px; color: var(--muted);" id="mChartVolLabel">📈 حجم 24h</div>
-            <div id="modalVolume" style="font-family: Orbitron; font-size: 11.5px; font-weight: 800; color: #fff;">$0.95</div>
-          </div>
-          <div>
-            <div style="font-size: 10px; color: var(--muted);" id="mChartFdvLabel">🏛️ القيمة (FDV)</div>
-            <div id="modalFdv" style="font-family: Orbitron; font-size: 11.5px; font-weight: 800; color: var(--gold-lt);">$31,314</div>
-          </div>
+          <div id="modalFdv" style="font-family: Orbitron; font-size: 14px; font-weight: 900; color: var(--gold-lt);">$31,314</div>
         </div>
       </div>
 
@@ -2495,8 +2487,6 @@
       const mUsd = document.getElementById('modalPriceUsd');
       const mTon = document.getElementById('modalPriceTon');
       const mChange = document.getElementById('modalPriceChange');
-      const mLiq = document.getElementById('modalLiquidity');
-      const mVol = document.getElementById('modalVolume');
       const mFdv = document.getElementById('modalFdv');
 
       if (mUsd) mUsd.textContent = formattedUsd;
@@ -2505,9 +2495,7 @@
         mChange.textContent = changeText;
         mChange.style.color = isPositive ? '#10b981' : '#ef4444';
       }
-      if (mLiq) mLiq.textContent = '$' + Number(d.liquidity_usd || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
-      if (mVol) mVol.textContent = '$' + Number(d.volume_24h || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
-      if (mFdv) mFdv.textContent = '$' + Number(d.fdv || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+      if (mFdv) mFdv.textContent = '$' + Number(d.fdv || d.market_cap || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
     } catch(e) {
       console.error('Market data fetch error:', e);
     }
@@ -3357,9 +3345,7 @@
       setElText('mChartTitle', 'REX Live Chart & Market');
       setElText('mChartPriceLabel', 'Current ROYAL ELITE X Price:');
       setElText('mChartChangeLabel', '24h Change:');
-      setElText('mChartLiqLabel', '💧 Liquidity');
-      setElText('mChartVolLabel', '📈 24h Volume');
-      setElText('mChartFdvLabel', '🏛️ Market Cap');
+      setElText('mChartFdvLabel', 'Market Cap:');
       setElText('mChartBuyBtn', 'Buy / Trade REX on STON.fi DEX');
       setElText('mChartDexBtn', 'Open in DexScreener');
       setElText('mChartExplorerBtn', 'TON Explorer');
@@ -3485,9 +3471,7 @@
       setElText('mChartTitle', 'شارت وسعر REX الحي');
       setElText('mChartPriceLabel', 'سعر ROYAL ELITE X الحالي:');
       setElText('mChartChangeLabel', 'تغير 24 ساعة:');
-      setElText('mChartLiqLabel', '💧 السيولة');
-      setElText('mChartVolLabel', '📈 حجم 24h');
-      setElText('mChartFdvLabel', '🏛️ القيمة السوقية');
+      setElText('mChartFdvLabel', 'القيمة السوقية (Market Cap):');
       setElText('mChartBuyBtn', 'شراء / تداول REX على STON.fi DEX');
       setElText('mChartDexBtn', 'فتح في DexScreener');
       setElText('mChartExplorerBtn', 'مستكشف TON');
