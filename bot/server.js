@@ -2060,7 +2060,7 @@ bot.command('stats', (ctx) => {
     `💎 Token: *REX*\n` +
     `🌐 Network: *TON Blockchain*\n` +
     `📜 Smart Contract: \`${REX_MASTER_CONTRACT}\`\n\n` +
-    `🪙 Total Supply: *50,000,000 REX*\n` +
+    `🪙 Total Supply: *1,000,000 REX*\n` +
     `⛏️ Mining Reserve Remaining: *${tokenomics.reserve_remaining.toLocaleString()} REX*\n` +
     `👥 Registered Knights: *${tokenomics.total_users}*\n` +
     `📤 Confirmed On-Chain Withdrawals: *${tokenomics.total_confirmed_withdrawals.toLocaleString()} REX*`,
@@ -2075,7 +2075,7 @@ bot.command(['whitepaper', 'wp'], (ctx) => {
     `• Token Symbol: *REX*\n` +
     `• Network: *TON Blockchain (Mainnet)*\n` +
     `• Smart Contract: \`${REX_MASTER_CONTRACT}\`\n` +
-    `• Total Fixed Supply: *50,000,000 REX* (100% Mint Revoked)\n` +
+    `• Total Fixed Supply: *1,000,000 REX* (100% Mint Revoked)\n` +
     `• Official DEX Pair: *REX / GRAM on STON.fi DEX*\n` +
     `• Liquidity Pool: \`EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR\`\n\n` +
     `🛡️ *Sovereign Protocol & Withdrawal Rules:*\n` +

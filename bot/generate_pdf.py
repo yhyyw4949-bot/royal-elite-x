@@ -269,7 +269,7 @@ html_content = """<!DOCTYPE html>
     </div>
     <div class="cover-meta-box">
       <div class="cover-meta-label">المعروض النهائي الأقصى</div>
-      <div class="cover-meta-val">50,000,000 REX</div>
+      <div class="cover-meta-val">1,000,000 REX</div>
     </div>
     <div class="cover-meta-box">
       <div class="cover-meta-label">معرف البوت الرسمي</div>
@@ -332,8 +332,8 @@ html_content = """<!DOCTYPE html>
     </tr>
     <tr>
       <td><strong>إجمالي المعروض النهائي</strong></td>
-      <td><strong>50,000,000 REX</strong></td>
-      <td>خمسون مليون عملة نهائية ثابتة بالكامل (Non-Mintable)</td>
+      <td><strong>1,000,000 REX</strong></td>
+      <td>مليون عملة نهائية ثابتة بالكامل (Non-Mintable)</td>
     </tr>
     <tr>
       <td><strong>الكسور العشرية (Decimals)</strong></td>
@@ -350,15 +350,15 @@ html_content = """<!DOCTYPE html>
 
 <div class="callout">
   <div class="callout-title">💎 حماية من التضخم المالي</div>
-  عقد عملة REX مغلق بالكامل (Fixed Supply)، ولا يمكن لأي جهة أو مطور أو إدارة صك حتى عملة إضافية واحدة فوق الـ 50 مليون، مما يضمن ندرة العملة وحماية حقوق المالكين والمعدنين.
+  عقد عملة REX مغلق بالكامل (Fixed Supply)، ولا يمكن لأي جهة أو مطور أو إدارة صك حتى عملة إضافية واحدة فوق المليون عملة، مما يضمن ندرة العملة وحماية حقوق المالكين والمعدنين.
 </div>
 
 <h2>3. خريطة توزيع المعروض الإجمالي (Distribution Matrix)</h2>
 <ul>
-  <li><strong>60% (30,000,000 REX):</strong> مخصصة حصرياً لمكافآت التعدين السحابي اليومي والمهام.</li>
-  <li><strong>15% (7,500,000 REX):</strong> مخصصة لبرامج الشركاء والسفراء وعمولات الإحالة الملكية (5% مدى الحياة).</li>
-  <li><strong>15% (7,500,000 REX):</strong> مخصصة لسيولة التداول على منصات التداول اللامركزية (DEX) مثل DeDust و STON.fi.</li>
-  <li><strong>10% (5,000,000 REX):</strong> خزانة التطوير المستمر وصندوق تأمين ودعم شبكة البلاط الملكي.</li>
+  <li><strong>60% (600,000 REX):</strong> مخصصة حصرياً لمكافآت التعدين السحابي اليومي والمهام.</li>
+  <li><strong>15% (150,000 REX):</strong> مخصصة لبرامج الشركاء والسفراء وعمولات الإحالة الملكية (5% مدى الحياة).</li>
+  <li><strong>15% (150,000 REX):</strong> مخصصة لسيولة التداول على منصات التداول اللامركزية (DEX) مثل DeDust و STON.fi.</li>
+  <li><strong>10% (100,000 REX):</strong> خزانة التطوير المستمر وصندوق تأمين ودعم شبكة البلاط الملكي.</li>
 </ul>
 
 <div class="page-break"></div>

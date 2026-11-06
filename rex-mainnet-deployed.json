@@ -4,7 +4,7 @@
     "symbol": "REX",
     "description": "ROYAL ELITE X - The Premium Token on TON Blockchain",
     "decimals": "9",
-    "totalSupply": "50000000"
+    "totalSupply": "1000000"
   },
   "network": "mainnet",
   "masterContract": "EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH",
