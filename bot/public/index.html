@@ -1100,6 +1100,12 @@
         </a>
       </div>
 
+      <!-- Withdrawal Fee Badge -->
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:10px; padding:8px 12px; margin-bottom:12px; font-size:12px;">
+        <span style="color:var(--muted); display:flex; align-items:center; gap:6px;">🏷️ <span id="lblWdFeeTitle">رسوم معالجة وسحب الشبكة</span>:</span>
+        <span style="color:var(--gold-lt); font-family:Orbitron; font-weight:900; letter-spacing:0.5px;">500 REX</span>
+      </div>
+
       <div style="position:relative; margin-bottom:10px;">
         <input type="number" id="withdrawAmount" placeholder="5000" min="5000" step="100" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid var(--border-hl); border-radius:14px; padding:12px 60px 12px 14px; color:#fff; font-family:'Orbitron', monospace; font-size:16px; outline:none;">
         <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold-lt); font-weight:900; font-size:12px;">REX</span>
@@ -2472,9 +2478,14 @@
       statusMsg = `<span style="color:var(--green)">✅ ${currentLang === 'ar' ? 'جميع شروط السحب مستوفاة ومحفظتك مؤهلة فوراً! 👑' : 'All conditions met! Eligible for withdrawal. 👑'}</span>`;
     }
 
+    const fee = userData?.withdrawal_fee || 500;
+    const netReceive = Math.max(0, amt - fee);
+
     preview.style.display = 'block';
     preview.innerHTML = `
-      💸 ${currentLang === 'ar' ? 'المبلغ المطلوب:' : 'Amount:'} <strong>${amt.toLocaleString()} REX</strong><br>
+      💸 ${currentLang === 'ar' ? 'المبلغ المطلوب:' : 'Requested Amount:'} <strong>${amt.toLocaleString()} REX</strong><br>
+      🏷️ ${currentLang === 'ar' ? 'رسوم السحب والمعالجة:' : 'Withdrawal Fee:'} <strong style="color:var(--gold-lt);">${fee.toLocaleString()} REX</strong><br>
+      💎 ${currentLang === 'ar' ? 'صافي ما ستستلمه في محفظتك:' : 'Net to Receive:'} <strong style="color:var(--cyan); font-size:13px;">${netReceive.toLocaleString()} REX</strong><br>
       💼 ${currentLang === 'ar' ? 'المطلوب On-Chain (20%):' : 'Required On-Chain (20%):'} <strong>${reqWalletHold.toLocaleString()} REX</strong><br>
       🔍 ${currentLang === 'ar' ? 'المتوفر في محفظتك:' : 'Available in Wallet:'} <strong>${walletBal.toLocaleString()} REX</strong><br>
       ${statusMsg}
@@ -2526,7 +2537,10 @@
       return `
         <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:12px; margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <div style="font-family:'Orbitron', monospace; font-size:15px; font-weight:900; color:#fff;">📤 ${Number(w.amount).toLocaleString()} REX</div>
+            <div>
+              <div style="font-family:'Orbitron', monospace; font-size:15px; font-weight:900; color:#fff;">📤 ${Number(w.amount).toLocaleString()} REX</div>
+              <div style="font-size:10px; color:var(--muted); margin-top:2px;">${currentLang === 'ar' ? 'صافي المستلم:' : 'Net:'} <span style="color:var(--cyan); font-weight:800">${Number(w.net_amount || (w.amount - (w.fee||500))).toLocaleString()}</span> REX (Fee: ${w.fee || 500})</div>
+            </div>
             <span style="font-size:10px; font-weight:900; padding:2px 8px; border-radius:10px; background:rgba(255,255,255,0.06); color:${badgeColor}; border:1px solid ${badgeColor};">${statusLabel}</span>
           </div>
           <div style="font-size:10.5px; color:var(--muted);">${dateStr}</div>
@@ -3615,6 +3629,7 @@
       // Live Chart & Market
       setElText('lblLivePriceTitle', 'REX Live Market Price:');
       setElText('lblTapChartHint', 'Chart ❯');
+      setElText('lblWdFeeTitle', 'Network & Processing Fee');
       setElText('mChartTitle', 'REX Live Chart & Market');
       setElText('mChartPriceLabel', 'Current ROYAL ELITE X Price:');
       setElText('mChartChangeLabel', '24h Change:');
@@ -3765,6 +3780,7 @@
       // Live Chart & Market
       setElText('lblLivePriceTitle', 'سعر REX المباشر:');
       setElText('lblTapChartHint', 'الشارت ❯');
+      setElText('lblWdFeeTitle', 'رسوم معالجة وسحب الشبكة');
       setElText('mChartTitle', 'شارت وسعر REX الحي');
       setElText('mChartPriceLabel', 'سعر ROYAL ELITE X الحالي:');
       setElText('mChartChangeLabel', 'تغير 24 ساعة:');

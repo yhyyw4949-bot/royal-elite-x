@@ -554,6 +554,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     recent_transactions: recentTransactions,
     tokenomics: tokenomicsSummary,
     min_withdrawal: minWithdrawal,
+    withdrawal_fee: parseFloat(db.getSetting('withdrawal_fee', '500')),
     hold_percent: holdPercent,
     min_hold_rex: minHoldRex,
     min_hold_days: minHoldDays,
@@ -765,28 +766,41 @@ app.post('/api/user/withdraw', telegramAuth, checkMaintenance, requireChannelSub
     return sendMsg(req, res, false, arMsg, enMsg, { code: 'HOLD_PERIOD_NOT_ELAPSED' });
   }
 
+  const withdrawalFee = parseFloat(db.getSetting('withdrawal_fee', '500'));
+  if (reqAmount <= withdrawalFee) {
+    return sendMsg(req, res, false,
+      `مبلغ السحب (${reqAmount.toLocaleString()} REX) يجب أن يكون أكبر من رسوم السحب (${withdrawalFee.toLocaleString()} REX)!`,
+      `Withdrawal amount (${reqAmount.toLocaleString()} REX) must be greater than withdrawal fee (${withdrawalFee.toLocaleString()} REX)!`
+    );
+  }
+  const netAmount = Math.max(0, reqAmount - withdrawalFee);
+
   const idempKey = idempotency_key || `WD_${telegram_id}_${Date.now()}`;
   try {
-    const reserveRes = db.atomicReserveWithdrawal(telegram_id, user.wallet_address, reqAmount, idempKey);
+    const reserveRes = db.atomicReserveWithdrawal(telegram_id, user.wallet_address, reqAmount, idempKey, withdrawalFee);
 
     // Notify Admin Telegram
     bot.telegram.sendMessage(ADMIN_TG_ID,
       `📤 *طلب سحب جديد مؤكد On-Chain!* 👑\n\n` +
       `🆔 رقم الطلب: #${reserveRes.withdrawal_id}\n` +
       `👤 المستخدم: ${user.first_name} (@${user.username || 'بلا'})\n` +
-      `💰 المبلغ المطلوب: *${reqAmount.toLocaleString()} REX* (تم حجزه بنجاح ✅)\n` +
+      `💰 المبلغ المطلوب: *${reqAmount.toLocaleString()} REX*\n` +
+      `🏷️ رسوم السحب (Fee): *${withdrawalFee.toLocaleString()} REX*\n` +
+      `💵 صافي المستلم للمحفظة: *${netAmount.toLocaleString()} REX*\n` +
       `💼 رصيد محفظته On-Chain: *${onChainBalance.toLocaleString()} REX* (مستوفي شرط الـ 20% ✅)\n` +
       `📍 المحفظة: \`${user.wallet_address}\`\n\n` +
       `الحالة الحالية: \`PENDING\` (قيد التدقيق)`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
 
-    const arMsg = `🎉 تم تسجيل طلب سحب ${reqAmount.toLocaleString()} REX بنجاح! بمجرد موافقة الإدارة، سيصل السحب لمحفظتك على البلوكتشين خلال 24 ساعة كحد أقصى.`;
-    const enMsg = `🎉 Withdrawal request for ${reqAmount.toLocaleString()} REX submitted! Tokens will arrive in your TON wallet within 24 hours of approval.`;
+    const arMsg = `🎉 تم تسجيل طلب سحب ${reqAmount.toLocaleString()} REX بنجاح!\n• رسوم السحب: ${withdrawalFee.toLocaleString()} REX\n• الصافي الذي سيصل لمحفظتك: ${netAmount.toLocaleString()} REX\nبمجرد موافقة الإدارة، سيصل السحب لمحفظتك على البلوكتشين خلال 24 ساعة كحد أقصى.`;
+    const enMsg = `🎉 Withdrawal request for ${reqAmount.toLocaleString()} REX submitted!\n• Fee: ${withdrawalFee.toLocaleString()} REX\n• Net amount to receive: ${netAmount.toLocaleString()} REX\nTokens will arrive in your TON wallet within 24 hours of approval.`;
     return sendMsg(req, res, true, arMsg, enMsg, {
       withdrawal_id: reserveRes.withdrawal_id,
       remaining_balance: reserveRes.remaining_balance,
       reserved_balance: reserveRes.reserved_balance,
+      fee: withdrawalFee,
+      net_amount: netAmount,
       status: 'pending'
     });
   } catch (err) {
@@ -1436,10 +1450,11 @@ app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
   }
 
   try {
+    const netPayout = withdrawal.net_amount || (withdrawal.amount - (withdrawal.fee || 500));
     const txResult = await payout.sendOnChainRexPayout({
       recipientAddress: recipientWallet,
-      amountRex: withdrawal.amount,
-      memo: `REX Withdrawal #${id} Payout 👑`
+      amountRex: netPayout,
+      memo: `REX Withdrawal #${id} Payout (Net: ${netPayout.toLocaleString()} REX) 👑`
     });
 
     const txHash = `seqno-${txResult.seqno}`;
@@ -1460,7 +1475,8 @@ app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
 
     bot.telegram.sendMessage(withdrawal.telegram_id,
       `✅ *تمت الموافقة وصرف سحبك تلقائياً على البلوكتشين!* 👑\n\n` +
-      `💰 *المبلغ المستلم:* *+${withdrawal.amount.toLocaleString()} REX*\n` +
+      `💰 *المبلغ الصافي المستلم:* *+${netPayout.toLocaleString()} REX*\n` +
+      `🏷️ *رسوم السحب:* *${(withdrawal.fee || 500).toLocaleString()} REX*\n` +
       `📥 *المحفظة المستلمة:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
       `🌐 *رابط التحقق:* [عرض المعاملة في Tonviewer](${explorerUrl})\n\n` +
       `🛡️ *قانون الأمان الملكي (Anti-Dump Protection - 24h):*\n` +

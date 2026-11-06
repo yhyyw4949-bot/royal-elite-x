@@ -247,7 +247,9 @@ const safeAlterCols = [
   { table: 'admin_audit_logs', col: 'ip', def: 'TEXT' },
   { table: 'users', col: 'daily_streak', def: 'INTEGER DEFAULT 0' },
   { table: 'users', col: 'last_checkin_at', def: 'INTEGER DEFAULT 0' },
-  { table: 'users', col: 'ref_bonus_awarded', def: 'INTEGER DEFAULT 0' }
+  { table: 'users', col: 'ref_bonus_awarded', def: 'INTEGER DEFAULT 0' },
+  { table: 'withdrawals', col: 'fee', def: 'REAL DEFAULT 500.0' },
+  { table: 'withdrawals', col: 'net_amount', def: 'REAL DEFAULT NULL' }
 ];
 
 for (const m of safeAlterCols) {
@@ -261,6 +263,7 @@ for (const m of safeAlterCols) {
 // ── 3. Seed Default System Settings ──
 const defaultSettings = [
   { key: 'min_withdrawal', val: '5000', description: 'الحد الأدنى للسحب (REX)' },
+  { key: 'withdrawal_fee', val: '500', description: 'رسوم معالجة وشبكة السحب (REX)' },
   { key: 'hold_percent', val: '20', description: 'نسبة الاحتفاظ المطلوبة في المحفظة On-Chain (%)' },
   { key: 'base_daily_reward', val: '100', description: 'معدل التعدين الأساسي لكل 24 ساعة (REX)' },
   { key: 'referral_percent', val: '5', description: 'نسبة عمولة الإحالة مدى الحياة (%)' },
@@ -824,7 +827,7 @@ module.exports = {
   },
 
   // ── Atomic Multi-Stage Withdrawal Engine ──
-  atomicReserveWithdrawal: (telegram_id, wallet_address, amount, idempotency_key) => {
+  atomicReserveWithdrawal: (telegram_id, wallet_address, amount, idempotency_key, fee = 500) => {
     const tx = db.transaction(() => {
       // Deduct from balance and move to reserved_balance atomically
       const res = db.prepare(`
@@ -838,12 +841,13 @@ module.exports = {
         throw new Error('INSUFFICIENT_BALANCE');
       }
 
+      const netAmount = Math.max(0, amount - fee);
       const now = Date.now();
       const insertW = db.prepare(`
         INSERT INTO withdrawals 
-        (idempotency_key, telegram_id, wallet_address, amount, status, created_at, updated_at) 
-        VALUES (?, ?, ?, ?, 'pending', ?, ?)
-      `).run(idempotency_key, telegram_id, wallet_address, amount, now, now);
+        (idempotency_key, telegram_id, wallet_address, amount, fee, net_amount, status, created_at, updated_at) 
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+      `).run(idempotency_key, telegram_id, wallet_address, amount, fee, netAmount, now, now);
 
       const withdrawalId = insertW.lastInsertRowid;
       const user = db.prepare('SELECT balance, reserved_balance FROM users WHERE telegram_id = ?').get(telegram_id);
@@ -855,13 +859,15 @@ module.exports = {
         amount: -amount,
         balance_after: user.balance,
         reference_id: `W_${withdrawalId}`,
-        details: `حجز رصيد لطلب السحب #${withdrawalId}`
+        details: `حجز رصيد لطلب السحب #${withdrawalId} (المطلوب: ${amount} REX - الرسوم: ${fee} REX - الصافي: ${netAmount} REX)`
       });
 
       return {
         withdrawal_id: withdrawalId,
         remaining_balance: user.balance,
-        reserved_balance: user.reserved_balance
+        reserved_balance: user.reserved_balance,
+        fee,
+        net_amount: netAmount
       };
     });
 
