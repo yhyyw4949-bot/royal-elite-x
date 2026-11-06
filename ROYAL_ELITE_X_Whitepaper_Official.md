@@ -31,11 +31,11 @@
 | **شبكة البلوكتشين** | TON Mainnet (شبكة TON الرئيسية) |
 | **معيار الرمز (Standard)** | TEP-74 Jetton Fungible Standard |
 | **إجمالي المعروض الثابت (Total Supply)** | **1,000,000 REX** (مغلق نهائياً وغير قابل للسك أو التضخم) |
-| **العقد الذكي الرئيسي (Jetton Master)** | `EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX` |
+| **العقد الذكي الرئيسي (Jetton Master)** | `EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH` |
 | **زوج التداول الرسمي اللامركزي** | **REX / GRAM** على منصة **STON.fi DEX v2** |
 | **عنوان مجمع السيولة (STON.fi Pool)** | `EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR` |
 | **الشارت والأسعار اللحظية** | [شارت مباشر على DexScreener](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr) |
-| **مستكشف المعاملات الرسمي** | [Tonviewer REX Jetton Explorer](https://tonviewer.com/EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX) |
+| **مستكشف المعاملات الرسمي** | [Tonviewer REX Jetton Explorer](https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH) |
 | **البوت الرسمي على تيليجرام** | [@Royalelitexbot](https://t.me/Royalelitexbot) |
 | **القناة الإلزامية للمجتمع** | [@REXCEO1A](https://t.me/REXCEO1A) |
 
@@ -195,9 +195,9 @@ flowchart LR
 
 * **البوت الرسمي:** [@Royalelitexbot](https://t.me/Royalelitexbot)
 * **قناة الإعلانات الرسمية:** [@REXCEO1A](https://t.me/REXCEO1A)
-* **رابط التداول والشراء على STON.fi:** [Trade REX on STON.fi DEX](https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX)
+* **رابط التداول والشراء على STON.fi:** [Trade REX on STON.fi DEX](https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH)
 * **رابط الشارت على DexScreener:** [REX / GRAM Live Chart](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr)
-* **مستكشف العقد الذكي على Tonviewer:** [EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX](https://tonviewer.com/EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX)
+* **مستكشف العقد الذكي على Tonviewer:** [EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH](https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH)
 
 ---
 
