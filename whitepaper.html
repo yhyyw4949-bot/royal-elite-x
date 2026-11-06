@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ROYAL ELITE X (REX) — Official Whitepaper & Tokenomics</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #050811;
+      color: #e2e8f0;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .page-container {
+      padding: 30px 40px;
+      max-width: 100%;
+    }
+    
+    /* Cover / Hero Header */
+    .hero-card {
+      background: linear-gradient(135deg, #0d1527 0%, #17233f 50%, #0d1527 100%);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 16px;
+      padding: 25px 20px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      margin-bottom: 25px;
+    }
+    
+    .logo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 3px solid #d4af37;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+      margin-bottom: 10px;
+    }
+    
+    h1 {
+      color: #d4af37;
+      font-size: 26px;
+      margin: 5px 0;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    }
+    
+    .hero-subtitle {
+      color: #38bdf8;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    
+    .badges-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .badge {
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.6);
+      color: #facc15;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    
+    .badge-blue {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      color: #38bdf8;
+    }
+    
+    /* Section Headings */
+    h2 {
+      color: #facc15;
+      font-size: 18px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 25px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+    }
+    
+    p {
+      font-size: 13px;
+      color: #cbd5e1;
+      text-align: justify;
+      margin: 0 0 10px 0;
+    }
+    
+    /* Grid Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 15px 0;
+    }
+    
+    .metric-card {
+      background: #0d1527;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .metric-title {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .metric-value {
+      font-size: 15px;
+      font-weight: 800;
+      color: #d4af37;
+    }
+    
+    .feature-card {
+      background: #0d1527;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px 16px;
+      border-right: 3px solid #38bdf8;
+    }
+    
+    .feature-card h3 {
+      color: #38bdf8;
+      font-size: 14px;
+      margin: 0 0 6px 0;
+      font-weight: 700;
+    }
+    
+    .feature-card p {
+      font-size: 12px;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background: #0d1527;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+      font-size: 12px;
+    }
+    
+    th, td {
+      padding: 10px 14px;
+      text-align: right;
+      border-bottom: 1px solid #1e293b;
+    }
+    
+    th {
+      background-color: #17233f;
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .gold-text {
+      color: #facc15;
+      font-weight: 700;
+    }
+    
+    /* Callout Box */
+    .callout {
+      background: linear-gradient(90deg, rgba(212, 175, 55, 0.08) 0%, rgba(56, 189, 248, 0.08) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 15px 18px;
+      margin: 15px 0;
+    }
+    
+    .callout h3 {
+      color: #facc15;
+      font-size: 13px;
+      margin: 0 0 6px 0;
+      font-weight: 700;
+    }
+    
+    .callout p {
+      font-size: 12px;
+      margin: 0;
+      color: #cbd5e1;
+    }
+    
+    /* Code Contract Box */
+    .contract-bar {
+      background: #030712;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 15px 0;
+      direction: ltr;
+      text-align: left;
+    }
+    
+    .contract-label {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+    
+    .contract-address {
+      font-family: monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      font-weight: bold;
+    }
+    
+    /* Roadmap Timeline */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 15px 0;
+    }
+    
+    .timeline-step {
+      background: #0d1527;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    
+    .timeline-step.active {
+      border: 1px solid rgba(212, 175, 55, 0.6);
+      background: linear-gradient(180deg, #131c33 0%, #0d1527 100%);
+    }
+    
+    .step-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    
+    .step-done {
+      background: #059669;
+      color: #fff;
+    }
+    
+    .step-current {
+      background: #d97706;
+      color: #fff;
+    }
+    
+    .step-future {
+      background: #334155;
+      color: #94a3b8;
+    }
+    
+    .step-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #facc15;
+      margin-bottom: 6px;
+    }
+    
+    .step-items {
+      font-size: 11px;
+      color: #94a3b8;
+      margin: 0;
+      padding-right: 15px;
+      line-height: 1.5;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #1e293b;
+      font-size: 11px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-container">
+
+    <!-- Hero Card -->
+    <div class="hero-card">
+      <img src="https://iili.io/nsECVNn.jpg" class="logo" alt="ROYAL ELITE X Logo">
+      <h1>ROYAL ELITE X (REX)</h1>
+      <div class="hero-subtitle">الورقة البيضاء الرسمية وهندسة التوكنوميكس (Whitepaper & Tokenomics)</div>
+      <div class="badges-row">
+        <span class="badge">شبكة TON Blockchain (Mainnet 🔴)</span>
+        <span class="badge badge-blue">معيار TEP-74 Jetton</span>
+        <span class="badge">إمداد ندرة ثابت: 50,000,000 REX</span>
+        <span class="badge badge-blue">اللوجو موثق On-Chain</span>
+      </div>
+    </div>
+
+    <!-- Quick Metrics -->
+    <div class="grid-4">
+      <div class="metric-card">
+        <div class="metric-title">الإمداد الكلي النهائي</div>
+        <div class="metric-value">50,000,000 REX</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">المنازل العشرية</div>
+        <div class="metric-value">9 Decimals</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">خاصية السك الإضافي</div>
+        <div class="metric-value" style="color: #ef4444;">مغلقة نهائياً (0%)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">السيولة الأولية المخصصة</div>
+        <div class="metric-value" style="color: #38bdf8;">50% من الإمداد</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Overview & Pillars -->
+    <h2>1. 🌟 رؤية المشروع وفلسفة الندرة (Vision & Core Pillars)</h2>
+    <p>
+      مشروع <strong>ROYAL ELITE X (REX)</strong> هو أصل رقمي فاخر مبني على شبكة <strong>TON (The Open Network)</strong> اللامركزية. صُمم التوكن ليعكس مفهوم <strong>"مخزن القيمة النادر وشديد الشح" (High Scarcity Digital Store of Value)</strong>. على النقيض تماماً من المشاريع ذات الإمدادات المليارية والتريليونية التي تنهار قيمتها بفعل التضخم، تتبنى REX نموذجاً متوازناً وصارماً بحجم <strong>50 مليون عملة فقط</strong>، مستفيدة من اندماج تيليجرام المباشر مع شبكة TON.
+    </p>
+
+    <div class="grid-2">
+      <div class="feature-card">
+        <h3>👑 الندرة والشح الرقمي (Absolute Scarcity)</h3>
+        <p>50,000,000 رمز فقط للأبد! إمداد مثالي يجمع بين مكافأة مئات الآلاف من المستخدمين والحفاظ على ندرة وقوة التوكن في السوق.</p>
+      </div>
+      <div class="feature-card">
+        <h3>⚡ سرعة وتكامل منظومة TON & Telegram</h3>
+        <p>معاملات فورية بتكلفة سنتات معدودة، مع إمكانية التحويل والتداول المباشر بين محافظ ما يقارب مليار مستخدم على تطبيق تيليجرام.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🎮 تطبيقات تفاعلية وبوتات ربح ذكية</h3>
+        <p>نظام مكافآت مبتكر يربط المهام بنقاط الكراونز (Crowns) بدون إغراق أو ضغط بيع على العملة الأساسية.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🔒 استقرار السيولة ومكافحة الإغراق (Anti-Dump)</h3>
+        <p>تخصيص نصف الإمداد مباشرة لأحواض السيولة اللامركزية مع هيكل حوافز يشجع على الاحتفاظ بالعملة (Hold) والاستفادة من صعودها.</p>
+      </div>
+    </div>
+
+    <!-- Section 2: Detailed Tokenomics -->
+    <h2>2. 📊 جدول التوكنوميكس التفصيلي (Token Allocation - 50M)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>الحصة</th>
+          <th>النسبة</th>
+          <th>الكمية الكلية</th>
+          <th>خطة الإطلاق والهدف الاستراتيجي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="gold-text">السيولة اللامركزية (DEX Liquidity)</td>
+          <td class="gold-text">50%</td>
+          <td>25,000,000 REX</td>
+          <td>تودع في أحواض STON.fi و DeDust.io لتأمين عمق السوق والتداول السلس بدون انزلاق.</td>
+        </tr>
+        <tr>
+          <td class="gold-text">مكافآت مجتمع تيليجرام والـ Airdrop</td>
+          <td class="gold-text">25%</td>
+          <td>12,500,000 REX</td>
+          <td>توزع تدريجياً عبر بوت المهام والمواسم التنافسية للأعضاء الأكثر تفاعلاً وإحالات.</td>
+        </tr>
+        <tr>
+          <td class="gold-text">التسويق والشراكات وإدراج المنصات</td>
+          <td class="gold-text">15%</td>
+          <td>7,500,000 REX</td>
+          <td>مخصصة لحملات المؤثرين (KOLs)، إعلانات تيليجرام، وتوثيق الإدراج على CoinGecko و CoinMarketCap.</td>
+        </tr>
+        <tr>
+          <td class="gold-text">خزينة التطوير وفريق العمل (Treasury)</td>
+          <td class="gold-text">10%</td>
+          <td>5,000,000 REX</td>
+          <td>تطوير التطبيق المصغر (Mini App)، تكاليف الخوادم، وعقود الـ Staking المستقبلية.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Section 3: Telegram Bot Mechanics -->
+    <h2>3. 🎮 آلية عمل بوت وتطبيق تيليجرام (The Royal Bot Economy)</h2>
+    <div class="callout">
+      <h3>💡 نموذج "التاج والكسور" لحماية القيمة (The Crowns & Fractional System):</h3>
+      <p>
+        بما أن المعروض محدد جداً، يعتمد البوت على عملة داخلية تسمى <strong>نقاط التاج (Crowns 👑)</strong>:
+        <br>• <strong>كيف يجمع المستخدم الكراونز؟</strong> عبر فحص عمر حساب التيليجرام، دعوة الأصدقاء، إتمام مهام السوشيال ميديا، وزيارة البوت يومياً.
+        <br>• <strong>كيف يتم التحويل لـ REX؟</strong> يتم تخصيص حوض جوائز أسبوعي محدد من عملات REX (مثلاً 500 REX أسبوعياً)، ويحصل كل مشارك على كسر من REX يتناسب طردياً مع نقاط الكراونز التي جمعها.
+        <br>• <strong>النتيجة الاستثمارية:</strong> يحصل المستخدم على عملة حقيقية ثمينة ومرتفعة السعر في محفظته بدلاً من أرقام وهمية تنهار عند الإدراج.
+      </p>
+    </div>
+
+    <!-- Section 4: Roadmap -->
+    <h2>4. 🗺️ خارطة طريق المشروع (Roadmap)</h2>
+    <div class="timeline">
+      <div class="timeline-step">
+        <span class="step-badge step-done">المرحلة 1 — مكتملة بنجاح ✅</span>
+        <div class="step-title">التأسيس والإطلاق التقني</div>
+        <ul class="step-items">
+          <li>برمجة العقود الذكية بمعيار TEP-74 على Tact.</li>
+          <li>النشر والتدقيق على TON Testnet.</li>
+          <li>الإطلاق الرسمي على TON Mainnet (1M REX).</li>
+          <li>تضمين لوجو التاج الملكي On-Chain.</li>
+        </ul>
+      </div>
+
+      <div class="timeline-step active">
+        <span class="step-badge step-current">المرحلة 2 — قيد التنفيذ ⏳</span>
+        <div class="step-title">السيولة وإطلاق البوت</div>
+        <ul class="step-items">
+          <li>إنشاء مجمع السيولة الأولي على STON.fi.</li>
+          <li>إطلاق بوت التيليجرام الرسمي لمكافآت Crowns.</li>
+          <li>توثيق العملة على Tonkeeper Assets.</li>
+          <li>إطلاق الحملة الترويجية الأولى لمجتمع النخبة.</li>
+        </ul>
+      </div>
+
+      <div class="timeline-step">
+        <span class="step-badge step-future">المرحلة 3 — القادمة 🚀</span>
+        <div class="step-title">التوسع والتطبيقات الكبرى</div>
+        <ul class="step-items">
+          <li>إطلاق تطبيق Telegram Mini App الملكي.</li>
+          <li>التوثيق في CoinGecko و CoinMarketCap.</li>
+          <li>تفعيل نظام الـ Staking لتوزيع عوائد لحاملي REX.</li>
+          <li>شراكات إعلانية مع منصات TON الكبرى.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 5: Contract Bar -->
+    <h2>5. 📋 بيانات العقد الذكي الرسمي المعتمد (Smart Contract Verification)</h2>
+    <p>العقد منشور وموثق بشكل علني وشفاف على شبكة TON الرئيسية، ويمكن لأي مستثمر تدقيقه ومعاينته عبر المستكشف الرسمي:</p>
+    
+    <div class="contract-bar">
+      <span class="contract-label">Master Contract:</span>
+      <span class="contract-address">EQA3JasdR7Goynco42eBBxAh2LnwK46Nmr48DvC16Xr5NWjt</span>
+    </div>
+
+    <div class="footer">
+      ROYAL ELITE X (REX) © 2026 — All Rights Reserved | The Prestige Jetton on The Open Network (TON)
+    </div>
+
+  </div>
+
+</body>
+</html>

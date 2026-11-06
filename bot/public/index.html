@@ -1,0 +1,3242 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ROYAL ELITE X — Enterprise Web3 Ecosystem</title>
+
+  <!-- Google Fonts: Cairo & Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <!-- Scripts: Telegram WebApp, TON Connect, FingerprintJS, Confetti -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #050811;
+      --card-bg: rgba(14, 23, 46, 0.78);
+      --card-border: rgba(245, 158, 11, 0.18);
+      --border-hl: rgba(245, 158, 11, 0.45);
+      --gold: #f59e0b;
+      --gold-lt: #fbbf24;
+      --gold-bright: #fef08a;
+      --gold-grad: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%);
+      --gold-glow: 0 0 24px rgba(245, 158, 11, 0.38);
+      --cyan: #38bdf8;
+      --cyan-glow: 0 0 20px rgba(56, 189, 248, 0.4);
+      --purple: #c084fc;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --muted-lt: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    html {
+      background-color: #050811 !important;
+      background: #050811 !important;
+      min-height: 100vh;
+      width: 100%;
+    }
+    body {
+      background-color: #050811 !important;
+      background: var(--bg) !important;
+      color: var(--text);
+      font-family: 'Cairo', -apple-system, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      padding-bottom: 96px;
+    }
+
+    /* Background Atmospheric Grids */
+    .bg-mesh {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(circle at 50% 12%, rgba(245, 158, 11, 0.12) 0%, transparent 60%),
+                  radial-gradient(circle at 10% 85%, rgba(56, 189, 248, 0.08) 0%, transparent 50%);
+    }
+    .bg-grid {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* ════ HEADER ════ */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(5, 8, 17, 0.94);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.16);
+      padding: 10px 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .header-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .user-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .avatar-wrapper { position: relative; flex-shrink: 0; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 2px solid var(--gold); box-shadow: var(--gold-glow);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 15px; color: var(--gold-lt);
+    }
+    .avatar-crown {
+      position: absolute; top: -7px; right: -5px; font-size: 14px;
+      filter: drop-shadow(0 2px 6px rgba(245,158,11,0.8));
+    }
+    .user-meta { display: flex; flex-direction: column; min-width: 0; }
+    .user-name {
+      font-size: 13.5px; font-weight: 800; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 175px;
+    }
+    .rank-pill {
+      font-size: 10px; font-weight: 800; color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.28);
+      padding: 1px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px;
+      white-space: nowrap; width: fit-content;
+    }
+
+    .header-utility-btns {
+      display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+    }
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; color: var(--gold-lt); transition: all 0.2s;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+    .lang-btn {
+      font-size: 11px; font-weight: 800; width: auto; padding: 0 10px; border-radius: 12px;
+      background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35);
+      display: inline-flex; align-items: center; gap: 4px; height: 34px;
+    }
+
+    /* ════ ROW 2: DEDICATED WALLET & NETWORK BAR ════ */
+    .header-wallet-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: rgba(14, 22, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 5px 8px;
+      gap: 8px;
+    }
+    .network-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--green);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 3px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .status-dot-blink {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: blinkPulse 1.4s infinite;
+    }
+    @keyframes blinkPulse { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.35; transform:scale(0.85);} }
+
+    .header-wallet-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex: 1;
+      min-width: 0;
+    }
+    #tonConnectBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      max-width: 100%;
+    }
+    #tonConnectBtn button {
+      height: 32px !important;
+      font-size: 12px !important;
+      border-radius: 10px !important;
+    }
+
+    /* ════ MAIN SCROLL VIEW ════ */
+    .main-scroll { position: relative; z-index: 1; padding: 14px 14px 30px; max-width: 480px; margin: 0 auto; }
+
+    /* ════ HERO VAULT CARD ════ */
+    .vault-card {
+      background: linear-gradient(165deg, rgba(20, 30, 58, 0.88), rgba(9, 14, 28, 0.94));
+      border: 1px solid var(--border-hl); border-radius: 24px;
+      padding: 18px 18px 16px; margin-bottom: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6), var(--gold-glow);
+      position: relative; overflow: hidden;
+    }
+    .vault-card::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.15), transparent 45%);
+      pointer-events: none;
+    }
+    .vault-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .vault-badge {
+      font-size: 11px; font-weight: 800; color: var(--gold-lt);
+      background: rgba(245, 158, 11, 0.12); padding: 3px 10px; border-radius: 12px;
+      border: 1px solid rgba(245, 158, 11, 0.28);
+    }
+    .vault-multiplier {
+      font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 900;
+      color: var(--cyan); background: rgba(56, 189, 248, 0.14);
+      padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.32);
+    }
+    .vault-balance-wrap {
+      display: flex; align-items: baseline; justify-content: center;
+      gap: 8px; margin: 10px 0 14px; position: relative;
+    }
+    .vault-coin-img {
+      width: 32px; height: 32px; border-radius: 50%;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.5); align-self: center;
+    }
+    .vault-balance-num {
+      font-family: 'Orbitron', monospace; font-size: 34px; font-weight: 900;
+      background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+    .vault-balance-symbol { font-size: 14px; font-weight: 900; color: var(--gold); }
+
+    .vault-rates-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;
+    }
+    .rate-pill {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 7px 10px; font-size: 11px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .rate-pill strong { color: #fff; font-family: 'Orbitron', monospace; }
+    .pulse-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 8px var(--green); animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .vault-onchain-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0, 0, 0, 0.4); border-radius: 14px;
+      border: 1px dashed rgba(245, 158, 11, 0.25); padding: 8px 12px;
+      font-size: 11.5px;
+    }
+    .onchain-item { display: flex; align-items: center; gap: 5px; }
+    .onchain-item .label { color: var(--muted); }
+    .onchain-item .val { font-weight: 800; color: #fff; }
+    .onchain-item .val.rex { color: var(--gold-lt); font-family: 'Orbitron', monospace; }
+
+    /* ════ SOVEREIGN HOLDING TIERS & BOOST ════ */
+    .vault-tier-bar {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(14, 22, 42, 0.85) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      border-radius: 14px;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .vault-tier-bar:active { transform: scale(0.98); background: rgba(245, 158, 11, 0.14); }
+    .tier-badge-row {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+    }
+    .tier-badge-pill {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; color: #fff;
+    }
+    .tier-mult-tag {
+      background: rgba(245, 158, 11, 0.22); border: 1px solid var(--gold);
+      color: var(--gold-lt); padding: 1px 7px; border-radius: 8px; font-size: 10.5px; font-family: 'Orbitron', monospace;
+    }
+    .tier-tap-hint {
+      font-size: 10.5px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 3px;
+    }
+    .tier-progress-track {
+      width: 100%; height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; margin-bottom: 4px;
+    }
+    .tier-progress-fill {
+      height: 100%; background: linear-gradient(90deg, var(--gold) 0%, #10b981 100%);
+      border-radius: 4px; transition: width 0.4s ease;
+    }
+    .tier-progress-sub {
+      font-size: 10px; color: var(--muted-lt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tier-card-item {
+      background: rgba(14, 22, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px; padding: 13px 14px; margin-bottom: 10px;
+      transition: all 0.25s;
+    }
+    .tier-card-item.active-tier {
+      border: 2px solid var(--gold);
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(14, 22, 42, 0.9) 100%);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+    }
+    .tier-active-pill {
+      background: rgba(16, 185, 129, 0.18); border: 1px solid var(--green);
+      color: var(--green); font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 10px;
+    }
+
+    /* ════ GATEKEEPER CARD (LOCKDOWN SCREEN) ════ */
+    #gateScreen {
+      background: linear-gradient(165deg, rgba(24, 18, 10, 0.96), rgba(8, 10, 20, 0.98));
+      border: 2px solid var(--gold); border-radius: 26px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.8), 0 0 40px rgba(245, 158, 11, 0.35);
+      text-align: center;
+    }
+    .gate-icon-large { font-size: 54px; margin-bottom: 8px; filter: drop-shadow(0 6px 16px rgba(245,158,11,0.6)); }
+    .gate-h1 {
+      font-size: 19px; font-weight: 900; background: var(--gold-grad);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px;
+    }
+    .gate-desc { font-size: 12px; color: var(--muted-lt); line-height: 1.6; margin-bottom: 16px; }
+    .gate-step-card {
+      background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; text-align: right;
+    }
+    [dir="ltr"] .gate-step-card { text-align: left; }
+    .gate-step-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold-grad); color: #050811; font-weight: 900;
+      display: flex; align-items: center; justify-content: center; font-size: 13px;
+    }
+    .gate-step-details h5 { font-size: 13px; font-weight: 800; color: #fff; }
+    .gate-step-details p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* ════ 3D CELESTIAL MINING CORE ════ */
+    #miningCore { display: flex; flex-direction: column; align-items: center; }
+    .orbit-stage {
+      position: relative; width: 220px; height: 220px;
+      display: flex; align-items: center; justify-content: center; margin: 12px 0 16px;
+      cursor: pointer;
+    }
+    .orbit-ring {
+      position: absolute; border-radius: 50%; border: 1.5px solid transparent;
+      pointer-events: none;
+    }
+    .orbit-1 {
+      width: 210px; height: 210px; border-top-color: var(--gold); border-bottom-color: rgba(245,158,11,0.2);
+      animation: spinClockwise 12s linear infinite;
+    }
+    .orbit-2 {
+      width: 175px; height: 175px; border-left-color: var(--cyan); border-right-color: rgba(56,189,248,0.2);
+      animation: spinCounter 8s linear infinite;
+    }
+    .orbit-3 {
+      width: 145px; height: 145px; border-top-color: var(--purple); border-right-color: rgba(192,132,252,0.3);
+      animation: spinClockwise 6s linear infinite;
+    }
+    @keyframes spinClockwise { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes spinCounter   { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+    .core-sphere {
+      position: relative; width: 114px; height: 114px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fef08a 0%, #f59e0b 55%, #78350f 100%);
+      border: 3px solid #fef08a;
+      box-shadow: 0 0 45px rgba(245, 158, 11, 0.65), inset 0 3px 10px rgba(255, 255, 255, 0.7);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s ease; overflow: hidden;
+    }
+    .core-sphere:active { transform: scale(0.92); }
+    .core-sphere img { width: 94%; height: 94%; border-radius: 50%; object-fit: cover; }
+
+    /* Chronometer Status Hub */
+    .chronometer-hub {
+      width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      background: rgba(14, 23, 46, 0.7); border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 18px; padding: 12px 14px; margin-bottom: 12px;
+    }
+    .chrono-col-right { text-align: right; }
+    .chrono-col-left  { text-align: left; }
+    [dir="ltr"] .chrono-col-right { text-align: left; }
+    [dir="ltr"] .chrono-col-left  { text-align: right; }
+    .chrono-label { font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+    .chrono-val {
+      font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 900;
+      color: var(--gold-lt);
+    }
+    .chrono-timer {
+      font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 900;
+      color: var(--cyan);
+    }
+
+    /* Progress Track */
+    .prog-card {
+      width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px; padding: 10px 12px; margin-bottom: 14px;
+    }
+    .prog-info {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11.5px; font-weight: 800; color: var(--muted-lt); margin-bottom: 6px;
+    }
+    .prog-track {
+      width: 100%; height: 8px; background: rgba(255,255,255,0.08);
+      border-radius: 8px; overflow: hidden;
+    }
+    .prog-fill-gold {
+      height: 100%; width: 0%; background: var(--gold-grad);
+      border-radius: 8px; box-shadow: 0 0 12px rgba(245,158,11,0.7);
+      transition: width 0.4s ease;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      width: 100%; border: none; outline: none; cursor: pointer;
+      padding: 14px 20px; border-radius: 16px; font-size: 14.5px; font-weight: 900;
+      font-family: 'Cairo', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    }
+    .action-btn:active { transform: scale(0.97); }
+    .action-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-gold {
+      background: var(--gold-grad); color: #050811;
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.45);
+    }
+    .btn-mining-active {
+      background: rgba(56, 189, 248, 0.15); color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .btn-claim-reward {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;
+      box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5); animation: claimGlow 1.8s infinite alternate;
+    }
+    @keyframes claimGlow {
+      from { box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4); }
+      to   { box-shadow: 0 6px 32px rgba(16, 185, 129, 0.85); transform: translateY(-1px); }
+    }
+    .btn-withdraw-purple {
+      background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); color: #fff;
+      box-shadow: 0 6px 24px rgba(168, 85, 247, 0.4);
+    }
+
+    /* ════ CARDS & GRIDS ════ */
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 16px; margin-bottom: 14px;
+      backdrop-filter: blur(10px);
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 14.5px; font-weight: 800; color: #fff;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title-icon { font-size: 18px; color: var(--gold-lt); }
+
+    .metric-grid-dual {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+    }
+    .metric-box {
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px; padding: 10px 12px;
+    }
+    .metric-box-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .metric-box-val { font-family: 'Orbitron', monospace; font-size: 17px; font-weight: 900; }
+    .metric-box-val.gold { color: var(--gold-lt); }
+    .metric-box-val.cyan { color: var(--cyan); }
+    .metric-box-val.purple { color: var(--purple); }
+
+    /* ════ BOTTOM NAVIGATION ════ */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+      height: 72px; background: rgba(5, 8, 17, 0.94);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid rgba(245, 158, 11, 0.22);
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 0 6px env(safe-area-inset-bottom, 0);
+    }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; height: 100%; cursor: pointer; color: var(--muted);
+      font-size: 10.5px; font-weight: 700; gap: 3px; transition: all 0.2s; position: relative;
+    }
+    .nav-btn.active { color: var(--gold-lt); }
+    .nav-btn.active::before {
+      content: ''; position: absolute; top: 0; left: 24%; right: 24%; height: 2px;
+      background: var(--gold-grad); border-radius: 0 0 6px 6px;
+      box-shadow: 0 2px 10px rgba(245,158,11,0.6);
+    }
+    .nav-icon { font-size: 20px; transition: transform 0.2s ease; }
+    .nav-btn.active .nav-icon { transform: scale(1.15); }
+    .nav-badge-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--gold);
+      box-shadow: 0 0 6px var(--gold); margin-top: 2px;
+    }
+
+    /* Center Menu Button (Loot Style) */
+    .nav-center-item {
+      position: relative; z-index: 1060;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; cursor: pointer;
+    }
+    .center-menu-sphere {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fef08a 0%, #f59e0b 55%, #b45309 100%);
+      border: 2px solid #fef08a;
+      box-shadow: 0 0 26px rgba(245,158,11,0.6), 0 4px 14px rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      color: #050810; font-size: 20px; font-weight: 900;
+      margin-top: -16px; transition: all 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .center-menu-sphere:active { transform: scale(0.92); }
+    .nav-center-item.open .center-menu-sphere {
+      transform: rotate(90deg);
+      background: radial-gradient(circle at 35% 30%, #fef9c3 0%, #f59e0b 60%, #78350f 100%);
+      box-shadow: 0 0 38px rgba(251,191,36,0.95), 0 4px 18px rgba(0,0,0,0.8);
+      color: #050810;
+    }
+    .center-menu-label { font-size: 10px; font-weight: 800; color: var(--gold-lt); margin-top: 3px; }
+
+    /* ════ PLATFORM HUB BOTTOM SHEET ════ */
+    .hub-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.76);
+      backdrop-filter: blur(10px);
+      z-index: 1010; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .hub-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .hub-sheet {
+      position: fixed; bottom: 78px; left: 12px; right: 12px;
+      max-width: 460px; margin: 0 auto;
+      background: linear-gradient(175deg, rgba(20, 30, 54, 0.98), rgba(8, 12, 26, 0.99));
+      border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 28px;
+      padding: 18px 16px 20px; z-index: 1020;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.8), 0 0 45px rgba(245,158,11,0.22);
+      transform: translateY(115%); opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      pointer-events: none;
+    }
+    .hub-sheet.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+    .hub-handle-bar {
+      width: 40px; height: 4px; background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px; margin: -4px auto 14px;
+    }
+    .hub-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .hub-title-box { display: flex; align-items: center; gap: 10px; }
+    .hub-sparkle-sq {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 19px; color: var(--gold-lt);
+    }
+    .hub-title-main { font-size: 15px; font-weight: 900; color: #fff; }
+    .hub-title-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .hub-close-x {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8; font-size: 14px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+
+    .hub-cards-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .hub-card-item {
+      background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 18px; padding: 13px 12px; cursor: pointer; transition: all 0.2s;
+    }
+    .hub-card-item:active {
+      transform: scale(0.96); background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .hub-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .hub-card-icon-wrap {
+      width: 36px; height: 36px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .hub-card-icon-wrap.cyan   { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--cyan); }
+    .hub-card-icon-wrap.gold   { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--gold-lt); }
+    .hub-card-icon-wrap.purple { background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.3); color: var(--purple); }
+    .hub-card-icon-wrap.green  { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--green); }
+
+    .hub-card-badge {
+      font-size: 9px; font-weight: 900; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.5px;
+    }
+    .hub-card-badge.cyan   { background: rgba(56, 189, 248, 0.16); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.35); }
+    .hub-card-badge.gold   { background: rgba(245, 158, 11, 0.16); color: var(--gold-lt); border: 1px solid rgba(245, 158, 11, 0.35); }
+    .hub-card-badge.purple { background: rgba(168, 85, 247, 0.16); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35); }
+    .hub-card-badge.green  { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.35); }
+
+    .hub-card-name { font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+    .hub-card-desc { font-size: 10px; color: var(--muted); line-height: 1.35; }
+
+    /* ════ MODALS FOR ADVANCED SUBSYSTEMS ════ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
+      z-index: 2000; opacity: 0; pointer-events: none; transition: all 0.25s ease;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-sheet {
+      width: 100%; max-width: 480px; max-height: 85vh;
+      background: linear-gradient(175deg, #10182c, #070b16);
+      border: 1px solid var(--border-hl); border-radius: 28px 28px 0 0;
+      padding: 20px 18px 30px; overflow-y: auto;
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+    }
+    .modal-title { font-size: 16px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: 14px;
+    }
+
+    /* ════ TAB PANELS ════ */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: tabFadeIn 0.22s ease-out; }
+    @keyframes tabFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ════ TOAST NOTIFICATION ════ */
+    #toast {
+      position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(14, 23, 46, 0.96); border: 1px solid var(--border-hl);
+      color: #fff; padding: 11px 22px; border-radius: 50px;
+      font-size: 12.5px; font-weight: 800; opacity: 0;
+      transition: all 0.25s ease; pointer-events: none; z-index: 2500;
+      text-align: center; max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), var(--gold-glow);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ════ ROYAL INTRO SPLASH SCREEN ════ */
+    #splashScreen {
+      position: fixed; inset: 0; z-index: 99999;
+      background: radial-gradient(ellipse 90% 80% at 50% 35%, #0e172e 0%, #050811 75%, #020408 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      padding: 60px 24px 40px; overflow: hidden;
+      transition: opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1), transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #splashScreen.splash-dismiss { opacity: 0; transform: scale(1.08); pointer-events: none; }
+    .splash-backdrop-glow {
+      position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
+      width: 290px; height: 290px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.28) 0%, rgba(56, 189, 248, 0.08) 50%, transparent 70%);
+      pointer-events: none; animation: splashGlowPulse 3s ease-in-out infinite alternate;
+    }
+    @keyframes splashGlowPulse {
+      from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+      to   { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+    }
+    .splash-center { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: auto; margin-bottom: auto; z-index: 5; }
+    .splash-coin-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+    .splash-coin {
+      position: relative; width: 110px; height: 110px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fef08a 0%, #f59e0b 55%, #78350f 100%);
+      border: 3.5px solid #fef08a; box-shadow: 0 0 50px rgba(245, 158, 11, 0.65);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .splash-coin img { width: 94%; height: 94%; border-radius: 50%; object-fit: cover; }
+    .splash-crown { position: absolute; top: -14px; font-size: 28px; filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.85)); }
+    .splash-title {
+      font-family: 'Orbitron', monospace; font-size: 26px; font-weight: 900;
+      letter-spacing: 3px; background: var(--gold-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 7px;
+    }
+    .splash-subtitle { font-size: 11.5px; font-weight: 800; color: var(--cyan); letter-spacing: 1.2px; }
+    .splash-footer { width: 100%; max-width: 290px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 5; }
+    .splash-status-text { font-size: 12px; font-weight: 700; color: var(--gold-bright); text-align: center; }
+    .splash-progress-track { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 10px; overflow: hidden; }
+    .splash-progress-bar { height: 100%; width: 0%; background: var(--gold-grad); border-radius: 10px; transition: width 0.35s ease; }
+    .splash-version { font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; color: var(--muted); }
+
+    /* Withdrawal Status Timeline */
+    .wd-timeline { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; position: relative; }
+    .wd-step { display: flex; flex-direction: column; align-items: center; font-size: 9.5px; font-weight: 800; color: var(--muted); gap: 4px; z-index: 2; }
+    .wd-step.done { color: var(--gold-lt); }
+    .wd-step.active { color: var(--cyan); }
+    .wd-dot { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 9px; }
+    .wd-step.done .wd-dot { background: var(--gold-lt); color: #050811; }
+    .wd-step.active .wd-dot { background: var(--cyan); color: #050811; box-shadow: var(--cyan-glow); }
+
+    .w-100 { width: 100%; }
+  </style>
+</head>
+<body>
+
+<!-- ═════════════════════════ ROYAL INTRO SPLASH SCREEN ═════════════════════════ -->
+<div id="splashScreen">
+  <div class="splash-backdrop-glow"></div>
+  
+  <div class="splash-center">
+    <div class="splash-coin-wrap">
+      <div class="splash-coin">
+        <img src="https://iili.io/nsECVNn.jpg" alt="ROYAL ELITE X">
+      </div>
+      <div class="splash-crown">👑</div>
+    </div>
+
+    <div class="splash-title">ROYAL ELITE X</div>
+    <div class="splash-subtitle" id="splashSubText">Sovereign Mining Empire · TON Blockchain</div>
+  </div>
+
+  <div class="splash-footer">
+    <div class="splash-status-text" id="splashStatusText">⚡ Initializing Royal Mining Protocol...</div>
+    <div class="splash-progress-track">
+      <div class="splash-progress-bar" id="splashProgressBar"></div>
+    </div>
+    <div class="splash-version">v4.0 ENTERPRISE · TON MAINNET</div>
+  </div>
+</div>
+
+<!-- ═════════════════════════ SYSTEM MAINTENANCE SCREEN ═════════════════════════ -->
+<div id="maintenanceScreen" style="display:none; position:fixed; inset:0; z-index:99998; background:radial-gradient(ellipse 90% 80% at 50% 35%, #151d38 0%, #050811 75%, #020408 100%); flex-direction:column; align-items:center; justify-content:center; padding:30px 24px; text-align:center;">
+  <div style="font-size:72px; margin-bottom:16px; animation:spinClockwise 14s linear infinite; filter:drop-shadow(0 0 25px rgba(245,158,11,0.5));">⚙️</div>
+  <div style="display:inline-block; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.45); border-radius:20px; padding:5px 16px; font-size:11px; font-weight:800; color:#ef4444; margin-bottom:14px; letter-spacing:1px;">
+    🚨 SYSTEM UNDER MAINTENANCE
+  </div>
+  <h1 style="font-family:'Orbitron',sans-serif; font-size:24px; font-weight:900; background:var(--gold-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; letter-spacing:1.5px;">
+    ROYAL ELITE X
+  </h1>
+  <p style="color:var(--muted-lt); font-size:13px; line-height:1.7; max-width:330px; margin-bottom:24px;" id="maintDesc">
+    We are currently performing scheduled sovereign infrastructure upgrades. All assets, balances, and mining timers remain 100% secure.
+  </p>
+  <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:16px 20px; width:100%; max-width:320px; margin-bottom:22px; text-align:left; font-size:12px;">
+    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+      <span style="color:var(--muted);">Platform Status:</span>
+      <span style="color:var(--gold-lt); font-weight:800;">Upgrading Nodes...</span>
+    </div>
+    <div style="display:flex; justify-content:space-between;">
+      <span style="color:var(--muted);">Blockchain:</span>
+      <span style="color:var(--cyan); font-weight:800;">TON Mainnet Verified</span>
+    </div>
+  </div>
+  <button class="action-btn btn-gold" style="max-width:240px; padding:12px 24px;" onclick="location.reload()">
+    🔄 Refresh & Reconnect
+  </button>
+</div>
+
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="header">
+  <!-- ROW 1: USER PROFILE & UTILITIES -->
+  <div class="header-top-row">
+    <div class="user-info">
+      <div class="avatar-wrapper">
+        <div class="avatar" id="avatarLetter">R</div>
+        <div class="avatar-crown">👑</div>
+      </div>
+      <div class="user-meta">
+        <div class="user-name" id="userName">Royal Knight</div>
+        <div class="rank-pill" id="rankPill">⚡ Novice Knight</div>
+      </div>
+    </div>
+
+    <div class="header-utility-btns">
+      <button class="icon-btn" id="soundToggleBtn" onclick="toggleSound()" title="Audio Mute / Enable">🔊</button>
+      <button class="icon-btn lang-btn" id="langBtn" onclick="toggleLanguage()">🌐 عربي</button>
+    </div>
+  </div>
+
+  <!-- ROW 2: TON WALLET & NETWORK STATUS -->
+  <div class="header-wallet-row">
+    <div class="network-badge">
+      <span class="status-dot-blink"></span>
+      <span id="lblHeaderNet">TON Mainnet</span>
+    </div>
+    <div class="header-wallet-wrap">
+      <div id="tonConnectBtn"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ SCROLL VIEW ═══════════════════════════════ -->
+<div class="main-scroll" id="mainScroll">
+
+  <!-- ════ HERO VAULT CARD ════ -->
+  <div class="vault-card" id="vaultCard" style="display:none">
+    <div class="vault-top">
+      <div class="vault-badge" id="vaultBadgeText">👑 Available Royal Balance · REX</div>
+      <div class="vault-multiplier" id="vaultMultiplierPill">⚡ <span id="multLabel">Multiplier:</span> <span id="multVal">1.0</span>x</div>
+    </div>
+
+    <div class="vault-balance-wrap">
+      <img src="https://iili.io/nsECVNn.jpg" class="vault-coin-img" alt="REX">
+      <div class="vault-balance-num" id="heroBalance">0.00</div>
+      <div class="vault-balance-symbol">REX</div>
+    </div>
+
+    <div class="vault-rates-row">
+      <div class="rate-pill">
+        <span class="pulse-dot"></span>
+        <strong id="hourlyRateVal">4.17</strong>
+        <span id="hourlyRateUnit">REX / hour</span>
+      </div>
+      <div class="rate-pill">
+        <span class="pulse-dot"></span>
+        <strong id="dailyRateVal">100.0</strong>
+        <span id="dailyRateUnit">REX / day</span>
+      </div>
+    </div>
+
+    <!-- Sovereign Holding Tier Banner & Interactive Progress -->
+    <div class="vault-tier-bar" id="vaultTierBar" onclick="openModal('tiersModal')" title="10% Daily HODL Yield">
+      <div class="tier-badge-row">
+        <div class="tier-badge-pill" id="tierBadgePill">
+          <span id="tierBadgeIcon">💎</span>
+          <span id="tierBadgeName">10% Daily HODL Yield</span>
+          <span class="tier-mult-tag" id="tierBadgeMult">10%/day</span>
+        </div>
+        <div class="tier-tap-hint" id="tierTapHint">Yield Calculator ❯</div>
+      </div>
+      <div class="tier-progress-track">
+        <div class="tier-progress-fill" id="tierProgressFill" style="width: 0%;"></div>
+      </div>
+      <div class="tier-progress-sub" id="tierProgressSub">Hold REX in your TON wallet to earn 10% daily mining yield!</div>
+    </div>
+
+    <!-- Dual On-Chain Asset Bar -->
+    <div class="vault-onchain-bar">
+      <div class="onchain-item">
+        <span class="label" id="lblOnChainWallet">TON Wallet:</span>
+        <span class="val" id="onChainTon">— TON</span>
+      </div>
+      <div class="onchain-item">
+        <span class="label">REX On-Chain:</span>
+        <span class="val rex" id="onChainRex">— REX</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ GATEKEEPER CARD (LOCKDOWN SCREEN) ════ -->
+  <div id="gateScreen" style="display:none; padding: 28px 18px 24px; margin: 15px auto; max-width: 440px;">
+    <div class="gate-icon-large">🔐</div>
+    <h3 class="gate-h1" id="gateTitle">Sovereign Royal Gate Locked</h3>
+    <p class="gate-desc" id="gateDesc">
+      Welcome to <strong>ROYAL ELITE X</strong> 👑.<br>
+      To defend the ecosystem against sybil accounts, all platform modules are locked until completing two verification steps:
+    </p>
+
+    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="gate-step-badge">1</div>
+        <div class="gate-step-details" style="flex:1;">
+          <h5 id="gateStep1Title">Connect External TON Wallet</h5>
+          <p id="gateWalletDesc">Please connect your external TON wallet (Tonkeeper / MyTonWallet)</p>
+        </div>
+        <div class="gate-step-status" id="gateIcon1">⏳</div>
+      </div>
+      <div id="gateConnectBtnWrap">
+        <button class="action-btn btn-gold w-100" style="padding:10px; font-size:13px;" onclick="connectWalletModal()">
+          💼 <span id="gateConnectBtnText">Click to Connect Wallet</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="gate-step-card" style="display:flex; align-items:center; gap:12px;">
+      <div class="gate-step-badge">2</div>
+      <div class="gate-step-details" style="flex:1;">
+        <h5 id="gateStep2Title">Platform Access Fee — 0.1 TON</h5>
+        <p id="gateStep2Desc">One-time nominal fee to unlock and protect your account lifetime</p>
+      </div>
+      <div class="gate-step-status" id="gateIcon2">🔒</div>
+    </div>
+
+    <button class="action-btn btn-mining-active w-100" id="payBtn" style="margin-top:14px;" onclick="payActivationFee()" disabled>
+      🔒 <span id="payBtnText">Wallet connection required first</span>
+    </button>
+  </div>
+
+  <!-- ════ TAB: MINING ════ -->
+  <div id="tab-mine" class="tab-panel">
+    <div id="miningCore" style="display:none">
+
+      <div class="orbit-stage" onclick="tapCore()">
+        <div class="orbit-ring orbit-1"></div>
+        <div class="orbit-ring orbit-2"></div>
+        <div class="orbit-ring orbit-3"></div>
+        <div class="core-sphere">
+          <img src="https://iili.io/nsECVNn.jpg" alt="REX Coin">
+        </div>
+      </div>
+
+      <div class="chronometer-hub">
+        <div class="chrono-col-right">
+          <div class="chrono-label" id="lblAccrued">Current Cycle Rewards</div>
+          <div class="chrono-val" id="liveAccrual">0.0000</div>
+        </div>
+        <div class="chrono-col-left">
+          <div class="chrono-label" id="lblTimeLeft">Time Remaining</div>
+          <div class="chrono-timer" id="timeLeft">24:00:00</div>
+        </div>
+      </div>
+
+      <div class="prog-card">
+        <div class="prog-info">
+          <span id="lblProg">24h Cycle Complete</span>
+          <span id="progPct">0%</span>
+        </div>
+        <div class="prog-track">
+          <div class="prog-fill-gold" id="progFill"></div>
+        </div>
+      </div>
+
+      <button class="action-btn btn-gold" id="mineActionBtn" onclick="handleMineAction()">
+        ⚡ <span id="mineBtnText">Start Royal Mining Cycle (24h)</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ════ TAB: QUESTS ════ -->
+  <div id="tab-quests" class="tab-panel">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">📜</span>
+          <span id="questsTitle">Repeatable Royal Quests</span>
+        </div>
+        <span style="font-size:11px;color:var(--gold-lt);font-weight:800;">Recurring</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;" id="questsDesc">
+        Complete quests to earn instant REX rewards and accelerate your platform growth.
+      </p>
+      <div id="questsContainer">
+        <div style="text-align:center;padding:24px;color:var(--muted)">Loading royal quests...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ TAB: WITHDRAW ════ -->
+  <div id="tab-withdraw" class="tab-panel">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">📤</span>
+          <span id="wdTitle">REX Withdrawal Center</span>
+        </div>
+      </div>
+
+      <div class="metric-grid-dual">
+        <div class="metric-box">
+          <div class="metric-box-label" id="lblBotBal">Platform Balance</div>
+          <div class="metric-box-val gold" id="availBal">0.00</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-box-label" id="lblWalletBal">On-Chain Balance</div>
+          <div class="metric-box-val cyan" id="walletOnChainBal">0</div>
+        </div>
+      </div>
+
+      <div class="notice-box" style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.22); border-radius:14px; padding:12px; font-size:11.5px; line-height:1.6; color:var(--muted-lt); margin-bottom:10px;" id="wdNotice">
+        🔒 <strong>Royal Security Rule (20% On-Chain Hold):</strong><br>
+        To withdraw your earnings, you must hold in your TON wallet an on-chain balance of purchased REX tokens equivalent to at least <strong>20%</strong> of the requested withdrawal (Minimum: <strong>5,000 REX</strong>).
+      </div>
+
+      <!-- 3-Day 5,000 REX Holding Rule Banner -->
+      <div id="holdRuleBanner" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.28); border-radius:16px; padding:14px; font-size:12px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-weight:800; color:#fff;" id="lblHoldTitle">⏳ Holding Rule (3 Days - 5,000 REX):</span>
+          <span id="holdStatusBadge" class="badge badge-gold">Checking...</span>
+        </div>
+        
+        <!-- Live Countdown & Progress -->
+        <div id="holdTimerBox" style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px 12px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:5px;">
+            <span style="color:var(--muted);" id="lblHoldingTime">Holding Time:</span>
+            <strong style="color:var(--gold-lt); font-family:'Orbitron', monospace; font-size:13px;" id="holdTimerVal">00:00:00</strong>
+          </div>
+          <div style="width:100%; height:6px; background:rgba(255,255,255,0.08); border-radius:10px; overflow:hidden;">
+            <div id="holdProgressFill" style="width:0%; height:100%; background:var(--gold-grad); transition:width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <div style="font-size:11px; color:var(--muted-lt); line-height:1.6; margin-bottom:10px;" id="holdStatusDetail">
+          Must hold at least <strong>5,000 REX</strong> on-chain for 3 consecutive days (72 hours) before withdrawing.
+        </div>
+
+        <!-- Warning Reset on Sell -->
+        <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:8px 10px; font-size:10.5px; color:#fca5a5; line-height:1.5; margin-bottom:10px;" id="holdWarningMsg">
+          ⚠️ <strong>Strict Rule:</strong> If you sell and your wallet balance drops below 5,000 REX, the 3-day holding timer <strong>resets to 0 immediately</strong>!
+        </div>
+
+        <!-- Post-Withdrawal 24h Anti-Dump Ban Guard -->
+        <div style="background:rgba(239,68,68,0.14); border:1px solid rgba(239,68,68,0.35); border-radius:10px; padding:8px 10px; font-size:10.5px; color:#fca5a5; line-height:1.5; margin-bottom:10px;" id="antiDumpRuleMsg">
+          🛡️ <strong>Anti-Dump Policy (24h Ban Guard):</strong> Selling or transferring any REX tokens within <strong>24 hours</strong> of receiving a withdrawal triggers an <strong>immediate automatic permanent account ban</strong>!
+        </div>
+
+        <!-- Buy on STON.fi Button -->
+        <a href="https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn btn-gold w-100" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; font-size:12px; font-weight:800;" id="btnBuyStonfi">
+          🛒 <span>Buy 5,000 REX on STON.fi DEX</span>
+        </a>
+      </div>
+
+      <div style="position:relative; margin-bottom:10px;">
+        <input type="number" id="withdrawAmount" placeholder="5000" min="5000" step="100" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid var(--border-hl); border-radius:14px; padding:12px 60px 12px 14px; color:#fff; font-family:'Orbitron', monospace; font-size:16px; outline:none;">
+        <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--gold-lt); font-weight:900; font-size:12px;">REX</span>
+      </div>
+
+      <div style="display:flex; gap:6px; margin-bottom:14px;">
+        <button class="action-btn" style="flex:1; padding:7px; font-size:11.5px; background:rgba(255,255,255,0.06); color:#fff;" onclick="setWdAmount(5000)">5,000</button>
+        <button class="action-btn" style="flex:1; padding:7px; font-size:11.5px; background:rgba(255,255,255,0.06); color:#fff;" onclick="setWdAmount(10000)">10,000</button>
+        <button class="action-btn" style="flex:1; padding:7px; font-size:11.5px; background:rgba(255,255,255,0.06); color:#fff;" onclick="setWdAmount('max')">Max</button>
+      </div>
+
+      <div id="withdrawPreview" style="display:none; background:rgba(0,0,0,0.5); border:1px solid rgba(245,158,11,0.25); border-radius:14px; padding:12px; font-size:12px; line-height:1.6; margin-bottom:12px;"></div>
+
+      <div style="font-size:11px; color:var(--muted); text-align:center; margin-bottom:10px;" id="payoutNoticeMsg">
+        🛡️ Manual Admin Verification &bull; Payout arrives within <strong>24 hours</strong> of approval
+      </div>
+
+      <button class="action-btn btn-withdraw-purple w-100" onclick="submitWithdraw()" id="btnSubmitWd">
+        📤 Request Withdrawal (24h Delivery)
+      </button>
+    </div>
+
+    <!-- Live Verified Platform Payouts (Proof of Rewards Feed) -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">⚡</span>
+          <span id="payoutsTitle">Live Verified Platform Payouts</span>
+        </div>
+        <span class="badge badge-green" style="font-size:10px;">LIVE TON FEED</span>
+      </div>
+      <p style="font-size:11px; color:var(--muted); margin-bottom:12px;" id="payoutsDesc">
+        Latest approved community withdrawals processed on-chain:
+      </p>
+      <div id="publicPayoutsFeed">
+        <div style="text-align:center; padding:16px; color:var(--muted); font-size:11px;">Loading verified payouts...</div>
+      </div>
+    </div>
+
+    <!-- Multi-Stage Withdrawal History -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">📋</span>
+          <span id="histTitle">Your Personal Withdrawals History</span>
+        </div>
+      </div>
+      <div id="withdrawHistory">
+        <div style="text-align:center;padding:16px;color:var(--muted)">No personal withdrawals yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ TAB: FRIENDS ════ -->
+  <div id="tab-friends" class="tab-panel">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">👑</span>
+          <span id="friendsTitle">Knights Ambassador Program</span>
+        </div>
+        <span style="font-size:11.5px;color:var(--cyan);font-weight:800;">5% Lifetime</span>
+      </div>
+
+      <p style="font-size:12px;color:var(--muted-lt);line-height:1.7;margin-bottom:12px;" id="friendsDesc">
+        Invite friends: earn <strong style="color:var(--gold-lt);">50 REX</strong> instant + <strong style="color:var(--gold-lt);">5% royal commission</strong> on all friend claims for life!
+      </p>
+
+      <div class="metric-grid-dual">
+        <div class="metric-box">
+          <div class="metric-box-label" id="lblFriendsCount">Invited Knights</div>
+          <div class="metric-box-val gold" id="friendsCount">0</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-box-label" id="lblFriendsCommission">Commission Rate</div>
+          <div class="metric-box-val cyan">5%</div>
+        </div>
+      </div>
+
+      <div id="refLink" style="background:rgba(0,0,0,0.4); border:1px dashed var(--border-hl); border-radius:12px; padding:10px; font-family:'Orbitron', monospace; font-size:11px; color:var(--gold-bright); text-align:center; word-break:break-all; margin-bottom:12px;"></div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="action-btn btn-gold" style="flex:1;" onclick="copyRef()" id="btnCopyRef">📋 Copy Link</button>
+        <button class="action-btn btn-withdraw-purple" style="flex:1;" onclick="shareRef()" id="btnShareRef">✈️ Share</button>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">🏆</span>
+          <span id="lbTitle">Mining Emperors Leaderboard</span>
+        </div>
+      </div>
+      <div id="podiumWrap" style="display:flex; align-items:flex-end; justify-content:center; gap:10px; margin-bottom:16px;"></div>
+      <div id="leaderboardList"></div>
+    </div>
+  </div>
+
+</div><!-- /main-scroll -->
+
+<!-- ════ PLATFORM HUB BOTTOM SHEET ════ -->
+<div id="hubBackdrop" class="hub-backdrop" onclick="togglePlatformHub(false)"></div>
+
+<div id="platformHubSheet" class="hub-sheet">
+  <div class="hub-handle-bar"></div>
+
+  <div class="hub-header">
+    <div class="hub-title-box">
+      <div class="hub-sparkle-sq">✨</div>
+      <div>
+        <div class="hub-title-main" id="hubTitleMain">Ecosystem Services</div>
+        <div class="hub-title-sub" id="hubTitleSub">Blockchain & Platform Modules</div>
+      </div>
+    </div>
+    <div class="hub-close-x" onclick="togglePlatformHub(false)">✕</div>
+  </div>
+
+  <div class="hub-cards-grid">
+    <!-- Card 1: REX Intelligence -->
+    <div class="hub-card-item" onclick="openModal('intelligenceModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap cyan"><span>🧠</span></div>
+        <span class="hub-card-badge cyan">AI INTEL</span>
+      </div>
+      <div class="hub-card-name" id="hubIntelName">REX Intelligence</div>
+      <div class="hub-card-desc" id="hubIntelDesc">Performance analytics & ranking</div>
+    </div>
+
+    <!-- Card 2: Proof of Rewards -->
+    <div class="hub-card-item" onclick="openModal('proofModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>⛓️</span></div>
+        <span class="hub-card-badge gold">EXPLORER</span>
+      </div>
+      <div class="hub-card-name" id="hubProofName">Proof of Rewards</div>
+      <div class="hub-card-desc" id="hubProofDesc">TON Blockchain Live Explorer</div>
+    </div>
+
+    <!-- Card 3: Royal Achievements -->
+    <div class="hub-card-item" onclick="openModal('achievementsModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap purple"><span>🎖️</span></div>
+        <span class="hub-card-badge purple">BADGES</span>
+      </div>
+      <div class="hub-card-name" id="hubAchName">Achievements</div>
+      <div class="hub-card-desc" id="hubAchDesc">Badges & Honor XP</div>
+    </div>
+
+    <!-- Card 4: Royal Vault -->
+    <div class="hub-card-item" onclick="openModal('vaultModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>🏛️</span></div>
+        <span class="hub-card-badge gold">VAULT</span>
+      </div>
+      <div class="hub-card-name" id="hubVaultName">Royal Vault</div>
+      <div class="hub-card-desc" id="hubVaultDesc">Self-Locking & boosts</div>
+    </div>
+
+    <!-- Card 5: Royal Guilds -->
+    <div class="hub-card-item" onclick="openModal('guildsModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap cyan"><span>🛡️</span></div>
+        <span class="hub-card-badge cyan">GUILDS</span>
+      </div>
+      <div class="hub-card-name" id="hubGuildName">Royal Guilds</div>
+      <div class="hub-card-desc" id="hubGuildDesc">Alliances & weekly battles</div>
+    </div>
+
+    <!-- Card 6: REX Academy -->
+    <div class="hub-card-item" onclick="openModal('academyModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap green"><span>🎓</span></div>
+        <span class="hub-card-badge green">LEARN</span>
+      </div>
+      <div class="hub-card-name" id="hubAcadName">REX Academy</div>
+      <div class="hub-card-desc" id="hubAcadDesc">Web3 lessons & rewarded quizzes</div>
+    </div>
+
+    <!-- Card 7: REX Portfolio -->
+    <div class="hub-card-item" onclick="openModal('portfolioModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>💼</span></div>
+        <span class="hub-card-badge gold">LEDGER</span>
+      </div>
+      <div class="hub-card-name" id="hubPortName">Portfolio & Ledger</div>
+      <div class="hub-card-desc" id="hubPortDesc">Double-entry audit for balances</div>
+    </div>
+
+    <!-- Card 8: Official Whitepaper 2026 -->
+    <div class="hub-card-item" onclick="openModal('whitepaperModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>📜</span></div>
+        <span class="hub-card-badge gold">WHITEPAPER</span>
+      </div>
+      <div class="hub-card-name" id="hubWpName">Official Whitepaper</div>
+      <div class="hub-card-desc" id="hubWpDesc">Tokenomics, rules & ecosystem</div>
+    </div>
+
+    <!-- Card 9: Sovereign Holding Tiers -->
+    <div class="hub-card-item" onclick="openModal('tiersModal')">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>👑</span></div>
+        <span class="hub-card-badge cyan">UP TO 25X</span>
+      </div>
+      <div class="hub-card-name" id="hubTiersName">HODL Mining Tiers</div>
+      <div class="hub-card-desc" id="hubTiersDesc">Boost mining rate up to 25X</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: REX INTELLIGENCE ════ -->
+<div id="intelligenceModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'intelligenceModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>🧠</span> <span id="mIntelTitle">REX Intelligence</span></div>
+      <div class="modal-close" onclick="closeModal('intelligenceModal')">✕</div>
+    </div>
+    <div id="intelBody" style="font-size:12.5px; line-height:1.7;">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Retrieving analytics data...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: PROOF OF REWARDS ════ -->
+<div id="proofModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'proofModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>⛓️</span> <span id="mProofTitle">Proof of Rewards & TON Explorer</span></div>
+      <div class="modal-close" onclick="closeModal('proofModal')">✕</div>
+    </div>
+    <div id="proofBody" style="font-size:12px;">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Auditing blockchain state...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: ACHIEVEMENTS ════ -->
+<div id="achievementsModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'achievementsModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>🎖️</span> <span id="mAchTitle">Royal Badges & Achievements</span></div>
+      <div class="modal-close" onclick="closeModal('achievementsModal')">✕</div>
+    </div>
+    <div id="achievementsList">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Loading achievements...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: ROYAL VAULT ════ -->
+<div id="vaultModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'vaultModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>🏛️</span> <span id="mVaultTitle">Royal Vault (Self-Locking)</span></div>
+      <div class="modal-close" onclick="closeModal('vaultModal')">✕</div>
+    </div>
+    <div id="vaultBody">
+      <p style="font-size:12px; color:var(--muted-lt); line-height:1.6; margin-bottom:14px;" id="vaultModalDesc">
+        Voluntary lockup to boost your mining multiplier and prove holding without losing ownership.
+      </p>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="action-btn" id="v30Btn" style="flex:1; padding:10px; font-size:12px; background:rgba(255,255,255,0.06); color:#fff;" onclick="selectVaultDuration(30)">30 Days (+1.3x)</button>
+        <button class="action-btn" id="v60Btn" style="flex:1; padding:10px; font-size:12px; background:rgba(255,255,255,0.06); color:#fff;" onclick="selectVaultDuration(60)">60 Days (+1.8x)</button>
+        <button class="action-btn" id="v90Btn" style="flex:1; padding:10px; font-size:12px; background:rgba(255,255,255,0.06); color:#fff;" onclick="selectVaultDuration(90)">90 Days (+2.5x)</button>
+      </div>
+      <input type="number" id="vaultAmount" placeholder="Min. 100 REX" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid var(--border-hl); border-radius:14px; padding:12px; color:#fff; font-family:'Orbitron', monospace; font-size:15px; margin-bottom:12px; outline:none;">
+      <button class="action-btn btn-gold w-100" onclick="submitVaultLock()" id="btnSubmitVaultLock">🔒 Confirm Vault Lock</button>
+      <div id="userVaultsList" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: ROYAL GUILDS ════ -->
+<div id="guildsModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'guildsModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>🛡️</span> <span id="mGuildTitle">Royal Guilds & Alliances</span></div>
+      <div class="modal-close" onclick="closeModal('guildsModal')">✕</div>
+    </div>
+    <div id="guildsBody">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Loading guilds...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: REX ACADEMY ════ -->
+<div id="academyModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'academyModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>🎓</span> <span id="mAcadTitle">REX Blockchain Academy</span></div>
+      <div class="modal-close" onclick="closeModal('academyModal')">✕</div>
+    </div>
+    <div id="academyBody">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Loading lessons...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: REX PORTFOLIO & FINANCIAL LEDGER ════ -->
+<div id="portfolioModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'portfolioModal')">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title"><span>💼</span> <span id="mPortTitle">Portfolio & Financial Ledger</span></div>
+      <div class="modal-close" onclick="closeModal('portfolioModal')">✕</div>
+    </div>
+    <div id="portfolioBody">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Loading financial ledger...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: OFFICIAL WHITEPAPER 2026 ════ -->
+<div id="whitepaperModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'whitepaperModal')">
+  <div class="modal-sheet" style="max-height:88vh; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <div class="modal-title"><span>📜</span> <span id="mWpTitle">Official Sovereign Whitepaper 2026</span></div>
+      <div class="modal-close" onclick="closeModal('whitepaperModal')">✕</div>
+    </div>
+    
+    <!-- Top Action Shortcuts -->
+    <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
+      <a href="https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr" target="_blank" class="action-btn btn-gold" style="flex:1; min-width:105px; padding:6px 10px; font-size:11px; text-decoration:none; text-align:center;">📊 DexScreener</a>
+      <a href="https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn btn-mining-active" style="flex:1; min-width:105px; padding:6px 10px; font-size:11px; text-decoration:none; text-align:center;">🦄 STON.fi Pair</a>
+      <a href="https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn" style="flex:1; min-width:105px; padding:6px 10px; font-size:11px; text-decoration:none; text-align:center; background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.3); color:var(--cyan);">🔍 Tonviewer</a>
+    </div>
+
+    <div id="whitepaperBody" style="overflow-y:auto; padding-right:4px; font-size:12px; line-height:1.7; flex:1;">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Loading sovereign whitepaper...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: SOVEREIGN HOLDING TIERS (مستويات الحيازة ومضاعف التعدين) ════ -->
+<div id="tiersModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'tiersModal')">
+  <div class="modal-sheet" style="max-height:88vh; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <div class="modal-title"><span>👑</span> <span id="mTiersTitle">Sovereign Holding Tiers & Mining Boost</span></div>
+      <div class="modal-close" onclick="closeModal('tiersModal')">✕</div>
+    </div>
+
+    <!-- Quick Swap Banner -->
+    <div style="margin-bottom:12px;">
+      <a href="https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn btn-gold" style="width:100%; padding:10px 14px; font-size:12px; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>💎</span> <span id="lblBuyRexSton">Buy REX on STON.fi to Boost Mining Rate</span> <span>❯</span>
+      </a>
+    </div>
+
+    <div id="tiersBody" style="overflow-y:auto; padding-right:2px; flex:1;">
+      <div style="text-align:center; padding:30px; color:var(--muted)">Loading sovereign holding tiers...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ BOTTOM NAV BAR (5 ITEMS) ════ -->
+<nav class="bottom-nav" id="bottomNav" style="display:none">
+  <div class="nav-btn active" id="btn-tab-mine" onclick="switchTab('tab-mine', this)">
+    <span class="nav-icon">⛏️</span><span id="navMineText">Mining</span>
+  </div>
+  <div class="nav-btn" id="btn-tab-quests" onclick="switchTab('tab-quests', this)">
+    <span class="nav-icon">📜</span><span id="navQuestsText">Quests</span>
+  </div>
+
+  <!-- CENTER GLOW MENU BUTTON -->
+  <div class="nav-center-item" id="navCenterMenuBtn" onclick="togglePlatformHub()">
+    <div class="center-menu-sphere" id="centerMenuSphere">☰</div>
+    <span class="center-menu-label" id="centerMenuLabel">Menu</span>
+  </div>
+
+  <div class="nav-btn" id="btn-tab-friends" onclick="switchTab('tab-friends', this); loadLeaderboard()">
+    <span class="nav-icon">👥</span><span id="navFriendsText">Friends</span>
+    <span class="nav-badge-dot"></span>
+  </div>
+  <div class="nav-btn" id="btn-tab-withdraw" onclick="switchTab('tab-withdraw', this); loadWithdrawTab()">
+    <span class="nav-icon">📤</span><span id="navWithdrawText">Withdraw</span>
+  </div>
+</nav>
+
+<div id="toast"></div>
+
+<!-- ════ APPLICATION JAVASCRIPT ════ -->
+<script>
+  // ── Telegram WebApp Setup ──
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.expand();
+    tg.ready();
+    tg.setHeaderColor?.('#050811');
+    tg.setBackgroundColor?.('#050811');
+  }
+
+  const ADMIN_WALLET = 'UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz';
+  const user = tg?.initDataUnsafe?.user || { id: 7082457308, first_name: 'Yehia Wael', username: 'GRAMDROUV' };
+
+  document.getElementById('userName').textContent = (user.first_name || 'Royal Knight') + ' 👑';
+  document.getElementById('avatarLetter').textContent = (user.first_name || 'R').charAt(0).toUpperCase();
+  document.getElementById('refLink').textContent = `https://t.me/Royalelitexbot?start=ref_${user.id}`;
+
+  // Global State
+  let userData = null;
+  let deviceFP = null;
+  let liveTimer = null;
+  let soundEnabled = true;
+  let audioCtx = null;
+  let currentLang = localStorage.getItem('rex_lang_v3') || 'en';
+  let selectedVaultDays = 30;
+
+  // ── Royal Intro Splash Controller ──
+  function initSplashScreen() {
+    const splash = document.getElementById('splashScreen');
+    const bar = document.getElementById('splashProgressBar');
+    const status = document.getElementById('splashStatusText');
+    if (!splash) return;
+
+    const stages = [
+      { time: 100,  pct: 25,  text: currentLang === 'ar' ? '⚡ تهيئة بروتوكول التعدين الملكي...' : '⚡ Initializing Royal Mining Protocol...' },
+      { time: 600,  pct: 60,  text: currentLang === 'ar' ? '🔗 الاتصال بشبكة TON Blockchain...' : '🔗 Connecting to TON Blockchain...' },
+      { time: 1100, pct: 88,  text: currentLang === 'ar' ? '🔐 التحقق من أمان البلاط الملكي...' : '🔐 Verifying Sovereign Security...' },
+      { time: 1600, pct: 100, text: currentLang === 'ar' ? '👑 مرحباً بك في ROYAL ELITE X' : '👑 Welcome to ROYAL ELITE X' }
+    ];
+
+    stages.forEach(s => {
+      setTimeout(() => {
+        if (bar) bar.style.width = s.pct + '%';
+        if (status) status.textContent = s.text;
+      }, s.time);
+    });
+
+    setTimeout(() => {
+      try { playChime(); } catch(e) {}
+      confetti({
+        particleCount: 30,
+        spread: 60,
+        origin: { x: 0.5, y: 0.42 },
+        colors: ['#fef08a', '#fbbf24', '#f59e0b', '#38bdf8']
+      });
+
+      splash.classList.add('splash-dismiss');
+      setTimeout(() => { splash.style.display = 'none'; }, 700);
+    }, 2000);
+  }
+  initSplashScreen();
+
+  // ── Audio Feedback System ──
+  function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggleBtn');
+    if (btn) btn.textContent = soundEnabled ? '🔊' : '🔇';
+    toast(soundEnabled ? (currentLang === 'ar' ? '🔊 تم تفعيل الصوت' : '🔊 Sound Enabled') : (currentLang === 'ar' ? '🔇 تم كتم الصوت' : '🔇 Sound Muted'));
+  }
+
+  function playChime() {
+    if (!soundEnabled) return;
+    try {
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.12);
+    } catch(e) {}
+  }
+
+  function playWin() {
+    if (!soundEnabled) return;
+    try {
+      initAudio();
+      const now = audioCtx.currentTime;
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + i * 0.07);
+        gain.gain.setValueAtTime(0.16, now + i * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.07);
+        osc.stop(now + i * 0.07 + 0.22);
+      });
+    } catch(e) {}
+  }
+
+  // ── FingerprintJS ──
+  FingerprintJS.load().then(fp => fp.get()).then(r => {
+    deviceFP = r.visitorId;
+    fetchUserData();
+  });
+
+  // ── TON Connect UI ──
+  const tonUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+    buttonRootId: 'tonConnectBtn'
+  });
+
+  tonUI.onStatusChange(async (wallet) => {
+    if (wallet) await linkWallet(wallet.account.address);
+    else fetchUserData();
+  });
+
+  async function linkWallet(rawAddr) {
+    const r = await api('/api/user/connect-wallet', { telegram_id: user.id, raw_address: rawAddr });
+    if (!r.success) {
+      toast('⛔ ' + r.message);
+      tonUI.disconnect();
+    } else {
+      userData = { ...userData, is_wallet_connected: true, wallet_address: r.friendlyAddr, mining_multiplier: r.multiplier };
+      updateOnChainDisplay(r.onChainBalance || 0, null);
+      fetchUserData();
+    }
+  }
+
+  // ── Secure API Caller with Telegram initData ──
+  async function api(path, body = {}) {
+    body.lang = currentLang;
+    const headers = { 'Content-Type': 'application/json', 'Accept-Language': currentLang };
+    if (window.Telegram?.WebApp?.initData) {
+      headers['x-telegram-init-data'] = window.Telegram.WebApp.initData;
+    }
+    const res = await fetch(path, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  // ── Sync User Data ──
+  async function fetchUserData() {
+    try {
+      const d = await api('/api/user/sync', {
+        telegram_id: user.id,
+        first_name: user.first_name,
+        username: user.username,
+        fingerprint: deviceFP
+      });
+      userData = d;
+
+      if (d.maintenance) {
+        const ms = document.getElementById('maintenanceScreen');
+        if (ms) ms.style.display = 'flex';
+        const msScroll = document.getElementById('mainScroll');
+        if (msScroll) msScroll.style.display = 'none';
+        const bNav = document.getElementById('bottomNav');
+        if (bNav) bNav.style.display = 'none';
+        const vc = document.getElementById('vaultCard');
+        if (vc) vc.style.display = 'none';
+        const gs = document.getElementById('gateScreen');
+        if (gs) gs.style.display = 'none';
+        return;
+      } else {
+        const ms = document.getElementById('maintenanceScreen');
+        if (ms) ms.style.display = 'none';
+        const msScroll = document.getElementById('mainScroll');
+        if (msScroll) msScroll.style.display = 'block';
+      }
+
+      if (d.is_banned) {
+        document.body.innerHTML = `
+          <div style="padding:80px 24px;text-align:center;">
+            <div style="font-size:64px;margin-bottom:16px;">⛔</div>
+            <h2 style="color:#ef4444;font-size:22px;margin-bottom:8px;">${currentLang === 'ar' ? 'الحساب الملكي محظور' : 'Account Suspended'}</h2>
+            <p style="color:#94a3b8;font-size:14px;line-height:1.6;">${d.ban_reason || 'Anti-Sybil violation'}</p>
+          </div>`;
+        return;
+      }
+      renderAll(d);
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  // ── Render All Elements ──
+  function renderAll(d) {
+    // Vault Card
+    document.getElementById('heroBalance').textContent = Number(d.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('dailyRateVal').textContent = Number(d.daily_rate).toFixed(1);
+    document.getElementById('hourlyRateVal').textContent = Number(d.hourly_rate).toFixed(2);
+    document.getElementById('multVal').textContent = d.mining_multiplier;
+
+    // Rank
+    const rankTitle = currentLang === 'ar' ? (d.rank_info?.title_ar || 'فارس مبتدئ') : (d.rank_info?.title_en || 'Novice Knight');
+    document.getElementById('rankPill').textContent = `⚡ ${rankTitle} (Lv.${d.rank_info?.rank || 1})`;
+
+    // Friends
+    document.getElementById('friendsCount').textContent = d.referrals_count || 0;
+
+    // Withdraw Balances
+    document.getElementById('availBal').textContent = Number(d.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('walletOnChainBal').textContent = Number(d.on_chain_rex || 0).toLocaleString();
+
+    // On-Chain Displays & Holding Tiers
+    updateOnChainDisplay(d.on_chain_rex, null);
+    if (d.holding_tier) {
+      cachedHoldingTier = d.holding_tier;
+      if (d.all_holding_tiers) cachedAllHoldingTiers = d.all_holding_tiers;
+      updateHoldingTierUI(d.holding_tier);
+    }
+
+    // Quests & Withdrawals
+    renderQuests(d.tasks);
+    renderWithdrawHistory(d.withdrawal_history);
+
+    // Total Gatekeeper Lockdown
+    const isGated = !d.is_wallet_connected || !d.is_activated;
+    const bottomNav = document.getElementById('bottomNav');
+    const vaultCard = document.getElementById('vaultCard');
+    const gateScreen = document.getElementById('gateScreen');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    if (isGated) {
+      if (typeof togglePlatformHub === 'function') togglePlatformHub(false);
+      if (bottomNav) bottomNav.style.display = 'none';
+      if (vaultCard) vaultCard.style.display = 'none';
+      tabPanels.forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+      if (gateScreen) gateScreen.style.display = 'block';
+
+      const step1Desc = document.getElementById('gateWalletDesc');
+      const step1Icon = document.getElementById('gateIcon1');
+      const step1BtnWrap = document.getElementById('gateConnectBtnWrap');
+      const step2Icon = document.getElementById('gateIcon2');
+      const payBtn = document.getElementById('payBtn');
+
+      if (d.is_wallet_connected) {
+        step1Desc.textContent = `✅ ${d.wallet_address?.slice(0,8)}...${d.wallet_address?.slice(-6)}`;
+        step1Icon.textContent = '✅';
+        if (step1BtnWrap) step1BtnWrap.style.display = 'none';
+      } else {
+        step1Desc.textContent = currentLang === 'ar' ? 'يرجى ربط محفظة TON للمتابعة' : 'Connect TON wallet to continue';
+        step1Icon.textContent = '⏳';
+        if (step1BtnWrap) step1BtnWrap.style.display = 'block';
+      }
+
+      if (d.is_activated) {
+        step2Icon.textContent = '✅';
+        payBtn.style.display = 'none';
+      } else {
+        step2Icon.textContent = d.is_wallet_connected ? '⏳' : '🔒';
+        payBtn.style.display = 'flex';
+        if (!d.is_wallet_connected) {
+          payBtn.className = 'action-btn btn-mining-active w-100';
+          document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'يلزم ربط المحفظة أولاً للدفع' : 'Wallet connection required';
+          payBtn.disabled = true;
+        } else {
+          payBtn.className = 'action-btn btn-gold w-100';
+          document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'دفع 0.1 TON وفتح المنصة فوراً' : 'Pay 0.1 TON & Unlock Platform';
+          payBtn.disabled = false;
+        }
+      }
+    } else {
+      const msScroll = document.getElementById('mainScroll');
+      if (msScroll) msScroll.style.display = 'block';
+      if (bottomNav) bottomNav.style.display = 'flex';
+      if (vaultCard) vaultCard.style.display = 'block';
+      if (gateScreen) gateScreen.style.display = 'none';
+
+      const curActive = document.querySelector('.tab-panel.active') || document.getElementById('tab-mine');
+      if (curActive) {
+        curActive.classList.add('active');
+        curActive.style.display = 'block';
+      }
+      document.getElementById('miningCore').style.display = 'flex';
+      updateMiningUI(d);
+    }
+  }
+
+  function updateOnChainDisplay(rexBal, tonBal) {
+    if (rexBal !== null && rexBal !== undefined) {
+      document.getElementById('onChainRex').textContent = Number(rexBal).toLocaleString() + ' REX';
+    }
+    if (tonBal !== null && tonBal !== undefined) {
+      document.getElementById('onChainTon').textContent = Number(tonBal).toFixed(3) + ' TON';
+    }
+  }
+
+  // ── Mining State Engine ──
+  function updateMiningUI(d) {
+    clearInterval(liveTimer);
+    const DURATION = 24 * 60 * 60 * 1000;
+    const btn = document.getElementById('mineActionBtn');
+
+    if (!d.is_mining || !d.last_mining_start) {
+      document.getElementById('liveAccrual').textContent = '0.0000';
+      document.getElementById('timeLeft').textContent = '24:00:00';
+      document.getElementById('progFill').style.width = '0%';
+      document.getElementById('progPct').textContent = '0%';
+      btn.className = 'action-btn btn-gold';
+      btn.innerHTML = `⚡ <span>${currentLang === 'ar' ? 'ابدأ دورة التعدين الملكي (24 ساعة)' : 'Start 24h Royal Mining'}</span>`;
+      btn.disabled = false;
+      return;
+    }
+
+    const startMs = d.last_mining_start;
+    const dailyRate = d.daily_rate;
+
+    function tick() {
+      const now = Date.now();
+      const elapsed = now - startMs;
+      const pct = Math.min(elapsed / DURATION, 1.0);
+      const accrued = pct * dailyRate;
+      const remaining = Math.max(0, DURATION - elapsed);
+
+      document.getElementById('liveAccrual').textContent = accrued.toFixed(4);
+      document.getElementById('progFill').style.width = (pct * 100) + '%';
+      document.getElementById('progPct').textContent = (pct * 100).toFixed(1) + '%';
+
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      document.getElementById('timeLeft').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+      if (elapsed >= DURATION) {
+        clearInterval(liveTimer);
+        btn.className = 'action-btn btn-claim-reward';
+        btn.innerHTML = `🎁 <span>${currentLang === 'ar' ? `جمع الأرباح الملكية (+${dailyRate.toFixed(2)} REX)` : `Claim Rewards (+${dailyRate.toFixed(2)} REX)`}</span>`;
+        btn.disabled = false;
+        userData.can_claim = true;
+      } else {
+        btn.className = 'action-btn btn-mining-active';
+        btn.innerHTML = `⏳ <span>${currentLang === 'ar' ? `جاري التعدين — ${pad(h)}:${pad(m)}:${pad(s)}` : `Mining Active — ${pad(h)}:${pad(m)}:${pad(s)}`}</span>`;
+        btn.disabled = true;
+        userData.can_claim = false;
+      }
+    }
+    tick();
+    liveTimer = setInterval(tick, 1000);
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  async function handleMineAction() {
+    if (!userData) return;
+    haptic('medium');
+
+    if (!userData.is_mining) {
+      const r = await api('/api/user/start-mining', { telegram_id: user.id });
+      if (r.success) {
+        playChime();
+        toast(currentLang === 'ar' ? '⚡ انطلقت دورة التعدين الملكية بنجاح!' : '⚡ 24h Mining Cycle Started!');
+        fetchUserData();
+      } else {
+        toast('⚠️ ' + r.message);
+      }
+    } else if (userData.can_claim) {
+      confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 } });
+      haptic('success');
+      playWin();
+
+      const r = await api('/api/user/claim-mining', { telegram_id: user.id, idempotency_key: `CLAIM_${user.id}_${Date.now()}` });
+      if (r.success) {
+        toast(currentLang === 'ar' ? `🎉 تم جمع ${Number(r.claimed_amount).toFixed(2)} REX بنجاح!` : `🎉 Successfully claimed ${Number(r.claimed_amount).toFixed(2)} REX!`);
+        fetchUserData();
+      } else {
+        toast('⚠️ ' + r.message);
+      }
+    }
+  }
+
+  function tapCore() {
+    haptic('light');
+    playChime();
+    const rect = document.querySelector('.core-sphere')?.getBoundingClientRect();
+    if (rect) {
+      confetti({
+        particleCount: 14, spread: 45, startVelocity: 22,
+        origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
+        colors: ['#fef08a', '#fbbf24', '#f59e0b']
+      });
+    }
+  }
+
+  async function payActivationFee() {
+    if (!tonUI.connected) {
+      toast(currentLang === 'ar' ? '💼 اربط محفظتك أولاً' : 'Connect wallet first');
+      tonUI.openModal();
+      return;
+    }
+    haptic('warning');
+    const tx = {
+      validUntil: Math.floor(Date.now() / 1000) + 600,
+      messages: [{ address: ADMIN_WALLET, amount: '100000000' }]
+    };
+    try {
+      const res = await tonUI.sendTransaction(tx);
+      if (res) {
+        const r = await api('/api/user/confirm-activation', { telegram_id: user.id });
+        if (r.success) {
+          confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+          playWin();
+          toast(currentLang === 'ar' ? '👑 مرحباً بك في البلاط الملكي! تم تفعيل الحساب.' : '👑 Welcome! Account activated.');
+          fetchUserData();
+        }
+      }
+    } catch {
+      toast(currentLang === 'ar' ? '❌ تم إلغاء المعاملة.' : '❌ Transaction cancelled.');
+    }
+  }
+
+  // ── Render Quests ──
+  function renderQuests(tasks) {
+    const container = document.getElementById('questsContainer');
+    if (!container) return;
+    if (!tasks || !tasks.length) {
+      container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);">${currentLang === 'ar' ? '⏳ جاري تجهيز المهام الملكية...' : '⏳ Preparing royal quests...'}</div>`;
+      return;
+    }
+    container.innerHTML = tasks.map(t => {
+      const btnHtml = t.is_ready
+        ? `<button class="action-btn btn-gold" style="padding:7px 16px; font-size:12px; width:auto;" onclick="claimQuest('${t.id}')">✨ ${currentLang === 'ar' ? 'استلام' : 'Claim'}</button>`
+        : (() => {
+            const rem = t.cooldown_remaining || 0;
+            const h = Math.floor(rem / 3600000), m = Math.ceil((rem % 3600000) / 60000);
+            return `<button class="action-btn" style="padding:7px 16px; font-size:12px; width:auto; background:rgba(255,255,255,0.06); color:var(--muted); border:1px solid rgba(255,255,255,0.1);" disabled>⏳ ${h > 0 ? h + 'h ' : ''}${m}m</button>`;
+          })();
+
+      const qTitle = (currentLang === 'en' ? (t.name_en || t.name) : (t.name_ar || t.name));
+      return `
+        <div style="background:rgba(14,22,42,0.65); border:1px solid rgba(245,158,11,0.18); border-radius:16px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px; height:42px; border-radius:14px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); display:flex; align-items:center; justify-content:center; font-size:20px;">${t.icon}</div>
+            <div>
+              <div style="font-size:13.5px; font-weight:800; color:#fff;">${qTitle}</div>
+              <div style="font-size:11px; font-weight:800; color:var(--gold-lt);">🎁 +${t.reward} REX</div>
+            </div>
+          </div>
+          ${btnHtml}
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function claimQuest(taskId) {
+    haptic('success');
+    const r = await api('/api/user/claim-task', { telegram_id: user.id, task_id: taskId });
+    if (r.success) {
+      confetti({ particleCount: 75, spread: 60, origin: { y: 0.65 } });
+      playWin();
+      const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
+      toast(msg);
+      fetchUserData();
+    } else {
+      const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
+      toast('⚠️ ' + msg);
+    }
+  }
+
+  // ── Withdraw Tab ──
+  let holdCountdownInterval = null;
+
+  function loadWithdrawTab() {
+    if (userData) {
+      document.getElementById('availBal').textContent = Number(userData.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('walletOnChainBal').textContent = Number(userData.on_chain_rex || 0).toLocaleString();
+
+      updateHoldTimerDisplay();
+      loadPublicPayoutsFeed();
+    }
+    const input = document.getElementById('withdrawAmount');
+    input.removeEventListener('input', previewWithdraw);
+    input.addEventListener('input', previewWithdraw);
+  }
+
+  function updateHoldTimerDisplay() {
+    clearInterval(holdCountdownInterval);
+    const badge = document.getElementById('holdStatusBadge');
+    const detail = document.getElementById('holdStatusDetail');
+    const timerVal = document.getElementById('holdTimerVal');
+    const fill = document.getElementById('holdProgressFill');
+
+    const onChain = userData?.on_chain_rex || 0;
+    const minRex = userData?.min_hold_rex || 5000;
+    const minDays = userData?.min_hold_days || 3;
+    const minDurationMs = minDays * 24 * 3600 * 1000;
+    const isPassed = userData?.is_hold_passed;
+    const holdStart = userData?.onchain_hold_start || 0;
+
+    if (isPassed) {
+      if (badge) {
+        badge.className = 'badge badge-green';
+        badge.textContent = currentLang === 'ar' ? '✅ مستوفى (3+ أيام)' : '✅ Verified (3+ Days)';
+      }
+      if (timerVal) timerVal.textContent = '72:00:00 (100%)';
+      if (fill) fill.style.width = '100%';
+      if (detail) {
+        detail.innerHTML = currentLang === 'ar'
+          ? `🎉 رائع! محفظتك محتفظة بأكثر من ${minRex.toLocaleString()} REX لأكثر من ${minDays} أيام متتالية. شرط الاحتفاظ مكتمل ويمكنك السحب الآن.`
+          : `Verified! Wallet has held 5,000+ REX for over ${minDays} days. Holding unlocked.`;
+      }
+      return;
+    }
+
+    if (onChain < minRex) {
+      const diff = minRex - onChain;
+      if (badge) {
+        badge.className = 'badge badge-red';
+        badge.textContent = currentLang === 'ar' ? '❌ العداد متوقف' : '❌ Needs Deposit';
+      }
+      if (timerVal) timerVal.textContent = '00:00:00 (0%)';
+      if (fill) fill.style.width = '0%';
+      if (detail) {
+        detail.innerHTML = currentLang === 'ar'
+          ? `ينقصك <strong>${diff.toLocaleString()} REX</strong> في محفظتك لبدء احتساب الـ 3 أيام. اشترِ 5,000 REX من STON.fi لبدء العداد فوراً.`
+          : `Shortfall of <strong>${diff.toLocaleString()} REX</strong> to start the 3-day holding timer. Buy on STON.fi to start.`;
+      }
+      return;
+    }
+
+    // On-Chain >= 5,000 REX and holding in progress
+    function tickHold() {
+      const now = Date.now();
+      const elapsed = Math.max(0, now - holdStart);
+      const remMs = Math.max(0, minDurationMs - elapsed);
+
+      if (remMs <= 0) {
+        clearInterval(holdCountdownInterval);
+        if (badge) {
+          badge.className = 'badge badge-green';
+          badge.textContent = currentLang === 'ar' ? '✅ مستوفى (3+ أيام)' : '✅ Verified (3+ Days)';
+        }
+        if (timerVal) timerVal.textContent = '72:00:00 (100%)';
+        if (fill) fill.style.width = '100%';
+        if (detail) {
+          detail.innerHTML = currentLang === 'ar'
+            ? `🎉 اكتملت فترة الاحتفاظ (3 أيام)! يمكنك الآن تقديم طلب السحب.`
+            : `3-Day holding condition fulfilled! You may now request withdrawal.`;
+        }
+        return;
+      }
+
+      const remDays = Math.floor(remMs / (24 * 3600 * 1000));
+      const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
+      const remMins = Math.floor((remMs % 3600000) / 60000);
+      const remSecs = Math.floor((remMs % 60000) / 1000);
+
+      const pct = Math.min(100, Math.max(0, (elapsed / minDurationMs) * 100));
+
+      if (badge) {
+        badge.className = 'badge badge-gold';
+        badge.textContent = `⏳ ${remDays > 0 ? remDays + 'd ' : ''}${pad(remHours)}:${pad(remMins)}:${pad(remSecs)}`;
+      }
+      if (timerVal) {
+        timerVal.textContent = `${remDays > 0 ? remDays + 'd ' : ''}${pad(remHours)}:${pad(remMins)}:${pad(remSecs)} (${pct.toFixed(1)}%)`;
+      }
+      if (fill) fill.style.width = pct + '%';
+
+      if (detail) {
+        detail.innerHTML = currentLang === 'ar'
+          ? `جاري الاحتفاظ بـ <strong>${onChain.toLocaleString()} REX</strong>. متبقي لاكتمال الشرط: <strong>${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة و ${remSecs} ثانية</strong>.`
+          : `Active holding of <strong>${onChain.toLocaleString()} REX</strong>. Remaining: <strong>${remDays > 0 ? remDays + 'd ' : ''}${remHours}h ${remMins}m ${remSecs}s</strong>.`;
+      }
+    }
+
+    tickHold();
+    holdCountdownInterval = setInterval(tickHold, 1000);
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  async function loadPublicPayoutsFeed() {
+    const feed = document.getElementById('publicPayoutsFeed');
+    if (!feed) return;
+    try {
+      const res = await fetch('/api/public/proof-of-rewards').then(r => r.json());
+      const list = res.transactions || [];
+      if (!list.length) {
+        feed.innerHTML = `<div style="text-align:center; padding:12px; color:var(--muted); font-size:11px;">${currentLang === 'ar' ? 'لا توجد سحوبات مسجلة بعد' : 'No recorded payouts yet'}</div>`;
+        return;
+      }
+      feed.innerHTML = list.map(item => {
+        const addr = item.wallet_address ? `${item.wallet_address.slice(0, 5)}...${item.wallet_address.slice(-4)}` : 'UQ...';
+        const agoStr = timeAgo(item.updated_at || item.confirmed_at || item.created_at);
+        return `
+          <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:12px; font-weight:800; color:#fff; display:flex; align-items:center; gap:6px;">
+                <span>💼 ${addr}</span>
+                <span style="font-size:10px; color:var(--muted);">(${item.masked_user || 'Knight'})</span>
+              </div>
+              <div style="font-size:10px; color:var(--muted); margin-top:3px;">
+                <span>⏳ ${agoStr}</span> &bull; <span style="color:var(--green); font-weight:800;">✅ ${currentLang === 'ar' ? 'وصلت للمحفظة' : 'Arrived on TON'}</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Orbitron', monospace; font-size:13px; font-weight:900; color:var(--gold-lt);">+${Number(item.amount).toLocaleString()} REX</div>
+              <a href="${item.explorer_url || '#'}" target="_blank" style="font-size:10.5px; color:var(--cyan); text-decoration:none; font-weight:700;">Tonviewer ↗</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch(e) {
+      feed.innerHTML = `<div style="text-align:center; padding:12px; color:var(--muted); font-size:11px;">Error loading payouts</div>`;
+    }
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return currentLang === 'ar' ? 'حديثاً' : 'recently';
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 60) return currentLang === 'ar' ? 'الآن' : 'just now';
+    if (diff < 3600) return `${Math.floor(diff/60)} ${currentLang === 'ar' ? 'دقيقة' : 'm ago'}`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} ${currentLang === 'ar' ? 'ساعة' : 'h ago'}`;
+    return `${Math.floor(diff/86400)} ${currentLang === 'ar' ? 'يوم' : 'd ago'}`;
+  }
+
+  function setWdAmount(val) {
+    const input = document.getElementById('withdrawAmount');
+    if (val === 'max') input.value = Math.floor(userData?.balance || 0);
+    else input.value = val;
+    previewWithdraw();
+  }
+
+  function previewWithdraw() {
+    const amt = parseFloat(document.getElementById('withdrawAmount').value);
+    const preview = document.getElementById('withdrawPreview');
+    if (!amt || isNaN(amt)) {
+      preview.style.display = 'none';
+      return;
+    }
+
+    const reqWalletHold = amt * 0.20;
+    const botBal = userData?.balance || 0;
+    const walletBal = userData?.on_chain_rex || 0;
+    const minHoldRex = userData?.min_hold_rex || 5000;
+    const isHoldPassed = userData?.is_hold_passed;
+    const hasBotBal = botBal >= amt;
+    const hasWalletHold = walletBal >= reqWalletHold;
+    const isMinValid = amt >= 5000;
+    const hasMinHoldBal = walletBal >= minHoldRex;
+
+    let statusMsg = '';
+    if (!isMinValid) {
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? 'الحد الأدنى للسحب هو 5,000 REX' : 'Min withdrawal is 5,000 REX'}</span>`;
+    } else if (!hasBotBal) {
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `رصيدك غير كافٍ (${botBal.toLocaleString()} REX)` : `Insufficient balance (${botBal.toLocaleString()} REX)`}</span>`;
+    } else if (!hasMinHoldBal) {
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `شرط الاحتفاظ: يجب حيازة 5,000 REX على الأقل في محفظتك On-Chain (متوفر: ${walletBal.toLocaleString()} REX).` : `Holding rule: must hold 5,000+ REX in wallet.`}</span>`;
+    } else if (!isHoldPassed) {
+      const remMs = userData?.hold_remaining_ms || 0;
+      const remDays = Math.floor(remMs / (24 * 3600 * 1000));
+      const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
+      const remMins = Math.ceil((remMs % 3600000) / 60000);
+      statusMsg = `<span style="color:var(--gold-lt)">⏳ ${currentLang === 'ar' ? `شرط مدة الاحتفاظ (3 أيام) جاري: متبقي ${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة.` : `3-Day holding period in progress: ${remDays > 0 ? remDays + 'd ' : ''}${remHours}h ${remMins}m remaining.`}</span>`;
+    } else if (!hasWalletHold) {
+      const shortfall = reqWalletHold - walletBal;
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `ينقصك <strong>${shortfall.toLocaleString()} REX</strong> في محفظتك On-Chain (شرط الـ 20%).` : `Shortfall: ${shortfall.toLocaleString()} REX in TON wallet (20% hold rule).`}</span>`;
+    } else {
+      statusMsg = `<span style="color:var(--green)">✅ ${currentLang === 'ar' ? 'جميع شروط السحب مستوفاة ومحفظتك مؤهلة فوراً! 👑' : 'All conditions met! Eligible for withdrawal. 👑'}</span>`;
+    }
+
+    preview.style.display = 'block';
+    preview.innerHTML = `
+      💸 ${currentLang === 'ar' ? 'المبلغ المطلوب:' : 'Amount:'} <strong>${amt.toLocaleString()} REX</strong><br>
+      💼 ${currentLang === 'ar' ? 'المطلوب On-Chain (20%):' : 'Required On-Chain (20%):'} <strong>${reqWalletHold.toLocaleString()} REX</strong><br>
+      🔍 ${currentLang === 'ar' ? 'المتوفر في محفظتك:' : 'Available in Wallet:'} <strong>${walletBal.toLocaleString()} REX</strong><br>
+      ${statusMsg}
+    `;
+  }
+
+  async function submitWithdraw() {
+    const amt = parseFloat(document.getElementById('withdrawAmount').value);
+    if (!amt || isNaN(amt)) {
+      toast(currentLang === 'ar' ? '⚠️ أدخل مبلغ السحب أولاً' : 'Enter amount first');
+      return;
+    }
+    haptic('warning');
+    const r = await api('/api/user/withdraw', { telegram_id: user.id, amount: amt, idempotency_key: `WD_${user.id}_${Date.now()}` });
+    if (r.success) {
+      toast(`✅ ${r.message}`);
+      document.getElementById('withdrawAmount').value = '';
+      document.getElementById('withdrawPreview').style.display = 'none';
+      fetchUserData();
+    } else {
+      toast('⚠️ ' + r.message);
+    }
+  }
+
+  // ── Multi-Stage Withdrawal History Renderer ──
+  function renderWithdrawHistory(list) {
+    const container = document.getElementById('withdrawHistory');
+    if (!list?.length) {
+      container.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted)">${currentLang === 'ar' ? 'لا توجد سحوبات سابقة' : 'No previous withdrawals'}</div>`;
+      return;
+    }
+    container.innerHTML = list.map(w => {
+      const d = new Date(w.created_at);
+      const dateStr = `${d.toLocaleDateString()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+      let badgeColor = 'var(--cyan)';
+      let statusLabel = w.status.toUpperCase();
+      if (w.status === 'confirmed') badgeColor = 'var(--green)';
+      else if (w.status === 'rejected' || w.status === 'failed') badgeColor = 'var(--red)';
+
+      const steps = ['pending', 'reviewing', 'approved', 'processing', 'confirmed'];
+      const curIdx = steps.indexOf(w.status);
+
+      let explorerBtn = '';
+      if (w.status === 'confirmed' && w.explorer_url) {
+        explorerBtn = `<a href="${w.explorer_url}" target="_blank" style="display:inline-block; font-size:11px; color:var(--cyan); text-decoration:none; margin-top:6px;">🔗 View on Tonviewer ↗</a>`;
+      }
+
+      return `
+        <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:12px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-family:'Orbitron', monospace; font-size:15px; font-weight:900; color:#fff;">📤 ${Number(w.amount).toLocaleString()} REX</div>
+            <span style="font-size:10px; font-weight:900; padding:2px 8px; border-radius:10px; background:rgba(255,255,255,0.06); color:${badgeColor}; border:1px solid ${badgeColor};">${statusLabel}</span>
+          </div>
+          <div style="font-size:10.5px; color:var(--muted);">${dateStr}</div>
+
+          ${curIdx >= 0 ? `
+            <div class="wd-timeline">
+              <div class="wd-step ${curIdx >= 0 ? 'done' : ''}"><div class="wd-dot">1</div><span>REQ</span></div>
+              <div class="wd-step ${curIdx >= 1 ? 'done' : ''}"><div class="wd-dot">2</div><span>AUDIT</span></div>
+              <div class="wd-step ${curIdx >= 2 ? 'done' : ''}"><div class="wd-dot">3</div><span>APPV</span></div>
+              <div class="wd-step ${curIdx >= 3 ? 'done' : ''}"><div class="wd-dot">4</div><span>PROC</span></div>
+              <div class="wd-step ${curIdx >= 4 ? 'done' : ''}"><div class="wd-dot">5</div><span>ON-CHAIN</span></div>
+            </div>
+          ` : ''}
+
+          ${explorerBtn}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Leaderboard ──
+  async function loadLeaderboard() {
+    const list = await fetch('/api/leaderboard').then(r => r.json()).catch(() => []);
+    const podiumWrap = document.getElementById('podiumWrap');
+    const lbList = document.getElementById('leaderboardList');
+    const isAr = currentLang === 'ar';
+
+    if (!list?.length) {
+      if (podiumWrap) podiumWrap.innerHTML = '';
+      if (lbList) lbList.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted)">${isAr ? 'لا توجد بيانات صدارة' : 'No leaderboard data yet'}</div>`;
+      return;
+    }
+
+    const top3 = list.slice(0, 3);
+    podiumWrap.innerHTML = top3.map((u, i) => `
+      <div style="display:flex; flex-direction:column; align-items:center; flex:1; text-align:center;">
+        <div style="font-size:20px;">${['🥇','🥈','🥉'][i]}</div>
+        <div style="font-size:12px; font-weight:800; color:#fff; max-width:80px; overflow:hidden; text-overflow:ellipsis;">${esc(u.first_name)}</div>
+        <div style="font-family:'Orbitron', monospace; font-size:11px; color:var(--gold-lt);">${Number(u.balance).toFixed(0)}</div>
+      </div>
+    `).join('');
+
+    const rest = list.slice(3);
+    lbList.innerHTML = rest.map((u, i) => `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:rgba(0,0,0,0.25); border-radius:12px; margin-bottom:6px; font-size:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-family:'Orbitron', monospace; color:var(--muted); font-size:11px;">#${i + 4}</span>
+          <span style="font-weight:700; color:#fff;">${esc(u.first_name)}</span>
+        </div>
+        <span style="font-family:'Orbitron', monospace; font-weight:800; color:var(--gold-lt);">${Number(u.balance).toFixed(1)}</span>
+      </div>
+    `).join('');
+  }
+
+  // ── Social & Share ──
+  function copyRef() {
+    haptic('success');
+    const link = `https://t.me/Royalelitexbot?start=ref_${user.id}`;
+    navigator.clipboard?.writeText(link);
+    toast(currentLang === 'ar' ? '✅ تم نسخ رابط الدعوة الملكي!' : '✅ Referral link copied!');
+  }
+
+  function shareRef() {
+    haptic('medium');
+    const link = `https://t.me/Royalelitexbot?start=ref_${user.id}`;
+    const shareMsg = currentLang === 'ar'
+      ? `انضم إلى إمبراطورية التعدين الملكية ROYAL ELITE X على شبكة TON واحصل على هدايا ومكافآت يومية! 👑\n${link}`
+      : `Join ROYAL ELITE X Web3 Cloud Mining on TON Blockchain and claim daily sovereign rewards! 👑\n${link}`;
+    const text = encodeURIComponent(shareMsg);
+    if (tg?.openTelegramLink) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
+    else copyRef();
+  }
+
+  function connectWalletModal() {
+    haptic('light');
+    tonUI.openModal();
+  }
+
+  // ── Platform Hub Sheet ──
+  let isHubOpen = false;
+  function togglePlatformHub(forceState) {
+    if (!userData || !userData.is_wallet_connected || !userData.is_activated) {
+      toast(currentLang === 'ar' ? '🔒 البلاط مقفول! يرجى ربط المحفظة ودفع الرسوم أولاً' : '🔒 Platform is locked. Connect wallet & pay fee.');
+      haptic('warning');
+      return;
+    }
+    haptic('medium');
+    isHubOpen = (forceState !== undefined) ? forceState : !isHubOpen;
+
+    const sheet = document.getElementById('platformHubSheet');
+    const backdrop = document.getElementById('hubBackdrop');
+    const sphere = document.getElementById('centerMenuSphere');
+    const label = document.getElementById('centerMenuLabel');
+    const centerItem = document.getElementById('navCenterMenuBtn');
+
+    if (isHubOpen) {
+      sheet?.classList.add('open');
+      backdrop?.classList.add('open');
+      centerItem?.classList.add('open');
+      if (sphere) sphere.textContent = '✕';
+      if (label) label.textContent = currentLang === 'ar' ? 'إغلاق' : 'Close';
+    } else {
+      sheet?.classList.remove('open');
+      backdrop?.classList.remove('open');
+      centerItem?.classList.remove('open');
+      if (sphere) sphere.textContent = '☰';
+      if (label) label.textContent = currentLang === 'ar' ? 'القائمة' : 'Menu';
+    }
+  }
+
+  // ── Modals Framework ──
+  function openModal(id) {
+    togglePlatformHub(false);
+    haptic('medium');
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.add('open');
+
+    // Trigger subsystem loaders
+    if (id === 'intelligenceModal') loadIntelligence();
+    if (id === 'proofModal') loadProofOfRewards();
+    if (id === 'achievementsModal') loadAchievements();
+    if (id === 'vaultModal') loadVaults();
+    if (id === 'guildsModal') loadGuilds();
+    if (id === 'academyModal') loadAcademy();
+    if (id === 'portfolioModal') loadPortfolio();
+    if (id === 'whitepaperModal') loadWhitepaper();
+    if (id === 'tiersModal') renderHoldingTiersModal();
+  }
+
+  function closeModal(id) {
+    haptic('light');
+    document.getElementById(id)?.classList.remove('open');
+  }
+
+  function closeModalOnBackdrop(e, id) {
+    if (e.target.id === id) closeModal(id);
+  }
+
+  // ── 1. REX Intelligence Loader ──
+  async function loadIntelligence() {
+    const el = document.getElementById('intelBody');
+    const isAr = currentLang === 'ar';
+    try {
+      const d = await fetch(`/api/user/intelligence?id=${user.id}`).then(r => r.json());
+      const recs = isAr ? (d.recommendations_ar || d.recommendations) : (d.recommendations_en || d.recommendations);
+      el.innerHTML = `
+        <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:16px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-weight:800; color:#fff;">${isAr ? 'كفاءة التعدين الحالية:' : 'Current Mining Efficiency:'}</span>
+            <span style="font-family:'Orbitron', monospace; font-size:16px; font-weight:900; color:var(--cyan);">${d.mining_efficiency}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="color:var(--muted);">${isAr ? 'الرتبة الملكية:' : 'Sovereign Rank:'}</span>
+            <span style="font-weight:800; color:var(--gold-lt);">${isAr ? d.rank?.title_ar : d.rank?.title_en}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--muted);">${isAr ? 'الوقت المقدر للرتبة التالية:' : 'Est. Time to Next Rank:'}</span>
+            <span style="font-weight:800; color:#fff;">~ ${d.estimated_days_to_rank} ${isAr ? 'يوم' : 'days'} (${d.current_xp}/${d.next_rank_xp} XP)</span>
+          </div>
+        </div>
+
+        <h5 style="color:#fff; margin-bottom:6px;">${isAr ? '📊 سجل أرباح الـ 7 أيام الأخيرة (Server-Side):' : '📊 7-Day Server Earnings Ledger:'}</h5>
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; height:70px; background:rgba(0,0,0,0.3); border-radius:12px; padding:10px 8px 4px; margin-bottom:12px;">
+          ${d.chart_data.map((val, idx) => {
+            const h = Math.max(10, Math.min(60, (val / (d.daily_earning_potential || 100)) * 60));
+            return `
+              <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                <div style="width:16px; height:${h}px; background:var(--gold-grad); border-radius:4px;"></div>
+                <span style="font-size:9px; color:var(--muted);">${d.chart_labels[idx]}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <h5 style="color:#fff; margin-bottom:6px;">${isAr ? '💡 توصيات الذكاء لتحقيق أقصى ربح:' : '💡 AI Profit Maximization Insights:'}</h5>
+        ${recs.map(rec => `
+          <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:8px 10px; font-size:11.5px; color:var(--muted-lt); margin-bottom:6px;">• ${rec}</div>
+        `).join('')}
+      `;
+    } catch(e) {
+      el.innerHTML = `<div style="color:var(--red); text-align:center;">${isAr ? 'تعذر جلب البيانات' : 'Failed to load intelligence data'}</div>`;
+    }
+  }
+
+  // ── 2. Proof of Rewards Loader ──
+  async function loadProofOfRewards() {
+    const el = document.getElementById('proofBody');
+    const isAr = currentLang === 'ar';
+    try {
+      const [resProof, resStats] = await Promise.all([
+        fetch('/api/public/proof-of-rewards').then(r => r.json()),
+        fetch('/api/public/tokenomics').then(r => r.json())
+      ]);
+
+      el.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
+            <div style="font-size:10px; color:var(--muted);">${isAr ? 'المعروض الكلي الثابت' : 'Total Fixed Supply'}</div>
+            <div style="font-family:'Orbitron', monospace; font-size:13px; font-weight:800; color:var(--gold-lt);">${resStats.total_supply.toLocaleString()} REX</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
+            <div style="font-size:10px; color:var(--muted);">${isAr ? 'احتياطي التعدين المتبقي' : 'Mining Reserve Remaining'}</div>
+            <div style="font-family:'Orbitron', monospace; font-size:13px; font-weight:800; color:var(--cyan);">${resStats.reserve_remaining.toLocaleString()} REX</div>
+          </div>
+        </div>
+
+        <h5 style="color:#fff; margin-bottom:8px;">${isAr ? '💎 آخر السحوبات المؤكدة على بلوكتشين TON:' : '💎 Latest Verified On-Chain Withdrawals:'}</h5>
+        ${resProof.transactions?.length ? resProof.transactions.map(tx => `
+          <div style="background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:10px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-weight:800; color:#fff;">${tx.masked_user}</span>
+              <span style="font-family:'Orbitron', monospace; font-weight:800; color:var(--gold-lt);">+${tx.amount.toLocaleString()} REX</span>
+            </div>
+            <div style="font-size:10px; color:var(--muted); word-break:break-all;">Hash: ${tx.tx_hash}</div>
+            <a href="${tx.explorer_url}" target="_blank" style="font-size:11px; color:var(--cyan); text-decoration:none; display:inline-block; margin-top:4px;">🔗 Tonviewer Explorer ↗</a>
+          </div>
+        `).join('') : `<div style="text-align:center; padding:16px; color:var(--muted);">${isAr ? 'لا توجد معاملات مؤكدة بعد' : 'No confirmed transactions yet'}</div>`}
+      `;
+    } catch(e) {
+      el.innerHTML = `<div style="color:var(--red); text-align:center;">${isAr ? 'تعذر جلب بيانات الشفافية' : 'Failed to load proof of rewards'}</div>`;
+    }
+  }
+
+  // ── 3. Achievements Loader ──
+  async function loadAchievements() {
+    const el = document.getElementById('achievementsList');
+    try {
+      const list = await fetch(`/api/user/achievements?id=${user.id}`).then(r => r.json());
+      el.innerHTML = list.map(a => `
+        <div style="display:flex; align-items:center; gap:12px; background:rgba(0,0,0,0.3); border:1px solid ${a.is_unlocked ? 'var(--border-hl)' : 'rgba(255,255,255,0.06)'}; border-radius:14px; padding:10px; margin-bottom:8px; opacity:${a.is_unlocked ? 1 : 0.65};">
+          <div style="font-size:26px; filter:${a.is_unlocked ? 'drop-shadow(0 0 8px rgba(245,158,11,0.6))' : 'grayscale(1)'};">${a.badge_icon}</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:800; color:${a.is_unlocked ? 'var(--gold-lt)' : '#fff'};">${currentLang === 'ar' ? a.title_ar : a.title_en}</div>
+            <div style="font-size:10.5px; color:var(--muted);">${currentLang === 'ar' ? a.description_ar : a.description_en}</div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:8px; background:${a.is_unlocked ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.06)'}; color:${a.is_unlocked ? 'var(--green)' : 'var(--muted)'};">
+              ${a.is_unlocked ? 'UNLOCKED' : `+${a.reward_xp} XP`}
+            </span>
+          </div>
+        </div>
+      `).join('');
+    } catch(e) {
+      el.innerHTML = `<div style="color:var(--red); text-align:center;">${currentLang === 'ar' ? 'تعذر جلب الأوسمة' : 'Failed to load achievements'}</div>`;
+    }
+  }
+
+  // ── 4. Royal Vault Loader ──
+  function selectVaultDuration(days) {
+    selectedVaultDays = days;
+    [30, 60, 90].forEach(d => {
+      const b = document.getElementById(`v${d}Btn`);
+      if (b) b.style.borderColor = (d === days) ? 'var(--gold)' : 'transparent';
+    });
+  }
+
+  async function submitVaultLock() {
+    const amt = parseFloat(document.getElementById('vaultAmount').value);
+    if (!amt || amt < 100) {
+      toast(currentLang === 'ar' ? 'الحد الأدنى لقفل الخزينة هو 100 REX' : 'Minimum vault lock is 100 REX');
+      return;
+    }
+    const r = await api('/api/vault/lock', { telegram_id: user.id, amount: amt, duration_days: selectedVaultDays });
+    if (r.success) {
+      confetti({ particleCount: 80, spread: 60 });
+      toast(r.message);
+      document.getElementById('vaultAmount').value = '';
+      loadVaults();
+      fetchUserData();
+    } else {
+      toast('⚠️ ' + r.message);
+    }
+  }
+
+  async function loadVaults() {
+    const el = document.getElementById('userVaultsList');
+    if (!userData) return;
+    const isAr = currentLang === 'ar';
+    const vaults = userData.vaults || [];
+    el.innerHTML = `<h5 style="color:#fff; margin-bottom:8px;">${isAr ? '🏛️ حجوزاتك النشطة في الخزينة:' : '🏛️ Your Active Vault Locks:'}</h5>` + (vaults.length ? vaults.map(v => {
+      const unlockDate = new Date(v.unlock_at).toLocaleDateString();
+      const isEnded = Date.now() >= v.unlock_at;
+      return `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(245,158,11,0.25); border-radius:12px; padding:10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-family:'Orbitron', monospace; font-size:13px; font-weight:800; color:var(--gold-lt);">${v.locked_amount} REX (${v.duration_days} ${isAr ? 'يوم' : 'days'})</div>
+            <div style="font-size:10px; color:var(--muted);">${isAr ? 'تاريخ فك القفل:' : 'Unlock Date:'} ${unlockDate}</div>
+          </div>
+          ${isEnded && v.status === 'active' ? `
+            <button class="action-btn btn-gold" style="padding:4px 10px; font-size:11px; width:auto;" onclick="unlockVault(${v.id})">${isAr ? 'فك القفل' : 'Unlock'}</button>
+          ` : `<span style="font-size:10px; color:var(--cyan);">+${v.multiplier_boost}x Boost</span>`}
+        </div>
+      `;
+    }).join('') : `<div style="color:var(--muted); font-size:11px;">${isAr ? 'لا توجد مبالغ مقفولة حالياً' : 'No locked balances currently'}</div>`);
+  }
+
+  async function unlockVault(vaultId) {
+    const r = await api('/api/vault/unlock', { telegram_id: user.id, vault_id: vaultId });
+    if (r.success) {
+      toast(r.message);
+      loadVaults();
+      fetchUserData();
+    } else {
+      toast('⚠️ ' + r.message);
+    }
+  }
+
+  // ── 5. Royal Guilds Loader ──
+  async function loadGuilds() {
+    const el = document.getElementById('guildsBody');
+    const isAr = currentLang === 'ar';
+    try {
+      const [guilds, myGuild] = await Promise.all([
+        fetch('/api/guilds/leaderboard').then(r => r.json()),
+        fetch(`/api/guilds/my-guild?id=${user.id}`).then(r => r.json())
+      ]);
+
+      let myGuildHtml = '';
+      if (myGuild?.guild) {
+        myGuildHtml = `
+          <div style="background:rgba(56,189,248,0.1); border:1px solid var(--cyan); border-radius:16px; padding:12px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:15px; font-weight:900; color:#fff;">[${myGuild.guild.tag}] ${myGuild.guild.name}</span>
+              <button class="action-btn" style="padding:3px 8px; font-size:10px; width:auto; background:rgba(239,68,68,0.2); color:var(--red);" onclick="leaveGuild()">${isAr ? 'مغادرة' : 'Leave'}</button>
+            </div>
+            <div style="font-size:11px; color:var(--muted); margin-top:4px;">${isAr ? 'القوة الإجمالية:' : 'Total Power:'} ${myGuild.guild.total_power.toLocaleString()} · ${isAr ? 'الأعضاء:' : 'Members:'} ${myGuild.guild.members_count}</div>
+          </div>
+        `;
+      } else {
+        myGuildHtml = `
+          <div style="background:rgba(0,0,0,0.3); border-radius:14px; padding:12px; margin-bottom:14px;">
+            <h5 style="color:#fff; margin-bottom:6px;">${isAr ? 'تأسيس نقابة جديدة:' : 'Found New Guild:'}</h5>
+            <input type="text" id="guildName" placeholder="${isAr ? 'اسم النقابة' : 'Guild Name'}" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:8px; color:#fff; font-size:12px; margin-bottom:6px;">
+            <input type="text" id="guildTag" placeholder="${isAr ? 'رمز النقابة (3-5 أحرف)' : 'Guild Tag (3-5 chars)'}" maxlength="5" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:8px; color:#fff; font-size:12px; margin-bottom:8px;">
+            <button class="action-btn btn-gold w-100" style="padding:8px;" onclick="createGuild()">🛡️ ${isAr ? 'تأسيس النقابة' : 'Found Guild'}</button>
+          </div>
+        `;
+      }
+
+      el.innerHTML = myGuildHtml + `
+        <h5 style="color:#fff; margin-bottom:8px;">${isAr ? '🏆 صدارة النقابات الملكية:' : '🏆 Royal Guilds Leaderboard:'}</h5>
+        ${guilds.length ? guilds.map(g => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); border-radius:12px; padding:10px; margin-bottom:6px;">
+            <div>
+              <div style="font-weight:800; color:#fff;">[${g.tag}] ${g.name}</div>
+              <div style="font-size:10px; color:var(--muted);">${isAr ? 'القائد:' : 'Leader:'} ${g.leader_name} · ${g.members_count} ${isAr ? 'عضو' : 'members'}</div>
+            </div>
+            ${!myGuild?.guild ? `<button class="action-btn btn-gold" style="padding:4px 10px; font-size:10px; width:auto;" onclick="joinGuild(${g.id})">${isAr ? 'انضمام' : 'Join'}</button>` : `<span style="font-family:'Orbitron', monospace; font-size:11px; color:var(--gold-lt);">${g.total_power.toFixed(0)}</span>`}
+          </div>
+        `).join('') : `<div style="color:var(--muted); font-size:11px; text-align:center;">${isAr ? 'لا توجد نقابات مسجلة بعد' : 'No guilds registered yet'}</div>`}
+      `;
+    } catch(e) {
+      el.innerHTML = `<div style="color:var(--red); text-align:center;">${isAr ? 'تعذر جلب بيانات النقابات' : 'Failed to load guilds'}</div>`;
+    }
+  }
+
+  async function createGuild() {
+    const name = document.getElementById('guildName').value;
+    const tag = document.getElementById('guildTag').value;
+    const r = await api('/api/guilds/create', { telegram_id: user.id, name, tag });
+    if (r.success) {
+      toast(r.message);
+      loadGuilds();
+      fetchUserData();
+    } else toast('⚠️ ' + r.message);
+  }
+
+  async function joinGuild(id) {
+    const r = await api('/api/guilds/join', { telegram_id: user.id, guild_id: id });
+    if (r.success) {
+      toast(r.message);
+      loadGuilds();
+      fetchUserData();
+    } else toast('⚠️ ' + r.message);
+  }
+
+  async function leaveGuild() {
+    const r = await api('/api/guilds/leave', { telegram_id: user.id });
+    if (r.success) {
+      toast(r.message);
+      loadGuilds();
+      fetchUserData();
+    } else toast('⚠️ ' + r.message);
+  }
+
+  // ── 6. REX Academy Loader ──
+  async function loadAcademy() {
+    const el = document.getElementById('academyBody');
+    try {
+      const lessons = await fetch(`/api/academy/lessons?id=${user.id}`).then(r => r.json());
+      el.innerHTML = lessons.map(l => `
+        <div style="background:rgba(0,0,0,0.3); border:1px solid ${l.is_completed ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}; border-radius:16px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:14px; font-weight:800; color:#fff;">${l.order_num}. ${currentLang === 'ar' ? l.title_ar : l.title_en}</span>
+            <span style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:8px; background:${l.is_completed ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.15)'}; color:${l.is_completed ? 'var(--green)' : 'var(--gold-lt)'};">
+              ${l.is_completed ? 'COMPLETED' : `+${l.reward_rex} REX`}
+            </span>
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.6; margin-bottom:10px;">${currentLang === 'ar' ? l.content_ar : l.content_en}</p>
+
+          ${!l.is_completed ? `
+            <div style="background:rgba(255,255,255,0.03); border-radius:12px; padding:10px;">
+              <div style="font-size:11.5px; font-weight:800; color:var(--cyan); margin-bottom:8px;">❓ ${currentLang === 'ar' ? l.quiz_question_ar : l.quiz_question_en}</div>
+              <div style="display:grid; grid-template-columns:1fr; gap:6px;">
+                ${(currentLang === 'ar' ? l.quiz_options_ar : l.quiz_options_en).map((opt, optIdx) => `
+                  <button class="action-btn" style="padding:7px 10px; font-size:11px; background:rgba(255,255,255,0.06); color:#fff; text-align:right; justify-content:flex-start;" onclick="submitAcademyQuiz('${l.id}', ${optIdx})">
+                    ${optIdx + 1}. ${opt}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    } catch(e) {
+      el.innerHTML = `<div style="color:var(--red); text-align:center;">${currentLang === 'ar' ? 'تعذر جلب دروس الأكاديمية' : 'Failed to load lessons'}</div>`;
+    }
+  }
+
+  async function submitAcademyQuiz(lessonId, optIdx) {
+    haptic('medium');
+    const r = await api('/api/academy/submit-quiz', { telegram_id: user.id, lesson_id: lessonId, selected_index: optIdx });
+    if (r.success) {
+      confetti({ particleCount: 70, spread: 50 });
+      playWin();
+      toast(r.message);
+      loadAcademy();
+      fetchUserData();
+    } else {
+      toast(r.message);
+    }
+  }
+
+  // ── 7. REX Portfolio & Ledger Loader ──
+  async function loadPortfolio() {
+    const el = document.getElementById('portfolioBody');
+    if (!userData) return;
+    const isAr = currentLang === 'ar';
+    const txs = userData.recent_transactions || [];
+
+    el.innerHTML = `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+        <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
+          <div style="font-size:10px; color:var(--muted);">${isAr ? 'رصيد المنصة المتاح' : 'Available Bot Balance'}</div>
+          <div style="font-family:'Orbitron', monospace; font-size:14px; font-weight:900; color:var(--gold-lt);">${Number(userData.balance).toFixed(2)} REX</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
+          <div style="font-size:10px; color:var(--muted);">${isAr ? 'الرصيد المحجوز للسحب' : 'Reserved for Withdrawal'}</div>
+          <div style="font-family:'Orbitron', monospace; font-size:14px; font-weight:900; color:var(--purple);">${Number(userData.reserved_balance || 0).toFixed(2)} REX</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
+          <div style="font-size:10px; color:var(--muted);">${isAr ? 'رصيد TON On-Chain' : 'TON On-Chain Balance'}</div>
+          <div style="font-family:'Orbitron', monospace; font-size:14px; font-weight:900; color:var(--cyan);">${Number(userData.on_chain_rex || 0).toLocaleString()} REX</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
+          <div style="font-size:10px; color:var(--muted);">${isAr ? 'إجمالي التعدين التاريخي' : 'Total Lifetime Mined'}</div>
+          <div style="font-family:'Orbitron', monospace; font-size:14px; font-weight:900; color:#fff;">${Number(userData.mined_total || 0).toFixed(1)} REX</div>
+        </div>
+      </div>
+
+      <h5 style="color:#fff; margin-bottom:8px;">${isAr ? '📑 سجل المعاملات المالي المزدوج (Immutable Ledger):' : '📑 Double-Entry Immutable Ledger:'}</h5>
+      ${txs.length ? txs.map(t => {
+        const d = new Date(t.created_at);
+        const isCredit = t.amount >= 0;
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); border-radius:10px; padding:8px 10px; margin-bottom:6px; font-size:11px;">
+            <div>
+              <div style="font-weight:800; color:#fff;">${t.type}</div>
+              <div style="color:var(--muted); font-size:9.5px;">${t.details || ''}</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-family:'Orbitron', monospace; font-weight:800; color:${isCredit ? 'var(--green)' : 'var(--red)'};">${isCredit ? '+' : ''}${t.amount} REX</span>
+              <div style="font-size:9px; color:var(--muted);">${isAr ? 'بعد:' : 'After:'} ${t.balance_after}</div>
+            </div>
+          </div>
+        `;
+      }).join('') : `<div style="color:var(--muted); font-size:11px; text-align:center;">${isAr ? 'لا توجد معاملات مسجلة بعد' : 'No recorded transactions yet'}</div>`}
+    `;
+  }
+
+  // ── 8. Official Sovereign Whitepaper Loader ──
+  function loadWhitepaper() {
+    const el = document.getElementById('whitepaperBody');
+    if (!el) return;
+
+    if (currentLang === 'ar') {
+      el.innerHTML = `
+        <div style="background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(14,22,42,0.8)); border:1px solid rgba(245,158,11,0.3); border-radius:18px; padding:16px; margin-bottom:14px; text-align:center;">
+          <div style="font-family:'Orbitron', monospace; font-size:18px; font-weight:900; color:var(--gold-lt); margin-bottom:4px;">ROYAL ELITE X (REX)</div>
+          <div style="font-size:11.5px; color:var(--cyan); font-weight:800; letter-spacing:1px; margin-bottom:10px;">الورقة البيضاء الرسمية ومعمارية التوكنوميكس 2026</div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7; margin:0 auto; max-width:380px;">
+            منظومة تعدين سحابي سيادية مبنية على شبكة TON، تجمع بين ألعاب الويب 3 اللامركزية، سيولة التداول عبر STON.fi DEX، ونظام حيازة صارم يضمن ندرة العملة واستمرار صعود قيمتها السوقية.
+          </p>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <span>💎</span> العقود الذكية الموثقة على البلوكتشين (On-Chain Contracts):
+          </div>
+          
+          <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px; margin-bottom:8px;">
+            <div style="font-size:10px; color:var(--gold-lt); font-weight:800;">عقد الماستر للعملة (Jetton Master Minter):</div>
+            <div style="font-family:monospace; font-size:10.5px; color:#fff; word-break:break-all;">EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH</div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px; margin-bottom:8px;">
+            <div style="font-size:10px; color:var(--cyan); font-weight:800;">حوض السيولة الرسمي (STON.fi Pool Pair REX/GRAM):</div>
+            <div style="font-family:monospace; font-size:10.5px; color:#fff; word-break:break-all;">EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR</div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 2px;">
+            <span style="color:var(--muted);">إجمالي المعروض الثابت:</span>
+            <strong style="color:var(--gold-lt); font-family:'Orbitron';">50,000,000 REX (ثابت 100%)</strong>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <span>📊</span> توزيع الـ 50,000,000 عملة (Token Allocation):
+          </div>
+          <div style="font-size:11px; line-height:1.8; color:var(--muted-lt);">
+            • <strong style="color:var(--gold-lt);">40% (20M REX):</strong> احتياطي مكافآت التعدين السحابي للمجتمع (توزيع تدريجي يومي بسقف 50k عملة/يوم).<br>
+            • <strong style="color:var(--cyan);">30% (15M REX):</strong> سيولة منصات التداول (DEX/CEX Listings) وخزينة استقرار العملة.<br>
+            • <strong style="color:var(--purple);">15% (7.5M REX):</strong> خزن الحيازة الذاتية (Staking Vaults) وبطولات التحالفات.<br>
+            • <strong style="color:var(--green);">10% (5M REX):</strong> برنامج فرسان البلاط والإحالات والشراكات.<br>
+            • <strong style="color:#f87171);">5% (2.5M REX):</strong> التطوير، التدقيق الأمني، وتكاليف الخوادم السحابية.
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25);">
+          <div style="font-size:13px; font-weight:900; color:var(--gold-lt); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>⏳</span> قانون السحب وحيازة الـ 5,000 REX (النمو الصاعد):
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7;">
+            لحماية قيمة العملة ومنع التضخم، يشترط لسحب الأرباح امتلاك والاحتفاظ بما لا يقل عن <strong>5,000 REX</strong> في محفظة TON المربوطة لمدة <strong>3 أيام (72 ساعة) متصلة</strong> دون انقطاع.
+          </p>
+          <div style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:8px 10px; margin-top:8px; font-size:10.5px; color:#fca5a5;">
+            ⚠️ <strong>إعادة التعيين الفورية:</strong> في حال انخفض رصيدك عن 5,000 REX (بسبب البيع أو التحويل)، يُعاد عداد الأيام الثلاثة فورياً إلى الصفر (0%)!
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.25);">
+          <div style="font-size:13px; font-weight:900; color:var(--cyan); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>💎</span> بروتوكول تعدين الحيازة الملكي (10% يومياً - 10% Daily HODL Yield):
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7; margin-bottom:8px;">
+            يمنحك البوت تلقائياً عائداً يومياً ثابتاً يعادل <strong>10% من إجمالي عملات REX</strong> التي تحتفظ بها في محفظتك الخارجية On-Chain على شبكة TON، بدون أي قيود مستويات معقدة:
+          </p>
+          <div style="font-size:11px; line-height:1.8; color:#fff;">
+            • 🔹 <strong>حيازة 1,000 REX:</strong> إنتاج 100 REX يومياً (3,000 REX شهرياً)<br>
+            • 🔹 <strong>حيازة 5,000 REX:</strong> إنتاج 500 REX يومياً (15,000 REX شهرياً) + فتح السحب!<br>
+            • 🔹 <strong>حيازة 10,000 REX:</strong> إنتاج 1,000 REX يومياً (30,000 REX شهرياً)<br>
+            • 🔹 <strong>حيازة 25,000 REX:</strong> إنتاج 2,500 REX يومياً (75,000 REX شهرياً)<br>
+            • 👑 <strong>حيازة 50,000 REX:</strong> إنتاج 5,000 REX يومياً (150,000 REX شهرياً)!
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🛡️</span> آلية السحب والوصول خلال 24 ساعة:
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7;">
+            تخضع جميع طلبات السحب لمراجعة أمنية وتدقيق مزدوج في لوحة الإدارة السيادية لمنع أي تلاعب. بمجرد اعتماد الطلب، يتلقى المستخدم إشعاراً فورياً على تيليجرام وتصل العملات لمحفظته خلال <strong>24 ساعة كحد أقصى</strong> مع رابط معاملة موثق على شبكة TON.
+          </p>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🔒</span> بوابة الأمان (0.1 TON Anti-Sybil Fee):
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7;">
+            رسم رمزي لمرة واحدة (0.1 TON) يُدفع على البلوكتشين لتأمين الحساب واستبعاد الروبوتات والحسابات الوهمية، مع سجل تدقيق مالي مزدوج (ACID Ledger) لكل حركة مالية في المنظومة.
+          </p>
+        </div>
+      `;
+    } else {
+      el.innerHTML = `
+        <div style="background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(14,22,42,0.8)); border:1px solid rgba(245,158,11,0.3); border-radius:18px; padding:16px; margin-bottom:14px; text-align:center;">
+          <div style="font-family:'Orbitron', monospace; font-size:18px; font-weight:900; color:var(--gold-lt); margin-bottom:4px;">ROYAL ELITE X (REX)</div>
+          <div style="font-size:11.5px; color:var(--cyan); font-weight:800; letter-spacing:1px; margin-bottom:10px;">Official Sovereign Whitepaper & Tokenomics 2026</div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7; margin:0 auto; max-width:380px;">
+            A sovereign Web3 cloud-mining ecosystem on TON Blockchain merging interactive tap-to-mine engagement, real STON.fi DEX AMM liquidity, and strict on-chain holding verification.
+          </p>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <span>💎</span> Verified Smart Contracts & Blockchain Audits:
+          </div>
+          
+          <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px; margin-bottom:8px;">
+            <div style="font-size:10px; color:var(--gold-lt); font-weight:800;">Jetton Master Minter Contract:</div>
+            <div style="font-family:monospace; font-size:10.5px; color:#fff; word-break:break-all;">EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH</div>
+          </div>
+
+          <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px; margin-bottom:8px;">
+            <div style="font-size:10px; color:var(--cyan); font-weight:800;">STON.fi Official Pool Pair (REX / GRAM):</div>
+            <div style="font-family:monospace; font-size:10.5px; color:#fff; word-break:break-all;">EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR</div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 2px;">
+            <span style="color:var(--muted);">Total Fixed Supply:</span>
+            <strong style="color:var(--gold-lt); font-family:'Orbitron';">50,000,000 REX (100% Capped)</strong>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <span>📊</span> Token Allocation (50,000,000 Total REX):
+          </div>
+          <div style="font-size:11px; line-height:1.8; color:var(--muted-lt);">
+            • <strong style="color:var(--gold-lt);">40% (20M REX):</strong> Community Mining Reserve (Daily emissions capped at 50k REX/day).<br>
+            • <strong style="color:var(--cyan);">30% (15M REX):</strong> DEX Liquidity, CEX Market Making & Ecosystem Treasury.<br>
+            • <strong style="color:var(--purple);">15% (7.5M REX):</strong> Sovereign Staking Vaults & Weekly Guild Tournaments.<br>
+            • <strong style="color:var(--green);">10% (5M REX):</strong> Knights Ambassador Program & Direct Referral Bounties.<br>
+            • <strong style="color:#f87171);">5% (2.5M REX):</strong> Infrastructure, Smart Contract Security Audits & Core Dev.
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25);">
+          <div style="font-size:13px; font-weight:900; color:var(--gold-lt); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>⏳</span> The 5,000 REX 3-Day Holding Rule:
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7;">
+            To defend liquidity and maintain upward price pressure on STON.fi, users must purchase and hold at least <strong>5,000 REX</strong> in their connected non-custodial TON wallet for <strong>3 consecutive days (72 hours)</strong> before requesting a withdrawal.
+          </p>
+          <div style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:8px 10px; margin-top:8px; font-size:10.5px; color:#fca5a5;">
+            ⚠️ <strong>Instant Auto-Reset:</strong> If the on-chain balance drops below 5,000 REX at any second (selling), the holding timer resets immediately to 0%!
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(6,182,212,0.06); border:1px solid rgba(6,182,212,0.25);">
+          <div style="font-size:13px; font-weight:900; color:var(--cyan); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>👑</span> Sovereign HODL Boost Tiers (Tiered Mining Multipliers):
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7; margin-bottom:8px;">
+            The more REX you hold in your non-custodial TON wallet, the higher your sovereign rank and the faster your 24h cloud mining engine produces tokens:
+          </p>
+          <div style="font-size:11px; line-height:1.8; color:#fff;">
+            • 🥉 <strong>Bronze Explorer (0 - 499 REX):</strong> 1.0x Base Rate (100 REX/day)<br>
+            • 🥈 <strong>Silver Guardian (500 - 1,999 REX):</strong> 2.0x Boost (200 REX/day)<br>
+            • 🥇 <strong>Gold Knight (2,000 - 4,999 REX):</strong> 4.0x Boost (400 REX/day)<br>
+            • 💠 <strong>Platinum Baron (5,000 - 14,999 REX):</strong> 7.0x Boost (700 REX/day) + Unlocks Withdrawal!<br>
+            • 💎 <strong>Diamond Duke VIP (15,000 - 49,999 REX):</strong> 15.0x Boost (1,500 REX/day)<br>
+            • 👑 <strong>Crown Sovereign VIP (50,000+ REX):</strong> Apex 25.0x Multiplier (2,500 REX/day)!
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px; background:rgba(14,22,42,0.65);">
+          <div style="font-size:13px; font-weight:900; color:#fff; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🛡️</span> Multi-Stage Withdrawal & 24h Settlement:
+          </div>
+          <p style="font-size:11.5px; color:var(--muted-lt); line-height:1.7;">
+            Withdrawal requests are reserved atomically in our ACID ledger and reviewed by Sovereign Admins. Once approved, the user receives an instant Telegram notification and tokens arrive on-chain within <strong>24 hours maximum</strong>.
+          </p>
+        </div>
+      `;
+    }
+  }
+
+  // ── Tab Switcher ──
+  function switchTab(id, el) {
+    if (!userData || !userData.is_wallet_connected || !userData.is_activated) {
+      toast(currentLang === 'ar' ? '🔒 البلاط مقفول! يرجى ربط المحفظة ودفع الرسوم أولاً' : '🔒 Connect wallet and pay fee first.');
+      haptic('warning');
+      return false;
+    }
+    haptic('light');
+    if (isHubOpen) togglePlatformHub(false);
+
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    const target = document.getElementById(id);
+    if (target) {
+      target.classList.add('active');
+      target.style.display = 'block';
+    }
+    if (el) el.classList.add('active');
+    
+    // Immediate render to prevent white screen flash
+    if (id === 'tab-quests') {
+      if (userData?.tasks?.length) {
+        renderQuests(userData.tasks);
+      }
+      fetchUserData();
+    }
+  }
+
+  // ── Bilingual Localization Engine ──
+  function setElText(id, txt) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  }
+  function setElHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  // ── 9. Sovereign Holding Tiers & Boost Loader ──
+  let cachedHoldingTier = null;
+  let cachedAllHoldingTiers = [
+    { tier: 1, min_hold: 0, multiplier: 1.0, badge: '🥉', title_ar: 'المستكشف البرونزي', title_en: 'Bronze Explorer', color: '#cd7f32', daily_rex: 100, hourly_rex: 4.16, desc_ar: 'المعدل القياسي بدون متطلبات حيازة', desc_en: 'Standard mining rate with 0 REX required' },
+    { tier: 2, min_hold: 500, multiplier: 2.0, badge: '🥈', title_ar: 'الحارس الفضي', title_en: 'Silver Guardian', color: '#94a3b8', daily_rex: 200, hourly_rex: 8.33, desc_ar: 'مضاعفة إنتاج التعدين 2X عند حيازة 500 REX', desc_en: '2X Mining rate boost holding 500+ REX' },
+    { tier: 3, min_hold: 2000, multiplier: 4.0, badge: '🥇', title_ar: 'الفارس الذهبي', title_en: 'Gold Knight', color: '#eab308', daily_rex: 400, hourly_rex: 16.66, desc_ar: 'مضاعفة إنتاج التعدين 4X عند حيازة 2,000 REX', desc_en: '4X Mining rate boost holding 2,000+ REX' },
+    { tier: 4, min_hold: 5000, multiplier: 7.0, badge: '💠', title_ar: 'البارون البلاتيني', title_en: 'Platinum Baron', color: '#a855f7', daily_rex: 700, hourly_rex: 29.16, desc_ar: 'مضاعفة 7X + فتح شرط أهلية السحب (72 ساعة)', desc_en: '7X Boost + Unlocks withdrawal eligibility (72h)' },
+    { tier: 5, min_hold: 15000, multiplier: 15.0, badge: '💎', title_ar: 'الدوق الماسي VIP', title_en: 'Diamond Duke VIP', color: '#06b6d4', daily_rex: 1500, hourly_rex: 62.5, desc_ar: 'مضاعفة خارقة 15X عند حيازة 15,000 REX', desc_en: 'Supercharged 15X boost holding 15,000+ REX' },
+    { tier: 6, min_hold: 50000, multiplier: 25.0, badge: '👑', title_ar: 'الإمبراطور الملكي الأسطوري', title_en: 'Crown Sovereign VIP', color: '#f59e0b', daily_rex: 2500, hourly_rex: 104.16, desc_ar: 'أقصى مضاعف تعدين في المنظومة 25X (VIP)', desc_en: 'Apex tier: Maximum 25X mining boost' }
+  ];
+
+  function updateHoldingTierUI(tierData) {
+    const iconEl = document.getElementById('tierBadgeIcon');
+    const nameEl = document.getElementById('tierBadgeName');
+    const multEl = document.getElementById('tierBadgeMult');
+    const fillEl = document.getElementById('tierProgressFill');
+    const subEl = document.getElementById('tierProgressSub');
+    const hintEl = document.getElementById('tierTapHint');
+
+    const onChain = Number(userData?.on_chain_rex || 0);
+    const dailyReward = Number(userData?.daily_rate || (Math.max(25, onChain * 0.10))).toFixed(1);
+    const isAr = currentLang === 'ar';
+
+    if (iconEl) iconEl.textContent = '💎';
+    if (nameEl) nameEl.textContent = isAr ? 'عائد الحيازة 10% يومياً' : '10% Daily HODL Yield';
+    if (multEl) multEl.textContent = '10%/day';
+    if (hintEl) hintEl.textContent = isAr ? 'حاسبة العائد ❯' : 'Yield Calculator ❯';
+
+    const target = 5000;
+    const pct = Math.min(100, Math.max(0, (onChain / target) * 100));
+    if (fillEl) fillEl.style.width = `${pct}%`;
+
+    if (subEl) {
+      if (onChain > 0) {
+        subEl.textContent = isAr
+          ? `حيازتك: ${onChain.toLocaleString()} REX ← إنتاجك: +${dailyReward} REX / يومياً (10%)`
+          : `Holding: ${onChain.toLocaleString()} REX → Yield: +${dailyReward} REX / day (10%)`;
+      } else {
+        subEl.textContent = isAr
+          ? 'اشترِ واحتفظ بـ REX في محفظة TON لتحصل على 10% يومياً من رصيدك في التعدين!'
+          : 'Hold REX in your TON wallet to earn 10% daily cloud mining yield!';
+      }
+    }
+  }
+
+  function renderHoldingTiersModal() {
+    const el = document.getElementById('tiersBody');
+    if (!el) return;
+
+    const onChain = Number(userData?.on_chain_rex || 0);
+    const monthlyProd = (onChain * 0.10 * 30).toFixed(0);
+    const isAr = currentLang === 'ar';
+
+    let html = `
+      <!-- User Current Holding & 10% Yield Card -->
+      <div style="background:linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(14,22,42,0.95) 100%); border:1px solid rgba(6,182,212,0.35); border-radius:18px; padding:16px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:26px;">💎</span>
+            <div>
+              <div style="font-size:14px; font-weight:900; color:#fff;">
+                ${isAr ? 'بروتوكول تعدين الحيازة (10% يومياً)' : '10% Daily HODL Mining Protocol'}
+              </div>
+              <div style="font-size:10.5px; color:var(--cyan); font-weight:800;">
+                ${isAr ? 'عائد مباشر على العملات المحتفظ بها بدون مستويات' : 'Direct yield on held tokens — No tiers'}
+              </div>
+            </div>
+          </div>
+          <span style="font-family:'Orbitron'; font-size:16px; font-weight:900; color:var(--gold-lt); background:rgba(245,158,11,0.15); padding:4px 10px; border-radius:12px; border:1px solid rgba(245,158,11,0.3);">
+            10%/day
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div style="background:rgba(0,0,0,0.35); border-radius:12px; padding:10px;">
+            <div style="font-size:10px; color:var(--muted);">${isAr ? 'حيازتك في محفظة TON:' : 'Your TON Wallet Hold:'}</div>
+            <div style="font-family:'Orbitron'; font-size:15px; font-weight:900; color:#fff;">${onChain.toLocaleString()} REX</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.35); border-radius:12px; padding:10px;">
+            <div style="font-size:10px; color:var(--muted);">${isAr ? 'إنتاجك اليومي (10%):' : 'Daily 10% Reward:'}</div>
+            <div style="font-family:'Orbitron'; font-size:15px; font-weight:900; color:var(--gold-lt);">+${Number(userData?.daily_rate || Math.max(25, onChain * 0.10)).toFixed(1)} REX</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="background:rgba(0,0,0,0.25); border-radius:10px; padding:8px 10px;">
+            <div style="font-size:9.5px; color:var(--muted);">${isAr ? 'الإنتاج بالساعة:' : 'Hourly Production:'}</div>
+            <div style="font-family:'Orbitron'; font-size:12px; font-weight:800; color:var(--cyan);">+${Number(userData?.hourly_rate || (Math.max(25, onChain * 0.10)/24)).toFixed(2)} REX</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.25); border-radius:10px; padding:8px 10px;">
+            <div style="font-size:9.5px; color:var(--muted);">${isAr ? 'الإنتاج الشهري (30 يوم):' : 'Monthly Projection (30d):'}</div>
+            <div style="font-family:'Orbitron'; font-size:12px; font-weight:800; color:var(--green);">+${monthlyProd} REX</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Protocol Explanation Note -->
+      <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.25); border-radius:14px; padding:12px; margin-bottom:14px; font-size:11px; line-height:1.7; color:#e0f2fe;">
+        <strong>💡 ${isAr ? 'كيف يعمل تعدين الـ 10% اليومي؟' : 'How does the 10% Daily Mining Work?'}</strong><br>
+        ${isAr
+          ? 'يقوم البوت بقراءة رصيد REX الحقيقي الموجود في محفظة TON الخاصة بك على البلوكتشين تلقائياً. كل 24 ساعة، يُنتج محرك التعدين <strong>10% من إجمالي عملاتك المحتفظ بها</strong> ويضيفها مباشرة لرصيدك القابل للسحب دون الحاجة لأي شروط أو مستويات معقدة!'
+          : 'The platform scans your verified on-chain REX Jetton balance on TON Blockchain. Every 24 hours, your cloud mining engine produces <strong>10% of your total held tokens</strong> directly into your withdrawable balance—simple, direct, and tier-free!'}
+      </div>
+
+      <!-- Quick Interactive Calculator / Projection Table -->
+      <div style="font-size:12px; font-weight:800; color:#fff; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+        <span>📊</span> ${isAr ? 'جدول العوائد اليومية والشهرية التقديرية:' : 'Holding Yield & Profit Table:'}
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+        ${[
+          { hold: 1000, daily: 100, monthly: 3000 },
+          { hold: 5000, daily: 500, monthly: 15000 },
+          { hold: 10000, daily: 1000, monthly: 30000 },
+          { hold: 25000, daily: 2500, monthly: 75000 },
+          { hold: 50000, daily: 5000, monthly: 150000 }
+        ].map(item => `
+          <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:12px; font-weight:800; color:#fff;">
+                ${isAr ? `حيازة ${item.hold.toLocaleString()} REX` : `Hold ${item.hold.toLocaleString()} REX`}
+              </div>
+              <div style="font-size:10px; color:var(--muted); margin-top:2px;">
+                ${isAr ? `شهرياً (30 يوم): +${item.monthly.toLocaleString()} REX` : `Monthly: +${item.monthly.toLocaleString()} REX`}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Orbitron'; font-size:13px; font-weight:900; color:var(--gold-lt);">+${item.daily.toLocaleString()} REX</div>
+              <div style="font-size:9.5px; color:var(--cyan); font-weight:800;">${isAr ? 'يومياً (10%)' : 'Daily (10%)'}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Buy on STON.fi DEX Button -->
+      <div style="margin-top:6px; margin-bottom:14px;">
+        <a href="https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn btn-gold" style="width:100%; padding:11px 14px; font-size:12px; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>💎</span> <span>${isAr ? 'شراء REX من STON.fi لرفع إنتاج التعدين اليومي' : 'Buy REX on STON.fi to Boost Daily Yield'}</span> <span>🚀</span>
+        </a>
+      </div>
+    `;
+
+    el.innerHTML = html;
+  }
+
+  function toggleLanguage() {
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem('rex_lang_v3', currentLang);
+    localStorage.setItem('rex_lang', currentLang);
+    applyLanguage(currentLang);
+  }
+
+  function applyLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('rex_lang_v3', currentLang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    const langBtn = document.getElementById('langBtn');
+    if (langBtn) langBtn.textContent = lang === 'ar' ? '🌐 EN' : '🌐 عربي';
+
+    if (lang === 'en') {
+      // Splash
+      setElText('splashSubText', 'Sovereign Mining Empire · TON Blockchain');
+      setElText('splashStatusText', '⚡ Initializing Royal Mining Protocol...');
+
+      // Header
+      setElText('lblHeaderNet', 'TON Mainnet');
+      setElText('lblOnChainWallet', 'TON Wallet:');
+
+      // Vault Card
+      setElText('vaultBadgeText', '👑 Available Royal Balance · REX');
+      setElText('multLabel', 'Multiplier:');
+      setElText('hourlyRateUnit', 'REX / hour');
+      setElText('dailyRateUnit', 'REX / day');
+      setElText('tierTapHint', 'Yield Calculator ❯');
+
+      // Sovereign Gate
+      setElText('gateTitle', 'Sovereign Royal Gate Locked');
+      setElHtml('gateDesc', 'Welcome to <strong>ROYAL ELITE X</strong> 👑.<br>To defend the ecosystem against sybil accounts, all platform modules are locked until completing two verification steps:');
+      setElText('gateStep1Title', 'Connect External TON Wallet');
+      setElText('gateWalletDesc', 'Please connect your external TON wallet (Tonkeeper / MyTonWallet)');
+      setElText('gateConnectBtnText', 'Click to Connect Wallet');
+      setElText('gateStep2Title', 'Platform Access Fee — 0.1 TON');
+      setElText('gateStep2Desc', 'One-time nominal fee for anti-sybil platform defense');
+      setElText('payBtnText', userData?.is_wallet_connected ? 'Pay 0.1 TON & Unlock Platform' : 'Wallet connection required');
+
+      // Mining Core
+      setElText('lblAccrued', 'Current Cycle Rewards');
+      setElText('lblTimeLeft', 'Time Remaining');
+      setElText('lblProg', '24h Cycle Complete');
+      setElText('mineBtnText', 'Start Royal Mining Cycle (24h)');
+
+      // Quests Tab
+      setElText('questsTitle', 'Repeatable Royal Quests');
+      setElText('questsDesc', 'Complete recurring quests to earn instant REX rewards.');
+
+      // Withdraw Tab
+      setElText('wdTitle', 'REX Withdrawal Center');
+      setElText('lblBotBal', 'Platform Balance');
+      setElText('lblWalletBal', 'On-Chain Balance');
+      setElText('lblHoldTitle', '⏳ Holding Rule (3 Days - 5,000 REX):');
+      setElText('lblHoldingTime', 'Holding Time:');
+      setElHtml('holdStatusDetail', 'Must hold at least <strong>5,000 REX</strong> on-chain for 3 consecutive days (72 hours) before withdrawing.');
+      setElHtml('holdWarningMsg', '⚠️ <strong>Strict Rule:</strong> If you sell and your wallet balance drops below 5,000 REX, the 3-day holding timer <strong>resets to 0 immediately</strong>!');
+      setElHtml('antiDumpRuleMsg', '🛡️ <strong>Anti-Dump Policy (24h Ban Guard):</strong> Selling or transferring any REX tokens within <strong>24 hours</strong> of receiving a withdrawal triggers an <strong>immediate automatic permanent account ban</strong>!');
+      setElHtml('btnBuyStonfi', '🛒 <span>Buy 5,000 REX on STON.fi DEX</span>');
+      setElHtml('payoutNoticeMsg', '🛡️ Manual Admin Verification &bull; Payout arrives within <strong>24 hours</strong> of approval');
+      setElText('btnSubmitWd', '📤 Request Withdrawal (24h Delivery)');
+      setElText('payoutsTitle', 'Live Verified Platform Payouts');
+      setElText('payoutsDesc', 'Latest approved community withdrawals processed on-chain:');
+      setElText('histTitle', 'Your Personal Withdrawals History');
+      setElHtml('wdNotice', '🔒 <strong>Royal Security Rule (20% On-Chain Hold):</strong><br>To withdraw your earnings, you must hold in your TON wallet an on-chain balance of purchased REX tokens equivalent to at least <strong>20%</strong> of the requested withdrawal (Minimum: <strong>5,000 REX</strong>).');
+
+      // Friends Tab
+      setElText('friendsTitle', 'Knights Ambassador Program');
+      setElHtml('friendsDesc', 'Invite friends: earn <strong style="color:var(--gold-lt);">50 REX</strong> instant + <strong style="color:var(--gold-lt);">5% royal commission</strong> on all friend claims for life!');
+      setElText('lblFriendsCount', 'Invited Knights');
+      setElText('lblFriendsCommission', 'Commission Rate');
+      setElText('btnCopyRef', '📋 Copy Link');
+      setElText('btnShareRef', '✈️ Share');
+
+      // Leaderboard Tab
+      setElText('lbTitle', 'Mining Emperors Leaderboard');
+
+      // Bottom Nav
+      setElText('navMineText', 'Mining');
+      setElText('navQuestsText', 'Quests');
+      setElText('centerMenuLabel', typeof isHubOpen !== 'undefined' && isHubOpen ? 'Close' : 'Menu');
+      setElText('navFriendsText', 'Friends');
+      setElText('navWithdrawText', 'Withdraw');
+
+      // Platform Hub
+      setElText('hubTitleMain', 'Ecosystem Services');
+      setElText('hubTitleSub', 'Blockchain & Platform Modules');
+      setElText('hubIntelName', 'REX Intelligence');
+      setElText('hubIntelDesc', 'Performance analytics & ranking');
+      setElText('hubProofName', 'Proof of Rewards');
+      setElText('hubProofDesc', 'TON Blockchain Explorer');
+      setElText('hubAchName', 'Achievements');
+      setElText('hubAchDesc', 'Badges & Honor XP');
+      setElText('hubVaultName', 'Royal Vault');
+      setElText('hubVaultDesc', 'Self-Locking & boosts');
+      setElText('hubGuildName', 'Royal Guilds');
+      setElText('hubGuildDesc', 'Alliances & weekly battles');
+      setElText('hubAcadName', 'REX Academy');
+      setElText('hubAcadDesc', 'Web3 lessons & quizzes');
+      setElText('hubPortName', 'Portfolio & Ledger');
+      setElText('hubPortDesc', 'Double-entry financial audit');
+      setElText('hubWpName', 'Official Whitepaper');
+      setElText('hubWpDesc', 'Tokenomics, rules & ecosystem');
+      setElText('hubTiersName', '10% Daily HODL Yield');
+      setElText('hubTiersDesc', 'Mine 10% of held REX tokens daily');
+
+      // Modals Titles & Headers
+      setElText('mIntelTitle', 'REX Intelligence');
+      setElText('mProofTitle', 'Proof of Rewards & TON Explorer');
+      setElText('mAchTitle', 'Royal Badges & Achievements');
+      setElText('mVaultTitle', 'Royal Vault (Self-Locking)');
+      setElText('vaultModalDesc', 'Voluntary lockup to boost your mining multiplier and prove holding without losing ownership.');
+      setElText('btnSubmitVaultLock', '🔒 Confirm Vault Lock');
+      setElText('mGuildTitle', 'Royal Guilds & Alliances');
+      setElText('mAcadTitle', 'REX Blockchain Academy');
+      setElText('mPortTitle', 'Portfolio & Financial Ledger');
+      setElText('mWpTitle', 'Official Sovereign Whitepaper 2026');
+      setElText('mTiersTitle', '10% Daily HODL Mining Protocol');
+      setElText('lblBuyRexSton', 'Buy REX on STON.fi to Boost Daily Yield');
+    } else {
+      // Splash
+      setElText('splashSubText', 'إمبراطورية التعدين الملكية · TON BLOCKCHAIN');
+      setElText('splashStatusText', '⚡ تهيئة بروتوكول التعدين الملكي...');
+
+      // Header
+      setElText('lblHeaderNet', 'شبكة TON الرئيسية');
+      setElText('lblOnChainWallet', 'محفظة TON:');
+
+      // Vault Card
+      setElText('vaultBadgeText', '👑 الرصيد الملكي المتاح · REX');
+      setElText('multLabel', 'المضاعف:');
+      setElText('hourlyRateUnit', 'REX / ساعة');
+      setElText('dailyRateUnit', 'REX / يوم');
+      setElText('tierTapHint', 'حاسبة العائد ❯');
+
+      // Sovereign Gate
+      setElText('gateTitle', 'بوابة البلاط الملكي المقفولة');
+      setElHtml('gateDesc', 'مرحباً بك في <strong>ROYAL ELITE X</strong> 👑.<br>لحماية المنظومة من الحسابات الوهمية، جميع أقسام المنصة مقفولة حتى إتمام خطوتي الدخول:');
+      setElText('gateStep1Title', 'ربط محفظة TON الخارجية');
+      setElText('gateWalletDesc', 'يرجى ربط محفظتك الخارجية (Tonkeeper / MyTonWallet)');
+      setElText('gateConnectBtnText', 'اضغط هنا لربط المحفظة الآن');
+      setElText('gateStep2Title', 'رسوم تفعيل البلاط — 0.1 TON');
+      setElText('gateStep2Desc', 'رسم رمزي لمرة واحدة لفتح وحماية الحساب مدى الحياة');
+      setElText('payBtnText', userData?.is_wallet_connected ? 'دفع 0.1 TON وفتح المنصة فوراً' : 'يلزم ربط المحفظة أولاً للدفع');
+
+      // Mining Core
+      setElText('lblAccrued', 'الأرباح المتراكمة بالدورة');
+      setElText('lblTimeLeft', 'الوقت المتبقي');
+      setElText('lblProg', 'دورة 24 ساعة مكتملة');
+      setElText('mineBtnText', 'ابدأ دورة التعدين الملكي (24 ساعة)');
+
+      // Quests Tab
+      setElText('questsTitle', 'المهام الملكية المتجددة');
+      setElText('questsDesc', 'أكمل المهام اليومية لكسب مكافآت REX فورية.');
+
+      // Withdraw Tab
+      setElText('wdTitle', 'مركز سحب REX الملكي');
+      setElText('lblBotBal', 'رصيدك في المنصة');
+      setElText('lblWalletBal', 'رصيدك On-Chain');
+      setElText('lblHoldTitle', '⏳ شرط الاحتفاظ (3 أيام - 5,000 REX):');
+      setElText('lblHoldingTime', 'وقت الاحتفاظ الفعلي:');
+      setElHtml('holdStatusDetail', 'يجب شراء والاحتفاظ بما لا يقل عن <strong>5,000 REX</strong> في محفظتك On-Chain لمدة 3 أيام متتالية قبل السحب.');
+      setElHtml('holdWarningMsg', '⚠️ <strong>تحذير صارم:</strong> في حال بيع أي جزء من عملاتك ونزول رصيدك عن 5,000 REX، سيتم <strong>تصفير وإعادة العداد للبداية فوراً</strong>!');
+      setElHtml('antiDumpRuleMsg', '🛡️ <strong>حماية مكافحة الإغراق (حظر تلقائي 24 ساعة):</strong> يُحظر بيع أو تحويل أي جزء من عملات REX لمدة <strong>24 ساعة (يوم كامل)</strong> بعد استلام السحب، والبيع يتسبب في <strong>حظر الحساب تلقائياً ونهائياً</strong> فوراً!');
+      setElHtml('btnBuyStonfi', '🛒 <span>شراء 5,000 REX من منصة STON.fi</span>');
+      setElHtml('payoutNoticeMsg', '🛡️ مراجعة وموافقة يدوية من الإدارة &bull; يصل السحب لمحفظتك خلال <strong>24 ساعة</strong> من الموافقة');
+      setElText('btnSubmitWd', '📤 تأكيد طلب السحب (يصل خلال 24 ساعة)');
+      setElText('payoutsTitle', '🔥 آخر السحوبات المعتمدة بالشبكة');
+      setElText('payoutsDesc', 'أحدث السحوبات المعتمدة التي تم إرسالها لمحافظ الفرسان:');
+      setElText('histTitle', '📋 سجل سحوباتك الشخصية');
+      setElHtml('wdNotice', '🔒 <strong>شرط الأمان الملكي (20% On-Chain Hold):</strong><br>لسحب أرباحك، يجب أن تكون محتفظاً في محفظة TON برصيد عملات REX حقيقية مشتراة يعادل <strong>20%</strong> على الأقل من قيمة السحب المطلوب (الحد الأدنى للسحب: <strong>5,000 REX</strong>).');
+
+      // Friends Tab
+      setElText('friendsTitle', 'برنامج فرسان البلاط (الإحالات)');
+      setElHtml('friendsDesc', 'ادعُ أصدقاءك وانل <strong style="color:var(--gold-lt);">50 REX</strong> فورية لكل صديق + <strong style="color:var(--gold-lt);">5% عمولة ملكية</strong> مدى الحياة!');
+      setElText('lblFriendsCount', 'عدد الفرسان المدعوين');
+      setElText('lblFriendsCommission', 'نسبة أرباح الإحالة');
+      setElText('btnCopyRef', '📋 نسخ الرابط');
+      setElText('btnShareRef', '✈️ مشاركة');
+
+      // Leaderboard Tab
+      setElText('lbTitle', 'لوحة صدارة ملوك التعدين');
+
+      // Bottom Nav
+      setElText('navMineText', 'التعدين');
+      setElText('navQuestsText', 'المهام');
+      setElText('centerMenuLabel', typeof isHubOpen !== 'undefined' && isHubOpen ? 'إغلاق' : 'القائمة');
+      setElText('navFriendsText', 'الأصدقاء');
+      setElText('navWithdrawText', 'السحب');
+
+      // Platform Hub
+      setElText('hubTitleMain', 'أقسام المنظومة الملكية');
+      setElText('hubTitleSub', 'بوابة الخدمات والبلوكتشين');
+      setElText('hubIntelName', 'ذكاء المنظومة');
+      setElText('hubIntelDesc', 'تحليلات الأداء وتقدير الرتب');
+      setElText('hubProofName', 'إثبات المكافآت');
+      setElText('hubProofDesc', 'شفافية البلوكتشين ومستكشف TON');
+      setElText('hubAchName', 'الأوسمة والإنجازات');
+      setElText('hubAchDesc', 'شارات الشرف ونقاط XP');
+      setElText('hubVaultName', 'الخزينة الملكية');
+      setElText('hubVaultDesc', 'قفل الحيازة ومضاعفات القوة');
+      setElText('hubGuildName', 'النقابات الملكية');
+      setElText('hubGuildDesc', 'التحالفات والتنافس الأسبوعي');
+      setElText('hubAcadName', 'أكاديمية REX');
+      setElText('hubAcadDesc', 'مساقات واختبارات الويب 3');
+      setElText('hubPortName', 'المحفظة وسجل المعاملات المالي');
+      setElText('hubPortDesc', 'سجل تدقيق مالي مزدوج لجميع الأرصدة والحركات');
+      setElText('hubWpName', 'الورقة البيضاء الرسمية');
+      setElText('hubWpDesc', 'التوكنوميكس، القواعد والمنظومة');
+      setElText('hubTiersName', 'عائد الحيازة (10% يومياً)');
+      setElText('hubTiersDesc', 'تعدين 10% يومياً من العملات المحتفظ بها');
+
+      // Modals Titles & Headers
+      setElText('mIntelTitle', 'ذكاء المنظومة الملكية (REX Intelligence)');
+      setElText('mProofTitle', 'إثبات المكافآت ومستكشف TON');
+      setElText('mAchTitle', 'شارات الشرف والأوسمة الملكية');
+      setElText('mVaultTitle', 'الخزينة الملكية (قفل الحيازة)');
+      setElText('vaultModalDesc', 'قفل الحيازة الطوعي لرفع مضاعف التعدين وإثبات الولاء للمنظومة دون فقدان الملكية.');
+      setElText('btnSubmitVaultLock', '🔒 تأكيد قفل الرصيد في الخزينة');
+      setElText('mGuildTitle', 'النقابات الملكية والتحالفات');
+      setElText('mAcadTitle', 'أكاديمية REX لعلوم البلوكتشين');
+      setElText('mPortTitle', 'المحفظة وسجل المعاملات المالي');
+      setElText('mWpTitle', 'الورقة البيضاء الرسمية 2026');
+      setElText('mTiersTitle', 'بروتوكول تعدين الحيازة (10% يومياً)');
+      setElText('lblBuyRexSton', 'شراء REX من STON.fi لرفع إنتاج التعدين اليومي');
+    }
+
+    // Dynamic Updates
+    if (userData) {
+      renderAll(userData);
+      updateHoldTimerDisplay();
+    }
+    if (cachedHoldingTier) updateHoldingTierUI(cachedHoldingTier);
+
+    // Refresh active modal if open
+    const modalLoaders = {
+      intelligenceModal: loadIntelligence,
+      proofModal: loadProofOfRewards,
+      achievementsModal: loadAchievements,
+      vaultModal: loadVaults,
+      guildsModal: loadGuilds,
+      academyModal: loadAcademy,
+      portfolioModal: loadPortfolio,
+      whitepaperModal: loadWhitepaper,
+      tiersModal: renderHoldingTiersModal
+    };
+    Object.keys(modalLoaders).forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.classList.contains('open')) {
+        modalLoaders[id]();
+      }
+    });
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  function haptic(type) {
+    if (!tg) return;
+    if (type === 'light' || type === 'medium') tg.HapticFeedback?.impactOccurred(type);
+    else if (type === 'success' || type === 'warning') tg.HapticFeedback?.notificationOccurred(type);
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  applyLanguage(currentLang);
+
+  // Auto-open modals if requested via URL (?modal=whitepaper or ?modal=tiers)
+  const initUrlParams = new URLSearchParams(window.location.search);
+  const targetModal = initUrlParams.get('modal');
+  if (targetModal === 'whitepaper') {
+    setTimeout(() => { openModal('whitepaperModal'); }, 600);
+  } else if (targetModal === 'tiers' || targetModal === 'levels' || targetModal === 'boost') {
+    setTimeout(() => { openModal('tiersModal'); }, 600);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROYAL ELITE X — Enterprise Command Center</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #050811;
+      --bg-sidebar: #090e1c;
+      --bg-card: rgba(14, 22, 42, 0.85);
+      --bg-card-hover: rgba(22, 34, 62, 0.95);
+      
+      --gold: #f59e0b;
+      --gold-lt: #fbbf24;
+      --gold-bright: #fef08a;
+      --gold-grad: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%);
+      
+      --green: #10b981;
+      --green-grad: linear-gradient(135deg, #34d399, #059669);
+      
+      --red: #ef4444;
+      --red-grad: linear-gradient(135deg, #f87171, #dc2626);
+      
+      --cyan: #38bdf8;
+      --purple: #a855f7;
+      
+      --border: rgba(245, 158, 11, 0.18);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-hl: rgba(251, 191, 36, 0.45);
+      
+      --muted: #64748b;
+      --muted-lt: #94a3b8;
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: var(--bg);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245,158,11,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(56,189,248,0.05) 0%, transparent 60%);
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ════ LOGIN SCREEN (WITH 2FA OTP) ════ */
+    #loginScreen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+      flex-direction: column;
+    }
+    .login-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 28px; padding: 40px 32px; text-align: center;
+      box-shadow: 0 0 70px rgba(245,158,11,0.2), 0 20px 50px rgba(0,0,0,0.8);
+      width: min(440px, 92vw); backdrop-filter: blur(20px);
+    }
+    .login-brand {
+      font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900;
+      color: var(--gold-lt); margin-bottom: 6px;
+    }
+    .login-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .login-field {
+      width: 100%; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: 15px 18px; color: #fff; font-size: 16px; font-family: 'Orbitron', monospace;
+      outline: none; text-align: center; letter-spacing: 3px; margin-bottom: 14px;
+    }
+    .login-field:focus { border-color: var(--gold-lt); box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+    .login-submit-btn {
+      width: 100%; padding: 15px; background: var(--gold-grad);
+      color: #050810; border: none; border-radius: 16px; font-size: 15px;
+      font-weight: 900; cursor: pointer; transition: transform 0.15s; margin-bottom: 10px;
+    }
+    .login-submit-btn:hover { transform: scale(0.99); }
+    .otp-box {
+      background: rgba(56,189,248,0.08); border: 1px dashed var(--cyan);
+      border-radius: 16px; padding: 16px; margin-top: 14px; display: none;
+    }
+
+    /* ════ MAIN LAYOUT ════ */
+    .layout-container { display: flex; min-height: 100vh; }
+
+    /* ════ SIDEBAR ════ */
+    .admin-sidebar {
+      width: 250px; background: var(--bg-sidebar); border-left: 1px solid var(--border-subtle);
+      display: flex; flex-direction: column; padding: 22px 0;
+      flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      z-index: 100;
+    }
+    .sidebar-header {
+      padding: 0 20px 22px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .sidebar-brand {
+      font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900;
+      color: var(--gold-lt); display: flex; align-items: center; gap: 8px;
+    }
+    .system-status-indicator {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10.5px; font-weight: 700; color: var(--green);
+      background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 12px;
+      margin-top: 6px; border: 1px solid rgba(16,185,129,0.25);
+    }
+    .status-dot-blink {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: blinkDot 1.4s infinite;
+    }
+    @keyframes blinkDot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .nav-links-wrap { padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; cursor: pointer; font-size: 13px; font-weight: 700;
+      color: var(--muted-lt); transition: all 0.2s ease;
+      border-radius: 14px;
+    }
+    .sidebar-nav-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+    .sidebar-nav-item.active {
+      background: rgba(245,158,11,0.12); color: var(--gold-lt);
+      border: 1px solid rgba(245,158,11,0.25);
+    }
+    .nav-counter-badge {
+      margin-right: auto; background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 20px;
+    }
+
+    .sidebar-bottom-info {
+      margin-top: auto; padding: 18px 20px; font-size: 11px; color: var(--muted);
+      border-top: 1px solid var(--border-subtle); line-height: 1.6;
+    }
+
+    /* ════ MAIN CONTENT ════ */
+    .admin-main { flex: 1; padding: 28px 32px; overflow-x: hidden; }
+
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .section-heading {
+      font-size: 22px; font-weight: 900; color: #fff;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-heading span { color: var(--gold-lt); }
+
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-action-header {
+      padding: 9px 18px; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-subtle); border-radius: 12px;
+      color: #fff; font-size: 12px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn-action-header:hover { background: rgba(255,255,255,0.1); border-color: var(--border); }
+
+    /* ════ STATS METRIC GRID ════ */
+    .stat-cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .metric-card:hover { transform: translateY(-2px); border-color: var(--border); }
+    .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .metric-card.gold::before   { background: var(--gold-grad); }
+    .metric-card.green::before  { background: var(--green); }
+    .metric-card.red::before    { background: var(--red); }
+    .metric-card.cyan::before   { background: var(--cyan); }
+    .metric-card.purple::before { background: var(--purple); }
+
+    .metric-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .metric-card-icon { font-size: 24px; }
+    .metric-card-tag { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+    .metric-card-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+    .metric-card-value { font-family: 'Orbitron', monospace; font-size: 23px; font-weight: 900; color: #fff; }
+    .metric-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ════ TABLE WRAPPER ════ */
+    .table-container {
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius); overflow: hidden; box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
+    }
+    .table-top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 22px; border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap; gap: 10px;
+    }
+    .table-headline {
+      font-size: 15px; font-weight: 800; color: var(--gold-lt);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .table-search-input {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);
+      border-radius: 12px; padding: 8px 14px; color: #fff; font-size: 12.5px;
+      width: 250px; outline: none; font-family: 'Cairo', sans-serif;
+    }
+    .table-search-input:focus { border-color: var(--gold-lt); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      padding: 12px 18px; text-align: right; font-weight: 800; color: var(--muted-lt);
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px; white-space: nowrap; text-transform: uppercase;
+    }
+    td { padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .table-scroll-x { overflow-x: auto; }
+
+    /* ════ BADGES & PILLS ════ */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-red   { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .badge-gold  { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-cyan  { background: rgba(56,189,248,0.12); color: var(--cyan); border: 1px solid rgba(56,189,248,0.3); }
+    .badge-purple{ background: rgba(168,85,247,0.12); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+    .badge-muted { background: rgba(255,255,255,0.07); color: var(--muted); }
+
+    /* ════ BUTTONS ════ */
+    .btn {
+      padding: 7px 14px; border-radius: 10px; font-size: 12px; font-weight: 800;
+      cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn:hover { transform: scale(0.97); opacity: 0.92; }
+    .btn-ban    { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-unban  { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+    .btn-inspect{ background: rgba(56,189,248,0.12); color: var(--cyan); border: 1px solid rgba(56,189,248,0.3); }
+    .btn-gold   { background: var(--gold-grad); color: #000; }
+    .btn-approve{ background: var(--green-grad); color: #fff; }
+    .btn-reject { background: var(--red-grad); color: #fff; }
+    .btn-ghost  { background: rgba(255,255,255,0.07); color: #fff; }
+
+    /* ════ MODALS ════ */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+      z-index: 999; display: none; align-items: center; justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 26px; padding: 28px; width: min(640px, 94vw);
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 0 80px rgba(0,0,0,0.9);
+      animation: modalPopIn 0.2s ease-out;
+    }
+    @keyframes modalPopIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .inspector-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .inspector-cell {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);
+      border-radius: 14px; padding: 12px 14px;
+    }
+    .inspector-cell-label { font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+    .inspector-cell-val { font-size: 13.5px; font-weight: 800; color: #fff; word-break: break-all; }
+
+    /* ════ SETTINGS INPUTS ════ */
+    .settings-panel-box {
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle);
+      border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    }
+    .settings-panel-box h4 { font-size: 14px; color: var(--gold-lt); margin-bottom: 14px; }
+    .form-item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .form-item-row label { font-size: 13px; color: #cbd5e1; font-weight: 700; }
+    .form-item-input {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);
+      border-radius: 10px; padding: 9px 12px; color: #fff; font-family: 'Orbitron', monospace;
+      font-size: 13px; width: 170px; text-align: left; outline: none;
+    }
+
+    #adminToast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(30px);
+      background: rgba(15,25,45,0.98); border: 1px solid var(--gold-lt);
+      color: #fff; padding: 12px 26px; border-radius: 50px;
+      font-size: 13px; font-weight: 800; opacity: 0; transition: all 0.3s;
+      pointer-events: none; z-index: 9999; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    }
+    #adminToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .filter-tabs-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-chip {
+      padding: 7px 14px; border-radius: 12px; font-size: 11.5px; font-weight: 800;
+      cursor: pointer; border: 1px solid var(--border-subtle); color: var(--muted);
+      transition: all 0.2s;
+    }
+    .filter-chip.active { background: rgba(245,158,11,0.12); color: var(--gold-lt); border-color: rgba(245,158,11,0.3); }
+
+    .tab-content-panel { display: none; }
+    .tab-content-panel.active { display: block; animation: fadeInSection 0.2s ease-out; }
+    @keyframes fadeInSection { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN OVERLAY (WITH 2FA OTP) ══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-brand">👑 REX ENTERPRISE COMMAND</div>
+    <div class="login-subtitle">غرفة العمليات المركزية والتحكم السيادي</div>
+    
+    <div id="secretStep">
+      <input class="login-field" type="password" id="secretInput" placeholder="كلمة سر الإدارة (REX_ADMIN_2026)" onkeydown="if(event.key==='Enter')verifySecret()">
+      <button class="login-submit-btn" onclick="verifySecret()">🔑 التحقق ودخول لوحة التحكم</button>
+      <div style="font-size:12px; color:var(--muted); margin-top:10px;">
+        💡 للدخول السريع: اضغط <a href="javascript:void(0)" onclick="document.getElementById('secretInput').value='REX_ADMIN_2026';verifySecret();" style="color:var(--gold-lt); text-decoration:underline; font-weight:bold;">هنا لتسجيل الدخول التلقائي</a>
+      </div>
+    </div>
+
+    <!-- 2FA OTP Step -->
+    <div id="otpStep" class="otp-box">
+      <h4 style="color:var(--cyan); margin-bottom:8px;">🔐 التحقق الثنائي (Admin 2FA)</h4>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">أدخل الرمز السري المكون من 6 أرقام المرسل إلى تيليجرام:</p>
+      <input class="login-field" type="text" id="otpInput" placeholder="● ● ● ● ● ●" maxlength="6" style="letter-spacing:6px; font-size:18px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="requestOtp()">📲 إرسال OTP</button>
+        <button class="btn btn-gold" style="flex:1;" onclick="verifyOtp()">🔓 تأكيد الدخول</button>
+      </div>
+    </div>
+
+    <p id="loginErr" style="color:var(--red);font-size:12px;margin-top:12px;display:none"></p>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN DASHBOARD LAYOUT ══════════════ -->
+<div class="layout-container" id="mainLayout" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">👑 REX COMMAND</div>
+      <div class="system-status-indicator">
+        <span class="status-dot-blink"></span>
+        <span>متصل · TON MAINNET</span>
+      </div>
+    </div>
+
+    <div class="nav-links-wrap">
+      <div class="sidebar-nav-item active" onclick="switchNav('overview', this)">
+        <span>📊</span> الإحصائيات واقتصاد العملة
+      </div>
+      <div class="sidebar-nav-item" onclick="switchNav('users', this)">
+        <span>👥</span> فرسان البلاط (المستخدمين)
+      </div>
+      <div class="sidebar-nav-item" onclick="switchNav('withdrawals', this)">
+        <span>📤</span> محرك السحب المؤسسي
+        <span class="nav-counter-badge" id="pendingCountBadge" style="display:none">0</span>
+      </div>
+      <div class="sidebar-nav-item" onclick="switchNav('sybil', this)">
+        <span>🛡️</span> رادار مكافحة الاحتيال
+      </div>
+      <div class="sidebar-nav-item" onclick="switchNav('settings', this)">
+        <span>⚙️</span> إعدادات الاقتصاد والنظام
+      </div>
+      <div class="sidebar-nav-item" onclick="switchNav('broadcast', this)">
+        <span>📢</span> الإشعار الملكي الجماعي
+      </div>
+      <div class="sidebar-nav-item" onclick="switchNav('audit', this)">
+        <span>📜</span> سجل التدقيق الإداري
+      </div>
+    </div>
+
+    <div class="sidebar-bottom-info">
+      <div>🔒 2FA مفعّل ومحمي</div>
+      <div style="color:var(--gold-lt);">إجمالي المعروض: 50,000,000</div>
+      <div id="sidebarMaintBadge" style="margin-top:6px; font-weight:800; color:var(--green);">🟢 النظام متاح أونلاين</div>
+    </div>
+  </aside>
+
+  <!-- MAIN VIEW -->
+  <main class="admin-main">
+
+    <!-- GLOBAL MAINTENANCE BANNER -->
+    <div id="adminMaintBanner" style="display:none; width:100%; background:linear-gradient(90deg, rgba(239,68,68,0.22), rgba(239,68,68,0.06)); border:1px solid rgba(239,68,68,0.5); border-radius:14px; padding:12px 20px; margin-bottom:20px; color:#ef4444; font-weight:800; font-size:13.5px; align-items:center; justify-content:space-between; box-shadow:0 0 20px rgba(239,68,68,0.2);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:18px;">🚨</span>
+        <span>وضع الصيانة مفعّل حالياً: التطبيق مغلق تماماً أمام جميع المستخدمين.</span>
+      </div>
+      <button class="btn btn-approve" style="padding:6px 16px; font-size:12px;" onclick="toggleMaintenanceMode()">إلغاء وضع الصيانة الآن</button>
+    </div>
+
+    <!-- 1. TAB: OVERVIEW & TOKENOMICS -->
+    <div id="tab-overview" class="tab-content-panel active">
+      <div class="section-header">
+        <div class="section-heading"><span>📊</span> لوحة المؤشرات العامة واقتصاد REX</div>
+        <div class="header-actions">
+          <button class="btn-action-header" onclick="loadOverview()">🔄 تحديث لحظي</button>
+        </div>
+      </div>
+
+      <!-- Live Tokenomics Strip -->
+      <div class="stat-cards-grid">
+        <div class="metric-card gold">
+          <div class="metric-card-top"><span class="metric-card-icon">🪙</span><span class="metric-card-tag badge-gold">FIXED CAP</span></div>
+          <div class="metric-card-label">إجمالي المعروض النهائي</div>
+          <div class="metric-card-value" id="s-supply">50,000,000</div>
+          <div class="metric-card-sub">عقد الـ Jetton المعتمد على TON</div>
+        </div>
+        <div class="metric-card cyan">
+          <div class="metric-card-top"><span class="metric-card-icon">⛏️</span><span class="metric-card-tag badge-cyan">RESERVE</span></div>
+          <div class="metric-card-label">احتياطي التعدين المتبقي</div>
+          <div class="metric-card-value" id="s-mining-rem">20,000,000</div>
+          <div class="metric-card-sub" id="s-mining-dist">موزع: 0 REX</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-card-top"><span class="metric-card-icon">⚡</span><span class="metric-card-tag badge-purple">EMISSION</span></div>
+          <div class="metric-card-label">الانبعاث اليومي المتاح</div>
+          <div class="metric-card-value" id="s-daily-emission">50,000</div>
+          <div class="metric-card-sub" id="s-today-dist">موزع اليوم: 0 REX</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-card-top"><span class="metric-card-icon">📤</span><span class="metric-card-tag badge-green">ON-CHAIN</span></div>
+          <div class="metric-card-label">سحوبات البلوكتشين المؤكدة</div>
+          <div class="metric-card-value" id="s-confirmed-wd">0</div>
+          <div class="metric-card-sub">معاملات مسجلة وموثقة بالـ Hash</div>
+        </div>
+      </div>
+
+      <!-- Core Platform Stats -->
+      <div class="stat-cards-grid">
+        <div class="metric-card cyan">
+          <div class="metric-card-top"><span class="metric-card-icon">👥</span></div>
+          <div class="metric-card-label">المستخدمين المسجلين</div>
+          <div class="metric-card-value" id="s-users">0</div>
+          <div class="metric-card-sub" id="s-new">+0 اليوم</div>
+        </div>
+        <div class="metric-card gold">
+          <div class="metric-card-top"><span class="metric-card-icon">👑</span></div>
+          <div class="metric-card-label">الحسابات المفعّلة (0.1 TON)</div>
+          <div class="metric-card-value" id="s-activated">0</div>
+          <div class="metric-card-sub">دخول مكتمل ومؤكد</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-card-top"><span class="metric-card-icon">⚡</span></div>
+          <div class="metric-card-label">المعدنين النشطين حالياً</div>
+          <div class="metric-card-value" id="s-miners">0</div>
+          <div class="metric-card-sub">دورة تعدين جارية</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-card-top"><span class="metric-card-icon">🏦</span></div>
+          <div class="metric-card-label">إجمالي رصيد المنصة الداخلي</div>
+          <div class="metric-card-value" id="s-balance">0</div>
+          <div class="metric-card-sub" id="s-reserved-bal">محجوز للسحب: 0 REX</div>
+        </div>
+      </div>
+
+      <!-- Quick Pending Withdrawals Table -->
+      <div class="table-container">
+        <div class="table-top-bar">
+          <div class="table-headline"><span>⚡</span> طلبات السحب العاجلة بانتظار المعالجة</div>
+          <button class="btn btn-inspect" onclick="switchNav('withdrawals')">عرض جميع السحوبات ↗</button>
+        </div>
+        <div class="table-scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>المستخدم</th>
+                <th>المبلغ المطلوب</th>
+                <th>المحفظة On-Chain</th>
+                <th>التاريخ</th>
+                <th>الإجراء المباشر</th>
+              </tr>
+            </thead>
+            <tbody id="quickPendingTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TAB: USERS -->
+    <div id="tab-users" class="tab-content-panel">
+      <div class="section-header">
+        <div class="section-heading"><span>👥</span> دليل فرسان البلاط الملكي</div>
+        <div class="header-actions">
+          <input type="text" class="table-search-input" id="userSearchBox" placeholder="بحث بالاسم أو ID أو المحفظة..." oninput="debounceUserSearch()">
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div class="table-scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>Telegram ID</th>
+                <th>الاسم</th>
+                <th>اليوزرنيم</th>
+                <th>الرصيد المتاح</th>
+                <th>المحجوز</th>
+                <th>XP الرتبة</th>
+                <th>المضاعف</th>
+                <th>الحالة</th>
+                <th>المحفظة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TAB: MULTI-STAGE WITHDRAWALS -->
+    <div id="tab-withdrawals" class="tab-content-panel">
+      <div class="section-header">
+        <div class="section-heading"><span>📤</span> محرك السحب المؤسسي خماسي المراحل</div>
+        <div class="header-actions">
+          <button class="btn-action-header" onclick="loadWithdrawals()">🔄 تحديث</button>
+        </div>
+      </div>
+
+      <div class="filter-tabs-bar">
+        <div class="filter-chip active" onclick="filterWd('all', this)">الكل</div>
+        <div class="filter-chip" onclick="filterWd('pending', this)">قيد الانتظار (PENDING)</div>
+        <div class="filter-chip" onclick="filterWd('reviewing', this)">قيد التدقيق (REVIEWING)</div>
+        <div class="filter-chip" onclick="filterWd('approved', this)">معتمد (APPROVED)</div>
+        <div class="filter-chip" onclick="filterWd('processing', this)">جاري التنفيذ (PROCESSING)</div>
+        <div class="filter-chip" onclick="filterWd('confirmed', this)">مؤكد On-Chain (CONFIRMED)</div>
+        <div class="filter-chip" onclick="filterWd('rejected', this)">مرفوض (REJECTED)</div>
+      </div>
+
+      <div class="table-container">
+        <div class="table-scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>معرف</th>
+                <th>المستخدم</th>
+                <th>المبلغ</th>
+                <th>المحفظة</th>
+                <th>الحالة الحالية</th>
+                <th>هاش المعاملة (Tx Hash)</th>
+                <th>التاريخ</th>
+                <th>التحكم والموافقة</th>
+              </tr>
+            </thead>
+            <tbody id="withdrawalsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. TAB: SYBIL RADAR -->
+    <div id="tab-sybil" class="tab-content-panel">
+      <div class="section-header">
+        <div class="section-heading"><span>🛡️</span> رادار مكافحة الاحتيال والحسابات المتعددة</div>
+        <div class="header-actions">
+          <button class="btn-action-header" onclick="loadSybilRadar()">🔄 إعادة الفحص</button>
+        </div>
+      </div>
+
+      <div class="table-container" style="margin-bottom:20px;">
+        <div class="table-top-bar">
+          <div class="table-headline"><span>📱</span> أجهزة متعددة الحسابات (Fingerprint Matches)</div>
+        </div>
+        <div class="table-scroll-x">
+          <table>
+            <thead><tr><th>بصمة الجهاز</th><th>العدد</th><th>معرفات الحسابات</th><th>إجراء فوري</th></tr></thead>
+            <tbody id="sybilFpBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div class="table-top-bar">
+          <div class="table-headline"><span>🌐</span> شبكات IP مشتركة بكثافة</div>
+        </div>
+        <div class="table-scroll-x">
+          <table>
+            <thead><tr><th>عنوان IP</th><th>عدد الحسابات</th><th>المعرفات</th></tr></thead>
+            <tbody id="sybilIpBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. TAB: SETTINGS -->
+    <div id="tab-settings" class="tab-content-panel">
+      <div class="section-header">
+        <div class="section-heading"><span>⚙️</span> إعدادات الاقتصاد والتحكم المركزي</div>
+        <div class="header-actions">
+          <button class="btn btn-gold" onclick="saveSettings()">💾 حفظ وتطبيق لحظي</button>
+        </div>
+      </div>
+
+      <!-- Maintenance Mode Control Box -->
+      <div class="settings-panel-box" style="margin-bottom:20px; border:1px solid rgba(239,68,68,0.35); background:rgba(239,68,68,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h4 style="margin:0 0 6px; color:#fff; display:flex; align-items:center; gap:8px;">
+              <span>🛠️</span> وضع الصيانة العام (Maintenance Mode)
+            </h4>
+            <p style="margin:0; font-size:12.5px; color:var(--muted-lt); line-height:1.6;">
+              عند تفعيل وضع الصيانة، يتم إغلاق تطبيق الميني آب وبوت التيليجرام أمام كافة المستخدمين وعرض شاشة الصيانة، بينما تبقى لوحة الأدمن متاحة لك بالكامل.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span id="maintenanceStatusBadge" class="status-badge" style="background:rgba(16,185,129,0.15); color:var(--green); font-size:12px; padding:6px 14px; border-radius:20px; font-weight:800;">
+              🟢 النظام متاح (Online)
+            </span>
+            <button id="btnToggleMaintenance" class="btn btn-ban" onclick="toggleMaintenanceMode()" style="padding:8px 18px; font-weight:800;">
+              ⛔ تفعيل وضع الصيانة
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel-box">
+        <h4>المعايير الاقتصادية وقواعد السحب:</h4>
+        <div class="form-item-row">
+          <label>الحد الأدنى للسحب (REX):</label>
+          <input type="number" class="form-item-input" id="cfg-min_withdrawal">
+        </div>
+        <div class="form-item-row">
+          <label>نسبة الاحتفاظ المطلوبة في المحفظة On-Chain (%):</label>
+          <input type="number" class="form-item-input" id="cfg-hold_percent">
+        </div>
+        <div class="form-item-row">
+          <label>الحد الأدنى للاحتفاظ بعملة REX في المحفظة On-Chain:</label>
+          <input type="number" class="form-item-input" id="cfg-min_hold_rex">
+        </div>
+        <div class="form-item-row">
+          <label>مدة الاحتفاظ الإلزامية برصيد REX قبل السحب (أيام):</label>
+          <input type="number" class="form-item-input" id="cfg-min_hold_days">
+        </div>
+        <div class="form-item-row">
+          <label>رسوم تفعيل البلاط الملكي (TON):</label>
+          <input type="number" step="0.01" class="form-item-input" id="cfg-activation_fee_ton">
+        </div>
+        <div class="form-item-row">
+          <label>معدل التعدين الأساسي اليومي (REX / 24h):</label>
+          <input type="number" class="form-item-input" id="cfg-base_daily_reward">
+        </div>
+        <div class="form-item-row">
+          <label>نسبة عمولة الإحالة مدى الحياة (%):</label>
+          <input type="number" class="form-item-input" id="cfg-referral_percent">
+        </div>
+        <div class="form-item-row">
+          <label>سقف الانبعاث اليومي لمكافآت التعدين (REX):</label>
+          <input type="number" class="form-item-input" id="cfg-max_daily_emission">
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. TAB: BROADCAST -->
+    <div id="tab-broadcast" class="tab-content-panel">
+      <div class="section-header">
+        <div class="section-heading"><span>📢</span> الإشعار الملكي الجماعي لكافة المستخدمين</div>
+      </div>
+      <div class="settings-panel-box">
+        <p style="font-size:12.5px;color:var(--muted-lt);margin-bottom:12px;">سيتم إرسال هذه الرسالة مباشرة عبر بوت التيليجرام لكافة المسجلين:</p>
+        <textarea id="broadcastContent" rows="6" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border-subtle);border-radius:14px;padding:14px;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;outline:none;margin-bottom:14px;" placeholder="اكتب نص البيان الملكي هنا..."></textarea>
+        <button class="btn btn-gold" onclick="sendBroadcastMsg()">🚀 إرسال البيان للجميع</button>
+        <div id="broadcastStatus" style="font-size:12px;color:var(--gold-lt);margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- 7. TAB: AUDIT LOGS -->
+    <div id="tab-audit" class="tab-content-panel">
+      <div class="section-header">
+        <div class="section-heading"><span>📜</span> سجل التدقيق الإداري غير القابل للتعديل</div>
+        <div class="header-actions"><button class="btn-action-header" onclick="loadAuditLogs()">🔄 تحديث</button></div>
+      </div>
+      <div class="table-container">
+        <div class="table-scroll-x">
+          <table>
+            <thead><tr><th>#</th><th>نوع الإجراء</th><th>التفاصيل والبيانات</th><th>التاريخ والوقت</th></tr></thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════ USER INSPECTOR MODAL ════ -->
+<div id="inspectorModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('inspectorModal')">
+  <div class="modal-card">
+    <div class="modal-headline">
+      <span>👑</span> فحص ملف الفارس الملكي <span id="insp-name"></span>
+    </div>
+    <div class="inspector-card-grid">
+      <div class="inspector-cell"><div class="inspector-cell-label">معرف التيليجرام</div><div class="inspector-cell-val" id="insp-tid"></div></div>
+      <div class="inspector-cell"><div class="inspector-cell-label">اليوزرنيم</div><div class="inspector-cell-val" id="insp-username"></div></div>
+      <div class="inspector-cell"><div class="inspector-cell-label">الرصيد المتاح في المنصة</div><div class="inspector-cell-val" style="color:var(--gold-lt)" id="insp-balance"></div></div>
+      <div class="inspector-cell"><div class="inspector-cell-label">الرصيد المحجوز للسحب</div><div class="inspector-cell-val" style="color:var(--purple)" id="insp-reserved"></div></div>
+      <div class="inspector-cell"><div class="inspector-cell-label">رصيد REX On-Chain الموثق</div><div class="inspector-cell-val" style="color:var(--cyan)" id="insp-onchain"></div></div>
+      <div class="inspector-cell"><div class="inspector-cell-label">مضاعف التعدين الحالي</div><div class="inspector-cell-val" id="insp-multiplier"></div></div>
+      <div class="inspector-cell"><div class="inspector-cell-label">حالة الحساب</div><div class="inspector-cell-val" id="insp-status"></div></div>
+      <div class="inspector-cell" style="grid-column: span 2;"><div class="inspector-cell-label">عنوان المحفظة المرتبطة</div><div class="inspector-cell-val" id="insp-wallet"></div></div>
+      <div class="inspector-cell" style="grid-column: span 2;"><div class="inspector-cell-label">شرط الاحتفاظ الإلزامي (3 أيام - 5,000 REX)</div><div class="inspector-cell-val" id="insp-hold-info"></div></div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+      <button class="btn btn-ban" id="insp-ban-btn" onclick="toggleUserBan()">⛔ حظر الحساب</button>
+      <button class="btn btn-gold" onclick="promptSetBalance()">💰 تعيين الرصيد</button>
+      <button class="btn btn-approve" onclick="promptAddBalance()">➕ إضافة رصيد</button>
+      <button class="btn btn-ghost" onclick="resetUserMining()">⚡ إعادة تعيين التعدين</button>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.02); border-radius:14px; padding:12px; margin-bottom:14px;">
+      <div style="font-size:12px; color:var(--gold-lt); font-weight:800; margin-bottom:6px;">إرسال رسالة خاصة للمستخدم على تيليجرام:</div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="insp-dm-input" placeholder="نص الرسالة..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); border-radius:10px; padding:8px 12px; color:#fff; font-size:12px;">
+        <button class="btn btn-gold" onclick="sendDmToUser()">إرسال</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost w-100" onclick="closeModal('inspectorModal')">إغلاق</button>
+  </div>
+</div>
+
+<!-- ════ CONFIRM ON-CHAIN MODAL ════ -->
+<div id="confirmWdModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('confirmWdModal')">
+  <div class="modal-card" style="width:min(500px, 94vw);">
+    <div class="modal-headline"><span>💎</span> تأكيد السحب برقم المعاملة (Tx Hash)</div>
+    <p style="font-size:12px; color:var(--muted-lt); margin-bottom:12px;">أدخل هاش المعاملة من محفظتك لإتمام العملية وتأكيدها للمستخدم وإرسال إشعار فوري له:</p>
+    <input type="hidden" id="modalWdId">
+    <input type="hidden" id="modalWdTid">
+    <input type="text" id="modalWdHash" placeholder="Tx Hash (مثال: 9a8b7c6d...)" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; padding:12px; color:#fff; font-family:'Orbitron', monospace; font-size:12px; margin-bottom:10px;">
+    <input type="text" id="modalWdExplorer" placeholder="رابط المستكشف (اختياري، يولد تلقائياً)" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); border-radius:12px; padding:12px; color:#fff; font-size:12px; margin-bottom:16px;">
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-approve" style="flex:1;" onclick="executeConfirmWithdrawal()">💎 تأكيد نهائي On-Chain</button>
+      <button class="btn btn-ghost" onclick="closeModal('confirmWdModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div id="adminToast"></div>
+
+<script>
+  // Check URL query parameters for one-click admin login (?secret=REX_ADMIN_2026)
+  const urlParams = new URLSearchParams(window.location.search);
+  const querySecret = urlParams.get('secret');
+  if (querySecret) {
+    try {
+      localStorage.setItem('rex_admin_secret', querySecret);
+      sessionStorage.setItem('rex_admin_secret', querySecret);
+    } catch(e) {}
+  }
+
+  let adminSecret = '';
+  try {
+    adminSecret = querySecret || localStorage.getItem('rex_admin_secret') || sessionStorage.getItem('rex_admin_secret') || '';
+  } catch(e) {}
+
+  let curNav = 'overview';
+  let curWdFilter = 'all';
+  let usersPage = 0;
+  let searchTimer = null;
+  let curInspectTid = null;
+  let curInspectUser = null;
+
+  async function api(path, method = 'GET', body = null) {
+    const opts = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': adminSecret
+      }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    try {
+      const res = await fetch(path, opts);
+      if (res.status === 403 || res.status === 401) {
+        // If error happens while on the main dashboard, redirect to login
+        if (document.getElementById('mainLayout').style.display === 'flex') {
+          try {
+            localStorage.removeItem('rex_admin_secret');
+            sessionStorage.removeItem('rex_admin_secret');
+          } catch(e) {}
+          document.getElementById('mainLayout').style.display = 'none';
+          document.getElementById('loginScreen').style.display = 'flex';
+          document.getElementById('loginErr').textContent = '⚠️ انتهت صلاحية الجلسة، يرجى إدخال المفتاح مجدداً';
+          document.getElementById('loginErr').style.display = 'block';
+        }
+        return { error: 'Unauthorized', status: res.status };
+      }
+      return await res.json();
+    } catch (e) {
+      console.error('Fetch error:', e);
+      return null;
+    }
+  }
+
+  // ── 2FA Authentication Flow ──
+  async function verifySecret(explicitKey = null) {
+    const s = explicitKey || document.getElementById('secretInput').value.trim();
+    if (!s) return;
+    adminSecret = s;
+
+    // Test secret with stats endpoint
+    const test = await api('/api/admin/stats');
+    if (!test || test.error) {
+      document.getElementById('loginErr').textContent = '❌ المفتاح السري غير صحيح!';
+      document.getElementById('loginErr').style.display = 'block';
+      return;
+    }
+
+    // Direct pass for administrator session
+    try {
+      localStorage.setItem('rex_admin_secret', adminSecret);
+      sessionStorage.setItem('rex_admin_secret', adminSecret);
+    } catch(e) {}
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainLayout').style.display = 'flex';
+    document.getElementById('loginErr').style.display = 'none';
+    loadOverview();
+  }
+
+  // Automatic initialization
+  if (adminSecret) {
+    verifySecret(adminSecret);
+  }
+
+  async function requestOtp() {
+    const r = await api('/api/admin/request-otp', 'POST');
+    if (r?.success) toast(r.message);
+    else toast('❌ ' + (r?.message || 'فشل'));
+  }
+
+  async function verifyOtp() {
+    const code = document.getElementById('otpInput').value.trim();
+    const r = await api('/api/admin/verify-otp', 'POST', { code });
+    if (r?.success) {
+      sessionStorage.setItem('rex_admin_secret', adminSecret);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainLayout').style.display = 'flex';
+      loadOverview();
+    } else {
+      document.getElementById('loginErr').textContent = '❌ رمز الأمان غير صالح';
+      document.getElementById('loginErr').style.display = 'block';
+    }
+  }
+
+  function switchNav(id, el) {
+    curNav = id;
+    document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.tab-content-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`tab-${id}`)?.classList.add('active');
+
+    if (id === 'overview') loadOverview();
+    else if (id === 'users') loadUsers(0);
+    else if (id === 'withdrawals') loadWithdrawals();
+    else if (id === 'sybil') loadSybilRadar();
+    else if (id === 'settings') loadSettings();
+    else if (id === 'audit') loadAuditLogs();
+  }
+
+  // ── Overview & Tokenomics ──
+  async function loadOverview() {
+    checkMaintenanceStatus();
+    const [stats, pending] = await Promise.all([
+      api('/api/admin/stats'),
+      api('/api/admin/withdrawals?status=pending')
+    ]);
+    if (!stats) return;
+
+    document.getElementById('s-users').textContent     = stats.users?.toLocaleString() || '0';
+    document.getElementById('s-new').textContent       = `+${stats.new_today || 0} اليوم`;
+    document.getElementById('s-activated').textContent = stats.activated?.toLocaleString() || '0';
+    document.getElementById('s-miners').textContent    = stats.active_miners?.toLocaleString() || '0';
+    document.getElementById('s-balance').textContent   = Math.floor(stats.total_balance || 0).toLocaleString();
+    document.getElementById('s-reserved-bal').textContent = `محجوز للسحب: ${Math.floor(stats.total_reserved || 0).toLocaleString()} REX`;
+
+    // Tokenomics
+    if (stats.tokenomics) {
+      document.getElementById('s-supply').textContent = stats.tokenomics.total_supply?.toLocaleString();
+      document.getElementById('s-mining-rem').textContent = stats.tokenomics.reserve_remaining?.toLocaleString();
+      document.getElementById('s-mining-dist').textContent = `موزع: ${stats.tokenomics.mining_distributed?.toLocaleString()} REX`;
+      document.getElementById('s-daily-emission').textContent = stats.tokenomics.daily_emission_limit?.toLocaleString();
+      document.getElementById('s-today-dist').textContent = `موزع اليوم: ${stats.tokenomics.today_distributed?.toLocaleString()} REX`;
+      document.getElementById('s-confirmed-wd').textContent = stats.tokenomics.total_confirmed_withdrawals?.toLocaleString() + ' REX';
+    }
+
+    const tbody = document.getElementById('quickPendingTable');
+    if (!Array.isArray(pending) || !pending.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">لا توجد طلبات سحب معلقة حالياً 🎉</td></tr>`;
+    } else {
+      tbody.innerHTML = pending.map(w => `
+        <tr>
+          <td style="color:var(--muted)">#${w.id}</td>
+          <td><strong>${esc(w.first_name||'—')}</strong><br><span style="color:var(--cyan);font-size:11px">@${esc(w.username||'بلا')}</span></td>
+          <td><span style="font-family:Orbitron;color:var(--gold-lt);font-weight:900">${Number(w.amount).toLocaleString()}</span> REX</td>
+          <td><span style="font-family:monospace;font-size:11px;color:var(--muted)">${w.wallet_address?.slice(0,10)}...${w.wallet_address?.slice(-6)}</span></td>
+          <td style="color:var(--muted);font-size:11px">${fmtDate(w.created_at)}</td>
+          <td>
+            <div style="display:flex;gap:4px;">
+              <button class="btn btn-inspect" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'reviewing')">🔍 تدقيق</button>
+              <button class="btn btn-approve" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'approved')">✅ اعتماد</button>
+              <button class="btn btn-reject"  onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ رفض</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // ── Multi-Stage Withdrawal Workflow ──
+  async function loadWithdrawals() {
+    const data = await api(`/api/admin/withdrawals?status=${curWdFilter}`);
+    const tbody = document.getElementById('withdrawalsTableBody');
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">لا توجد طلبات مطابقة</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(w => {
+      let badgeClass = 'badge-gold';
+      if (w.status === 'confirmed') badgeClass = 'badge-green';
+      else if (w.status === 'rejected' || w.status === 'failed') badgeClass = 'badge-red';
+      else if (w.status === 'processing' || w.status === 'approved') badgeClass = 'badge-cyan';
+
+      let actions = '';
+      if (w.status === 'pending') {
+        actions = `
+          <button class="btn btn-approve" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'approved')">✅ موافقة (خلال 24h)</button>
+          <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ رفض</button>
+          <button class="btn btn-inspect" onclick="inspectUser(${w.telegram_id})">🔍 كشف</button>
+        `;
+      } else if (w.status === 'reviewing') {
+        actions = `
+          <button class="btn btn-approve" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'approved')">✅ موافقة (خلال 24h)</button>
+          <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ رفض</button>
+        `;
+      } else if (w.status === 'approved') {
+        actions = `
+          <button class="btn btn-gold" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'processing')">⚡ بدء التنفيذ</button>
+          <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ إلغاء</button>
+        `;
+      } else if (w.status === 'processing') {
+        actions = `
+          <button class="btn btn-approve" onclick="promptConfirmWdModal(${w.id}, ${w.telegram_id})">💎 تأكيد On-Chain</button>
+          <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'failed')">⚠️ فشل المعاملة</button>
+        `;
+      } else {
+        actions = `<span style="color:var(--muted); font-size:11px;">مكتمل</span>`;
+      }
+
+      const txLink = w.tx_hash
+        ? `<a href="${w.explorer_url || `https://tonviewer.com/transaction/${w.tx_hash}`}" target="_blank" style="color:var(--cyan); font-family:monospace; font-size:11px; text-decoration:none;">${w.tx_hash.slice(0,10)}... ↗</a>`
+        : '—';
+
+      return `
+        <tr>
+          <td style="color:var(--muted)">#${w.id}</td>
+          <td><strong>${esc(w.first_name||'—')}</strong><br><span style="color:var(--cyan);font-size:11px">@${esc(w.username||'بلا')}</span></td>
+          <td><span style="font-family:Orbitron;color:var(--gold-lt);font-weight:900">${Number(w.amount).toLocaleString()}</span> REX</td>
+          <td><a href="https://tonviewer.com/${w.wallet_address}" target="_blank" style="color:var(--cyan);font-family:monospace;font-size:11px;text-decoration:none;">${w.wallet_address?.slice(0,8)}...${w.wallet_address?.slice(-4)} ↗</a></td>
+          <td><span class="badge ${badgeClass}">${w.status.toUpperCase()}</span></td>
+          <td>${txLink}</td>
+          <td style="color:var(--muted);font-size:11px;">${fmtDate(w.created_at)}</td>
+          <td><div style="display:flex;gap:4px;">${actions}</div></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function filterWd(status, el) {
+    curWdFilter = status;
+    document.querySelectorAll('.filter-chip').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    loadWithdrawals();
+  }
+
+  async function setWithdrawalStatus(id, tid, newStatus) {
+    let note = '';
+    if (newStatus === 'rejected' || newStatus === 'failed') {
+      note = prompt('أدخل سبب الرفض/الفشل (سيظهر للمستخدم ويتم استرجاع الرصيد):', 'مراجعة أمنية');
+      if (note === null) return;
+    }
+    const r = await api('/api/admin/withdrawals/status', 'POST', {
+      id,
+      telegram_id: tid,
+      new_status: newStatus,
+      audit_note: note
+    });
+    if (r?.success) {
+      toast(`✅ تم تحديث السحب #${id} إلى ${newStatus}`);
+      loadWithdrawals();
+      loadOverview();
+    } else {
+      toast('❌ ' + (r?.message || 'فشل'));
+    }
+  }
+
+  function promptConfirmWdModal(id, tid) {
+    document.getElementById('modalWdId').value = id;
+    document.getElementById('modalWdTid').value = tid;
+    document.getElementById('modalWdHash').value = '';
+    document.getElementById('modalWdExplorer').value = '';
+    document.getElementById('confirmWdModal').classList.add('open');
+  }
+
+  async function executeConfirmWithdrawal() {
+    const id = parseInt(document.getElementById('modalWdId').value);
+    const tid = parseInt(document.getElementById('modalWdTid').value);
+    const hash = document.getElementById('modalWdHash').value.trim();
+    let explorer = document.getElementById('modalWdExplorer').value.trim();
+
+    if (!hash) return toast('⚠️ يرجى إدخال الـ Tx Hash');
+    if (!explorer) explorer = `https://tonviewer.com/transaction/${hash}`;
+
+    const r = await api('/api/admin/withdrawals/status', 'POST', {
+      id,
+      telegram_id: tid,
+      new_status: 'confirmed',
+      tx_hash: hash,
+      explorer_url: explorer,
+      audit_note: 'تم إرسال العملات بنجاح على بلوكتشين TON'
+    });
+
+    if (r?.success) {
+      toast(`💎 تم تأكيد السحب #${id} على البلوكتشين بنجاح!`);
+      closeModal('confirmWdModal');
+      loadWithdrawals();
+      loadOverview();
+    } else {
+      toast('❌ ' + (r?.message || 'فشل'));
+    }
+  }
+
+  // ── Users Management ──
+  async function loadUsers(page = 0) {
+    usersPage = page;
+    const query = document.getElementById('userSearchBox')?.value || '';
+    const users = await api(`/api/admin/users?search=${encodeURIComponent(query)}&page=${page}&limit=30`);
+    const tbody = document.getElementById('usersTableBody');
+    if (!Array.isArray(users) || !users.length) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted)">لا توجد حسابات مطابقة</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const statusBadge = u.is_banned 
+        ? `<span class="badge badge-red">⛔ محظور</span>`
+        : u.is_activated 
+          ? `<span class="badge badge-green">✅ مفعّل</span>`
+          : `<span class="badge badge-muted">⏳ غير مفعّل</span>`;
+
+      return `
+        <tr>
+          <td style="font-family:monospace;color:var(--muted)">${u.telegram_id}</td>
+          <td><strong>${esc(u.first_name||'—')}</strong></td>
+          <td style="color:var(--cyan)">@${esc(u.username||'—')}</td>
+          <td><span style="font-family:Orbitron;color:var(--gold-lt);font-weight:800">${Number(u.balance).toFixed(2)}</span></td>
+          <td><span style="font-family:Orbitron;color:var(--purple);font-size:11px">${Number(u.reserved_balance||0).toFixed(0)}</span></td>
+          <td><span style="font-size:11px;color:var(--cyan)">Lv.${u.rank_level||1} (${u.xp_points||0} XP)</span></td>
+          <td><span class="badge badge-cyan">${u.mining_multiplier}x</span></td>
+          <td>${statusBadge}</td>
+          <td><span style="font-family:monospace;font-size:10px;color:var(--muted)">${u.wallet_address ? u.wallet_address.slice(0,8)+'...'+u.wallet_address.slice(-4) : '—'}</span></td>
+          <td><button class="btn btn-inspect" onclick="inspectUser(${u.telegram_id})">🔍 فحص</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function debounceUserSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadUsers(0), 300);
+  }
+
+  async function inspectUser(tid) {
+    curInspectTid = tid;
+    const data = await api(`/api/admin/user/${tid}`);
+    if (!data || !data.user) return toast('❌ تعذر تحميل ملف المستخدم');
+    const u = data.user;
+    curInspectUser = u;
+
+    document.getElementById('insp-name').textContent = `(${u.first_name})`;
+    document.getElementById('insp-tid').textContent = u.telegram_id;
+    document.getElementById('insp-username').textContent = u.username ? '@' + u.username : 'بلا يوزرنيم';
+    document.getElementById('insp-balance').textContent = Number(u.balance).toFixed(2) + ' REX';
+    document.getElementById('insp-reserved').textContent = Number(u.reserved_balance || 0).toFixed(2) + ' REX';
+    document.getElementById('insp-onchain').textContent = Number(data.onChainRex || 0).toLocaleString() + ' REX';
+    document.getElementById('insp-multiplier').textContent = u.mining_multiplier + 'x أضعاف';
+    document.getElementById('insp-status').innerHTML = u.is_banned 
+      ? '<span style="color:var(--red)">⛔ محظور (' + (u.ban_reason||'—') + ')</span>'
+      : u.is_activated ? '<span style="color:var(--green)">✅ مفعّل</span>' : '<span style="color:var(--muted)">غير مفعّل</span>';
+    
+    document.getElementById('insp-wallet').innerHTML = u.wallet_address
+      ? `<a href="https://tonviewer.com/${u.wallet_address}" target="_blank" style="color:var(--cyan);text-decoration:none;">${u.wallet_address} ↗</a>`
+      : 'غير مربوطة بعد';
+
+    const hold = data.holdInfo;
+    let holdHtml = '<span style="color:var(--muted)">لا تتوفر محفظة مربوطة</span>';
+    if (u.wallet_address) {
+      if (!hold || (data.onChainRex || 0) < (hold.minHoldRex || 5000)) {
+        holdHtml = `<span style="color:var(--red)">❌ غير مستوفى (الرصيد أقل من ${(hold?.minHoldRex || 5000).toLocaleString()} REX)</span>`;
+      } else if (hold.isHoldPassed) {
+        holdHtml = `<span style="color:var(--green)">✅ مستوفى الشروط (احتفاظ مستمر 3+ أيام)</span>`;
+      } else {
+        const remH = Math.ceil((hold.holdRemainingMs || 0) / (3600 * 1000));
+        holdHtml = `<span style="color:var(--cyan)">⏳ جاري الاحتفاظ (متبقي حوالي ${remH} ساعة)</span>`;
+      }
+    }
+    document.getElementById('insp-hold-info').innerHTML = holdHtml;
+
+    const banBtn = document.getElementById('insp-ban-btn');
+    if (u.is_banned) {
+      banBtn.className = 'btn btn-unban';
+      banBtn.textContent = '🔓 رفع الحظر';
+    } else {
+      banBtn.className = 'btn btn-ban';
+      banBtn.textContent = '⛔ حظر الحساب';
+    }
+
+    document.getElementById('inspectorModal').classList.add('open');
+  }
+
+  async function toggleUserBan() {
+    if (!curInspectUser) return;
+    if (curInspectUser.is_banned) {
+      await api('/api/admin/unban', 'POST', { telegram_id: curInspectTid });
+      toast('✅ تم رفع الحظر عن المستخدم');
+    } else {
+      const reason = prompt('أدخل سبب الحظر:', 'مخالفة قواعد المنصة');
+      if (!reason) return;
+      await api('/api/admin/ban', 'POST', { telegram_id: curInspectTid, reason });
+      toast('⛔ تم حظر المستخدم');
+    }
+    inspectUser(curInspectTid);
+    loadUsers(usersPage);
+  }
+
+  async function promptSetBalance() {
+    const val = prompt('أدخل الرصيد الجديد (REX):', curInspectUser?.balance || 0);
+    if (val === null) return;
+    const amt = parseFloat(val);
+    if (isNaN(amt)) return toast('⚠️ قيمة غير صالحة');
+    await api('/api/admin/set-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
+    toast('✅ تم تحديث الرصيد بنجاح');
+    inspectUser(curInspectTid);
+    loadUsers(usersPage);
+  }
+
+  async function promptAddBalance() {
+    const val = prompt('أدخل المبلغ المراد إضافته (REX):', 100);
+    if (!val) return;
+    const amt = parseFloat(val);
+    if (isNaN(amt)) return toast('⚠️ قيمة غير صالحة');
+    await api('/api/admin/add-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
+    toast('✅ تمت إضافة المبلغ للرصيد');
+    inspectUser(curInspectTid);
+    loadUsers(usersPage);
+  }
+
+  async function resetUserMining() {
+    if (!confirm('إعادة تعيين دورة التعدين الحالية للمستخدم؟')) return;
+    await api('/api/admin/reset-mining', 'POST', { telegram_id: curInspectTid });
+    toast('⚡ تم إعادة تعيين دورة التعدين');
+    inspectUser(curInspectTid);
+  }
+
+  async function sendDmToUser() {
+    const msg = document.getElementById('insp-dm-input').value.trim();
+    if (!msg) return toast('⚠️ اكتب الرسالة أولاً');
+    const r = await api('/api/admin/send-message', 'POST', { telegram_id: curInspectTid, message: msg });
+    if (r?.success) {
+      toast('📨 تم إرسال الرسالة الخاصة للمستخدم على تيليجرام');
+      document.getElementById('insp-dm-input').value = '';
+    } else {
+      toast('❌ فشل الإرسال: ' + (r?.message || ''));
+    }
+  }
+
+  // ── Sybil Radar ──
+  async function loadSybilRadar() {
+    const alerts = await api('/api/admin/sybil-radar');
+    const fpBody = document.getElementById('sybilFpBody');
+    const ipBody = document.getElementById('sybilIpBody');
+
+    if (!alerts?.dupFingerprints?.length) {
+      fpBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--green)">✅ ممتاز! لا توجد أجهزة مكررة نشطة حالياً.</td></tr>`;
+    } else {
+      fpBody.innerHTML = alerts.dupFingerprints.map(f => `
+        <tr>
+          <td style="font-family:monospace;font-size:11px;color:var(--gold-lt);">${f.fingerprint}</td>
+          <td><span class="badge badge-red">${f.count} حسابات</span></td>
+          <td style="font-family:monospace;font-size:12px;">${f.user_ids}</td>
+          <td><button class="btn btn-ban" onclick="massBanFingerprint('${f.user_ids}')">⛔ حظر الكل</button></td>
+        </tr>
+      `).join('');
+    }
+
+    if (!alerts?.dupIps?.length) {
+      ipBody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--green)">✅ لا توجد شبكات IP مشبوهة.</td></tr>`;
+    } else {
+      ipBody.innerHTML = alerts.dupIps.map(i => `
+        <tr>
+          <td style="font-family:monospace;color:var(--cyan);">${i.ip}</td>
+          <td><span class="badge badge-gold">${i.count} حسابات</span></td>
+          <td style="font-family:monospace;font-size:12px;">${i.user_ids}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  async function massBanFingerprint(userIdsStr) {
+    if (!confirm(`حظر جميع هذه الحسابات (${userIdsStr}) دفعة واحدة؟`)) return;
+    const ids = userIdsStr.split(',');
+    for (const id of ids) {
+      await api('/api/admin/ban', 'POST', { telegram_id: parseInt(id), reason: 'رصد تكرار جهاز على شبكة البلاط' });
+    }
+    toast('⛔ تم حظر جميع الحسابات المشبوهة بنجاح');
+    loadSybilRadar();
+  }
+
+  // ── Maintenance Mode Controller ──
+  let isMaintenanceOn = false;
+
+  async function checkMaintenanceStatus() {
+    const cfg = await api('/api/admin/settings');
+    if (!cfg) return;
+    updateMaintenanceUI(cfg.maintenance_mode === '1');
+  }
+
+  function updateMaintenanceUI(active) {
+    isMaintenanceOn = active;
+    const banner = document.getElementById('adminMaintBanner');
+    const badge = document.getElementById('maintenanceStatusBadge');
+    const btn = document.getElementById('btnToggleMaintenance');
+    const sideBadge = document.getElementById('sidebarMaintBadge');
+
+    if (active) {
+      if (banner) banner.style.display = 'flex';
+      if (badge) {
+        badge.innerHTML = '🚨 وضع الصيانة مفعّل (Active)';
+        badge.style.background = 'rgba(239,68,68,0.2)';
+        badge.style.color = '#ef4444';
+      }
+      if (btn) {
+        btn.innerHTML = '🟢 إيقاف وضع الصيانة وفتح المنصة';
+        btn.className = 'btn btn-approve';
+      }
+      if (sideBadge) {
+        sideBadge.innerHTML = '🚨 وضع الصيانة مفعّل';
+        sideBadge.style.color = '#ef4444';
+      }
+    } else {
+      if (banner) banner.style.display = 'none';
+      if (badge) {
+        badge.innerHTML = '🟢 النظام متاح لجميع الفرسان (Online)';
+        badge.style.background = 'rgba(16,185,129,0.15)';
+        badge.style.color = 'var(--green)';
+      }
+      if (btn) {
+        btn.innerHTML = '⛔ تفعيل وضع الصيانة وإغلاق المنصة';
+        btn.className = 'btn btn-ban';
+      }
+      if (sideBadge) {
+        sideBadge.innerHTML = '🟢 النظام متاح أونلاين';
+        sideBadge.style.color = 'var(--green)';
+      }
+    }
+  }
+
+  async function toggleMaintenanceMode() {
+    const actionText = isMaintenanceOn 
+      ? 'هل أنت متأكد من إيقاف وضع الصيانة وفتح المنصة لجميع المستخدمين؟' 
+      : 'تحذير: هل أنت متأكد من تفعيل وضع الصيانة وإغلاق التطبيق أمام جميع المستخدمين؟';
+    if (!confirm(actionText)) return;
+    const res = await api('/api/admin/toggle-maintenance', 'POST');
+    if (res?.success) {
+      updateMaintenanceUI(res.maintenance_mode === '1');
+      toast(res.maintenance_mode === '1' ? '⚠️ تم تفعيل وضع الصيانة بنجاح!' : '✅ تم إيقاف وضع الصيانة وفتح المنصة للجميع!');
+    } else {
+      toast('❌ فشل تغيير وضع الصيانة');
+    }
+  }
+
+  // ── Settings ──
+  async function loadSettings() {
+    checkMaintenanceStatus();
+    const cfg = await api('/api/admin/settings');
+    if (cfg) {
+      document.getElementById('cfg-min_withdrawal').value = cfg.min_withdrawal || '5000';
+      document.getElementById('cfg-hold_percent').value = cfg.hold_percent || '20';
+      document.getElementById('cfg-min_hold_rex').value = cfg.min_hold_rex || '5000';
+      document.getElementById('cfg-min_hold_days').value = cfg.min_hold_days || '3';
+      document.getElementById('cfg-activation_fee_ton').value = cfg.activation_fee_ton || '0.1';
+      document.getElementById('cfg-base_daily_reward').value = cfg.base_daily_reward || '100';
+      document.getElementById('cfg-referral_percent').value = cfg.referral_percent || '5';
+      document.getElementById('cfg-max_daily_emission').value = cfg.max_daily_emission || '50000';
+    }
+  }
+
+  async function saveSettings() {
+    const payload = {
+      min_withdrawal: document.getElementById('cfg-min_withdrawal').value,
+      hold_percent: document.getElementById('cfg-hold_percent').value,
+      min_hold_rex: document.getElementById('cfg-min_hold_rex').value,
+      min_hold_days: document.getElementById('cfg-min_hold_days').value,
+      activation_fee_ton: document.getElementById('cfg-activation_fee_ton').value,
+      base_daily_reward: document.getElementById('cfg-base_daily_reward').value,
+      referral_percent: document.getElementById('cfg-referral_percent').value,
+      max_daily_emission: document.getElementById('cfg-max_daily_emission').value
+    };
+    const r = await api('/api/admin/settings', 'POST', { settings: payload });
+    if (r?.success) {
+      toast('💾 تم حفظ وتفعيل الإعدادات الاقتصادية لحظياً!');
+    } else {
+      toast('❌ فشل حفظ الإعدادات');
+    }
+  }
+
+  // ── Broadcast ──
+  async function sendBroadcastMsg() {
+    const msg = document.getElementById('broadcastContent').value.trim();
+    if (!msg) return toast('⚠️ يرجى كتابة الرسالة أولاً');
+    if (!confirm('هل أنت متأكد من رغبتك بإرسال هذه الرسالة لجميع مستخدمي البوت؟')) return;
+
+    document.getElementById('broadcastStatus').textContent = '⏳ جاري الإرسال لجميع الفرسان...';
+    const r = await api('/api/admin/broadcast', 'POST', { message: msg });
+    document.getElementById('broadcastStatus').textContent = r?.success
+      ? `✅ تم الإرسال بنجاح إلى ${r.sent} مستخدم (فشل: ${r.failed})`
+      : '❌ حدث خطأ أثناء الإرسال';
+  }
+
+  // ── Audit Logs ──
+  async function loadAuditLogs() {
+    const logs = await api('/api/admin/audit-logs');
+    const tbody = document.getElementById('auditTableBody');
+    if (!Array.isArray(logs) || !logs.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">لا توجد سجلات بعد</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = logs.map(l => `
+      <tr>
+        <td style="color:var(--muted)">#${l.id}</td>
+        <td><span class="badge badge-gold">${l.action}</span></td>
+        <td style="font-size:12px;">${esc(l.details||'—')}</td>
+        <td style="color:var(--muted);font-size:11px;">${fmtDate(l.created_at)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function toast(msg) {
+    const el = document.getElementById('adminToast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3200);
+  }
+  function fmtDate(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

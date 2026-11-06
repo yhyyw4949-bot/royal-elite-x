@@ -1,0 +1,14 @@
+{
+  "token": {
+    "name": "ROYAL ELITE X",
+    "symbol": "REX",
+    "description": "ROYAL ELITE X - The Premium Token on TON Blockchain",
+    "decimals": "9",
+    "totalSupply": "1000000"
+  },
+  "network": "testnet",
+  "masterContract": "EQCWY8AF9fWZ_Wp__VEyEvRmRWe1wY8waGc3uQiL4b4PqWhK",
+  "owner": "UQArkwqjEJS1DRIq0XxnrC8z03GQFAZ5tILXdeodtvWQ9Pr4",
+  "deployedAt": "2026-11-04T22:19:28.808Z",
+  "explorer": "https://testnet.tonviewer.com/EQCWY8AF9fWZ_Wp__VEyEvRmRWe1wY8waGc3uQiL4b4PqWhK"
+}

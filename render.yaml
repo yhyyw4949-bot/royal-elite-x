@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: royal-elite-x-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node bot/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_WALLET
+        value: UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz
+      - key: ADMIN_TG_ID
+        value: "7082457308"
+      - key: ADMIN_SECRET
+        value: REX_ADMIN_2026
+      - key: REX_MASTER_CONTRACT
+        value: EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH
+      - key: WEBAPP_URL
+        sync: false
+      - key: TONCENTER_ENDPOINT
+        value: https://toncenter.com/api/v2/jsonRPC
