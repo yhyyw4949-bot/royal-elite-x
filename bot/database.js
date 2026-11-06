@@ -242,7 +242,7 @@ const defaultSettings = [
   { key: 'mining_reserve_cap', val: '20000000', description: 'سقف احتياطي التعدين الإجمالي المخصص (REX)' },
   { key: 'min_hold_rex', val: '5000', description: 'الحد الأدنى لحيازة المحفظة On-Chain لشرط المدة (REX)' },
   { key: 'min_hold_days', val: '3', description: 'المدة الإلزامية لحيازة العملة في المحفظة قبل السحب (أيام)' },
-  { key: 'required_channel', val: '@RoyalEliteX', description: 'قناة التيليجرام الإلزامية للاشتراك قبل الدخول' },
+  { key: 'required_channel', val: '@REXCEO1A', description: 'قناة التيليجرام الإلزامية للاشتراك قبل الدخول' },
   { key: 'force_sub_enabled', val: '1', description: 'تفعيل شرط الاشتراك الإجباري في القناة (1: مفعل, 0: معطل)' }
 ];
 

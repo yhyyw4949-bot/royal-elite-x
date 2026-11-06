@@ -71,7 +71,7 @@ app.get('/admin', (req, res) => {
 
 // ── Mandatory Channel Subscription Helpers ──
 function getRequiredChannel() {
-  return process.env.REQUIRED_CHANNEL || db.getSetting('required_channel', '@RoyalEliteX');
+  return process.env.REQUIRED_CHANNEL || db.getSetting('required_channel', '@REXCEO1A');
 }
 
 async function isUserSubscribedToChannel(userId) {

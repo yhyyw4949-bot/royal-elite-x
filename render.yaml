@@ -22,5 +22,7 @@ services:
         value: EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH
       - key: WEBAPP_URL
         value: https://royal-elite-x.onrender.com
+      - key: REQUIRED_CHANNEL
+        value: "@REXCEO1A"
       - key: TONCENTER_ENDPOINT
         value: https://toncenter.com/api/v2/jsonRPC
