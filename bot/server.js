@@ -1131,6 +1131,94 @@ app.post('/api/daily-checkin/claim', telegramAuth, checkMaintenance, requireChan
   }
 });
 
+
+// ================================================================
+// 12.B ADMIN PROMO & GIFT CODES ENGINE
+// ================================================================
+app.get('/api/admin/promo-codes', adminAuth, (req, res) => {
+  try {
+    const list = db.getAllPromoCodes();
+    res.json({ success: true, promo_codes: list });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/promo-codes/create', adminAuth, (req, res) => {
+  const { code, reward_rex, reward_xp, max_uses, duration_hours } = req.body;
+  try {
+    const newPromo = db.createPromoCode({
+      code,
+      reward_rex,
+      reward_xp: reward_xp || 0,
+      max_uses,
+      duration_hours,
+      created_by: ADMIN_TG_ID
+    });
+    db.logAdminAction('CREATE_PROMO_CODE', `Created promo code ${newPromo.code} with ${newPromo.reward_rex} REX, ${newPromo.max_uses} uses, ${newPromo.duration_hours}h duration`, ADMIN_TG_ID);
+    sendMsg(req, res, true, `تم إنشاء الكود الملكي ${newPromo.code} بنجاح!`, `Successfully created promo code ${newPromo.code}!`, { promo: newPromo });
+  } catch (err) {
+    let msgAr = err.message;
+    if (err.message === 'CODE_ALREADY_EXISTS') msgAr = 'هذا الكود موجود بالفعل، يرجى اختيار رمز آخر';
+    else if (err.message === 'INVALID_CODE_FORMAT') msgAr = 'صيغة الكود غير صالحة (يجب أن يتكون من 3 أحرف على الأقل)';
+    else if (err.message === 'INVALID_REWARD_AMOUNT') msgAr = 'يرجى إدخال كمية REX صالحة';
+    else if (err.message === 'INVALID_MAX_USES') msgAr = 'يرجى إدخال عدد مستخدمين أقصى صالح';
+    else if (err.message === 'INVALID_DURATION') msgAr = 'يرجى إدخال مدة صلاحية صالحة بالساعات';
+    res.json({ success: false, message: msgAr, code: err.message });
+  }
+});
+
+app.post('/api/admin/promo-codes/delete', adminAuth, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.deletePromoCode(id);
+    db.logAdminAction('DELETE_PROMO_CODE', `Deleted promo code ID ${id}`, ADMIN_TG_ID);
+    sendMsg(req, res, true, 'تم حذف الكود بنجاح!', 'Promo code deleted successfully!');
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/promo-codes/toggle', adminAuth, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.togglePromoCode(id);
+    db.logAdminAction('TOGGLE_PROMO_CODE', `Toggled active status for promo code ID ${id}`, ADMIN_TG_ID);
+    sendMsg(req, res, true, 'تم تحديث حالة الكود بنجاح!', 'Promo code status updated successfully!');
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+});
+
+// User API: Redeem Code inside Mini App
+app.post('/api/user/redeem-code', telegramAuth, checkMaintenance, (req, res) => {
+  const { telegram_id, code } = req.body;
+  const tid = parseInt(telegram_id);
+  if (!tid) return sendMsg(req, res, false, 'معرف المستخدم مطلوب', 'User ID required');
+  if (!code) return sendMsg(req, res, false, 'يرجى إدخال الكود', 'Please enter a code');
+
+  try {
+    const redeemRes = db.redeemPromoCode(tid, code);
+    sendMsg(
+      req,
+      res,
+      true,
+      `🎉 مبروك! تم تفعيل الكود ${redeemRes.code} وحصلت على +${redeemRes.reward_rex} REX!`,
+      `🎉 Congrats! Redeemed code ${redeemRes.code} and received +${redeemRes.reward_rex} REX!`,
+      redeemRes
+    );
+  } catch (err) {
+    let msgAr = 'حدث خطأ أثناء استرداد الكود';
+    if (err.message === 'CODE_NOT_FOUND') msgAr = 'الكود غير صحيح أو غير موجود';
+    else if (err.message === 'CODE_EXPIRED') msgAr = 'عذراً، انتهت صلاحية هذا الكود';
+    else if (err.message === 'CODE_EXHAUSTED') msgAr = 'عذراً، وصل هذا الكود إلى الحد الأقصى للمستخدمين';
+    else if (err.message === 'ALREADY_REDEEMED') msgAr = 'لقد قمت باستخدام هذا الكود مسبقاً';
+    else if (err.message === 'CODE_INACTIVE') msgAr = 'هذا الكود متوقف حالياً';
+    else if (err.message === 'USER_BANNED') msgAr = 'حسابك محظور';
+    res.json({ success: false, message: msgAr, code: err.message });
+  }
+});
+
 // 12. ADMIN COMMAND CENTER 2.0 (WITH 2FA OTP & AUDIT)
 // ================================================================
 
@@ -1757,6 +1845,66 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
   });
 });
 
+
+
+// Bot Command: Redeem Promo / Gift Code
+bot.command(['redeem', 'code', 'promo', 'gift'], async (ctx) => {
+  if (isMaintenanceActive() && ctx.from.id !== ADMIN_TG_ID) {
+    return ctx.reply('🛠 *النظام تحت الصيانة حالياً*\n\nيرجى المحاولة بعد قليل! 👑', { parse_mode: 'Markdown' });
+  }
+
+  const tid = ctx.from.id;
+  const parts = ctx.message.text.trim().split(/\s+/);
+
+  if (parts.length < 2) {
+    return ctx.reply(
+      '🎁 *استرداد كود الهدية الملكي (Redeem Promo Code)*\n\n' +
+      'يرجى كتابة الكود بجانب الأمر بالشكل التالي:\n' +
+      '`/redeem <CODE>`\n\n' +
+      '📌 *مثال:* `/redeem REX100`',
+      { parse_mode: 'Markdown' }
+    );
+  }
+
+  const promoCode = parts[1].trim();
+
+  try {
+    const redeemRes = db.redeemPromoCode(tid, promoCode);
+    const firstName = ctx.from.first_name || 'Knight';
+
+    const msg =
+      '👑 *تهانينا الملكية يا ' + firstName + '! تم تفعيل الكود بنجاح* 🎉\n\n' +
+      '🎁 *الكود المسترد:* `' + redeemRes.code + '`\n' +
+      '💰 *المكافأة المضافة:* *+' + Number(redeemRes.reward_rex).toLocaleString() + ' REX*\n' +
+      (redeemRes.reward_xp > 0 ? '⚡ *نقاط الخبرة:* *+' + redeemRes.reward_xp + ' XP*\n' : '') +
+      '💳 *رصيدك الإجمالي الآن:* *' + Number(redeemRes.new_balance).toLocaleString() + ' REX*\n\n' +
+      'تم إيداع الرصيد في حسابك الملكي فوراً! 🚀';
+
+    return ctx.reply(msg, {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([
+        [Markup.button.webApp('👑 فتح المنصة واستعراض الرصيد', WEBAPP_URL)]
+      ])
+    });
+  } catch (err) {
+    let errorMsg = '⚠️ حدث خطأ أثناء تفعيل الكود.';
+    if (err.message === 'CODE_NOT_FOUND') {
+      errorMsg = '❌ *عذراً، هذا الكود غير صالح أو غير موجود.*\nتأكد من كتابة الرمز بشكل صحيح وجرب ثانية.';
+    } else if (err.message === 'CODE_EXPIRED') {
+      errorMsg = '⏳ *عذراً، انتهت صلاحية هذا الكود الزمنيّة ولم يعد متاحاً للاستخدام.*';
+    } else if (err.message === 'CODE_EXHAUSTED') {
+      errorMsg = '🚫 *عذراً، لقد نفذت كمية هذا الكود بالكامل ووصل للحد الأقصى لعدد المستخدمين المسموح به.*';
+    } else if (err.message === 'ALREADY_REDEEMED') {
+      errorMsg = '⚠️ *لقد قمت باستخدام هذا الكود مسبقاً!*\nكل مستخدم يمكنه الاستفادة من الكود لمرة واحدة فقط.';
+    } else if (err.message === 'CODE_INACTIVE') {
+      errorMsg = '🔒 *تم إيقاف هذا الكود مؤقتاً من قِبل الإدارة.*';
+    } else if (err.message === 'USER_BANNED') {
+      errorMsg = '⛔ *حسابك محظور من الاستفادة من هذه الميزة.*';
+    }
+
+    return ctx.reply(errorMsg, { parse_mode: 'Markdown' });
+  }
+});
 
 // Bot Command: Daily Check-In
 bot.command(['checkin', 'daily'], async (ctx) => {

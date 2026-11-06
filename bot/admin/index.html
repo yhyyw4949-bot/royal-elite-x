@@ -366,6 +366,9 @@
       <div class="sidebar-nav-item" onclick="switchNav('broadcast', this)">
         <span>📢</span> الإشعار الملكي الجماعي
       </div>
+      <div class="sidebar-nav-item" onclick="switchNav('promo', this)">
+        <span>🎁</span> أكواد الهدايا (Promo Codes)
+      </div>
       <div class="sidebar-nav-item" onclick="switchNav('audit', this)">
         <span>📜</span> سجل التدقيق الإداري
       </div>
@@ -709,6 +712,103 @@
       </div>
     </div>
 
+    <!-- 8. TAB: PROMO & GIFT CODES -->
+    <div id="tab-promo" class="tab-content-panel">
+      <div class="section-header">
+        <div>
+          <div class="section-heading"><span>🎁</span> محرك إنشاء وإدارة أكواد الهدايا (Promo Codes Engine)</div>
+          <div style="font-size:12px; color:var(--muted); margin-top:3px;">
+            أنشئ أكواد بمكافأة REX محددة، عدد مستخدمين أقصى، ومدة صلاحية محددة ليقوم الأعضاء باستردادها عبر البوت بالأمر /redeem
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-action-header" onclick="loadAdminPromoCodes()">🔄 تحديث الأكواد</button>
+        </div>
+      </div>
+
+      <!-- Generator Card -->
+      <div class="card" style="margin-bottom:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <h4 style="margin:0; font-size:15px; color:#fff; display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--gold-lt);">⚡</span> إنشاء كود هدية جديد (New Promo Code)
+          </h4>
+          <button class="btn btn-secondary" type="button" onclick="generateRandomPromoCode()" style="padding:6px 14px; font-size:12px;">
+            🎲 توليد كود عشوائي
+          </button>
+        </div>
+
+        <form id="createPromoForm" onsubmit="handleCreatePromo(event)">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">رمز الكود (Code)*</label>
+              <input type="text" id="promoCodeInput" placeholder="مثال: REX2026" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-family:'Orbitron', monospace; font-weight:700; text-transform:uppercase;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">قيمة المكافأة (REX Reward)*</label>
+              <input type="number" id="promoRewardRex" placeholder="مثال: 500" min="1" step="any" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--gold-lt); font-weight:800;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">أقصى عدد مستخدمين (Max Users)*</label>
+              <input type="number" id="promoMaxUses" placeholder="مثال: 50" min="1" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-weight:700;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">مدة الصلاحية*</label>
+              <select id="promoDurationSelect" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-weight:700;">
+                <option value="1">ساعة واحدة (1 Hour)</option>
+                <option value="6">6 ساعات (6 Hours)</option>
+                <option value="12">12 ساعة (12 Hours)</option>
+                <option value="24" selected>24 ساعة (يوم كامل)</option>
+                <option value="48">48 ساعة (يومان)</option>
+                <option value="72">72 ساعة (3 أيام)</option>
+                <option value="168">7 أيام (أسبوع)</option>
+                <option value="720">30 يوماً (شهر كامل)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">نقاط خبرة إضافية (XP Bonus)</label>
+              <input type="number" id="promoRewardXp" placeholder="0" min="0" value="0" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--cyan); font-weight:700;">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="submit" id="btnSubmitPromo" class="btn btn-approve" style="padding:10px 24px; font-size:13px; font-weight:800;">
+              ⚡ إنشاء وتفعيل الكود فوراً
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Codes List Table -->
+      <div class="table-container">
+        <div class="table-top-bar">
+          <div class="table-headline">
+            <span>📋</span> الأكواد المنشأة وحالة استخدامها
+            <span id="promoCodesCountBadge" class="nav-counter-badge" style="display:inline-block; margin-right:8px;">0</span>
+          </div>
+        </div>
+        <div class="table-scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>الكود (Code)</th>
+                <th>المكافأة (REX)</th>
+                <th>المستخدمين (Claims)</th>
+                <th>نسبة الاستهلاك</th>
+                <th>الصلاحية المتبقية</th>
+                <th>الحالة</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="promoCodesTableBody">
+              <tr>
+                <td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">جاري تحميل الأكواد...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -884,6 +984,7 @@
     else if (id === 'sybil') loadSybilRadar();
     else if (id === 'settings') loadSettings();
     else if (id === 'audit') loadAuditLogs();
+    else if (id === 'promo') loadAdminPromoCodes();
   }
 
   // ── Overview & Tokenomics ──
@@ -1437,6 +1538,169 @@
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
   function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── Promo Codes Management ──
+  function generateRandomPromoCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let rand = '';
+    for (let i = 0; i < 5; i++) {
+      rand += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const fullCode = 'REX-' + rand;
+    const input = document.getElementById('promoCodeInput');
+    if (input) input.value = fullCode;
+  }
+
+  function copyPromoCode(code) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      alert('📋 تم نسخ الكود: ' + code);
+    }
+  }
+
+  async function loadAdminPromoCodes() {
+    const tbody = document.getElementById('promoCodesTableBody');
+    const badge = document.getElementById('promoCodesCountBadge');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--muted);">جاري التحميل...</td></tr>';
+
+    try {
+      const res = await api('/api/admin/promo-codes');
+      const list = res?.promo_codes || [];
+      if (badge) badge.textContent = list.length;
+
+      if (!list.length) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">لا توجد أكواد هدايا منشأة حتى الآن.</td></tr>';
+        return;
+      }
+
+      if (tbody) {
+        tbody.innerHTML = list.map(c => {
+          const pct = Math.min(100, Math.round((c.used_count / c.max_uses) * 100));
+          let statusBadge = '';
+          if (!c.is_active) {
+            statusBadge = '<span class="badge" style="background:rgba(255,255,255,0.08); color:var(--muted);">⏸️ متوقف</span>';
+          } else if (c.is_expired) {
+            statusBadge = '<span class="badge" style="background:rgba(239,68,68,0.15); color:var(--red);">⏳ منتهي الصلاحية</span>';
+          } else if (c.is_exhausted) {
+            statusBadge = '<span class="badge" style="background:rgba(168,85,247,0.15); color:var(--purple);">🚫 مكتمل الاستخدام</span>';
+          } else {
+            statusBadge = '<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green);">🟢 متاح ونشط</span>';
+          }
+
+          let timeLeftStr = '';
+          if (c.is_expired) {
+            timeLeftStr = '<span style="color:var(--red);">انتهت الصلاحية</span>';
+          } else {
+            const h = Math.floor(c.remaining_time_ms / 3600000);
+            const d = Math.floor(h / 24);
+            const remH = h % 24;
+            timeLeftStr = d > 0 ? `${d} يوم و ${remH} ساعة` : `${h} ساعة`;
+          }
+
+          return `
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-family:'Orbitron', monospace; font-weight:800; color:#fff; font-size:13px;">${esc(c.code)}</span>
+                  <button class="btn btn-secondary" style="padding:2px 6px; font-size:10px;" onclick="copyPromoCode('${esc(c.code)}')">📋 نسخ</button>
+                </div>
+              </td>
+              <td style="font-family:'Orbitron', monospace; font-weight:800; color:var(--gold-lt);">
+                +${Number(c.reward_rex).toLocaleString()} REX
+                ${c.reward_xp > 0 ? `<div style="font-size:10px; color:var(--cyan);">+${c.reward_xp} XP</div>` : ''}
+              </td>
+              <td style="font-weight:700;">
+                ${c.used_count} / ${c.max_uses} مستخدم
+              </td>
+              <td style="min-width:110px;">
+                <div style="background:rgba(255,255,255,0.1); border-radius:6px; height:8px; overflow:hidden; margin-bottom:4px;">
+                  <div style="background:${pct >= 100 ? 'var(--purple)' : 'var(--gold-lt)'}; width:${pct}%; height:100%;"></div>
+                </div>
+                <div style="font-size:10.5px; color:var(--muted); font-family:'Orbitron', monospace;">${pct}%</div>
+              </td>
+              <td style="font-size:12px;">${timeLeftStr}</td>
+              <td>${statusBadge}</td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="togglePromoCode(${c.id})">
+                    ${c.is_active ? 'إيقاف' : 'تفعيل'}
+                  </button>
+                  <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deletePromoCode(${c.id})">
+                    🗑️ حذف
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    } catch (err) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--red);">فشل التحميل: ${err.message}</td></tr>`;
+    }
+  }
+
+  async function handleCreatePromo(e) {
+    e.preventDefault();
+    const code = document.getElementById('promoCodeInput')?.value.trim();
+    const reward_rex = document.getElementById('promoRewardRex')?.value;
+    const max_uses = document.getElementById('promoMaxUses')?.value;
+    const duration_hours = document.getElementById('promoDurationSelect')?.value;
+    const reward_xp = document.getElementById('promoRewardXp')?.value || 0;
+
+    const btn = document.getElementById('btnSubmitPromo');
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await api('/api/admin/promo-codes/create', {
+        code,
+        reward_rex,
+        reward_xp,
+        max_uses,
+        duration_hours
+      });
+
+      if (res.success) {
+        alert('✅ ' + (res.message_ar || res.message));
+        document.getElementById('createPromoForm')?.reset();
+        generateRandomPromoCode();
+        loadAdminPromoCodes();
+      } else {
+        alert('❌ ' + (res.message_ar || res.message));
+      }
+    } catch (err) {
+      alert('❌ فشل إنشاء الكود: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function deletePromoCode(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا الكود نهائياً؟')) return;
+    try {
+      const res = await api('/api/admin/promo-codes/delete', { id });
+      if (res.success) {
+        loadAdminPromoCodes();
+      } else {
+        alert('❌ ' + res.message);
+      }
+    } catch (err) {
+      alert('❌ فشل الحذف: ' + err.message);
+    }
+  }
+
+  async function togglePromoCode(id) {
+    try {
+      const res = await api('/api/admin/promo-codes/toggle', { id });
+      if (res.success) {
+        loadAdminPromoCodes();
+      } else {
+        alert('❌ ' + res.message);
+      }
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
+  }
+
 </script>
 </body>
 </html>

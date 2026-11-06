@@ -196,6 +196,31 @@ db.exec(`
     completed_at INTEGER,
     PRIMARY KEY (telegram_id, lesson_id)
   );
+
+  CREATE TABLE IF NOT EXISTS promo_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE COLLATE NOCASE,
+    reward_rex REAL NOT NULL,
+    reward_xp REAL DEFAULT 0,
+    max_uses INTEGER NOT NULL,
+    used_count INTEGER DEFAULT 0,
+    duration_hours REAL NOT NULL,
+    expires_at INTEGER NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    created_by INTEGER DEFAULT 7082457308,
+    created_at INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS promo_code_redemptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code_id INTEGER,
+    code TEXT COLLATE NOCASE,
+    telegram_id INTEGER,
+    reward_rex REAL,
+    reward_xp REAL,
+    redeemed_at INTEGER,
+    UNIQUE(code_id, telegram_id)
+  );
 `);
 
 // ── 2. Safe Column Additions for Existing Databases ──
@@ -1389,6 +1414,124 @@ module.exports = {
       today_xp: todayReward.xp,
       days
     };
+  },
+
+
+  // ── Promo Codes Management ──
+  createPromoCode: ({ code, reward_rex, reward_xp = 0, max_uses, duration_hours, created_by = 7082457308 }) => {
+    const sanitizedCode = String(code || '').trim().toUpperCase();
+    if (!sanitizedCode || sanitizedCode.length < 3) throw new Error('INVALID_CODE_FORMAT');
+    const rex = parseFloat(reward_rex);
+    if (isNaN(rex) || rex <= 0) throw new Error('INVALID_REWARD_AMOUNT');
+    const xp = parseFloat(reward_xp || 0);
+    const uses = parseInt(max_uses);
+    if (isNaN(uses) || uses <= 0) throw new Error('INVALID_MAX_USES');
+    const hours = parseFloat(duration_hours);
+    if (isNaN(hours) || hours <= 0) throw new Error('INVALID_DURATION');
+
+    const now = Date.now();
+    const expiresAt = now + Math.round(hours * 3600 * 1000);
+
+    const existing = db.prepare('SELECT id FROM promo_codes WHERE code = ? COLLATE NOCASE').get(sanitizedCode);
+    if (existing) throw new Error('CODE_ALREADY_EXISTS');
+
+    const res = db.prepare(`
+      INSERT INTO promo_codes 
+      (code, reward_rex, reward_xp, max_uses, used_count, duration_hours, expires_at, is_active, created_by, created_at)
+      VALUES (?, ?, ?, ?, 0, ?, ?, 1, ?, ?)
+    `).run(sanitizedCode, rex, xp, uses, hours, expiresAt, created_by, now);
+
+    return db.prepare('SELECT * FROM promo_codes WHERE id = ?').get(res.lastInsertRowid);
+  },
+
+  getAllPromoCodes: () => {
+    const codes = db.prepare('SELECT * FROM promo_codes ORDER BY created_at DESC').all();
+    const now = Date.now();
+    return codes.map(c => {
+      const isExpired = now > c.expires_at;
+      const isExhausted = c.used_count >= c.max_uses;
+      let status = 'active';
+      if (!c.is_active) status = 'disabled';
+      else if (isExpired) status = 'expired';
+      else if (isExhausted) status = 'exhausted';
+
+      return {
+        ...c,
+        is_expired: isExpired,
+        is_exhausted: isExhausted,
+        status,
+        remaining_uses: Math.max(0, c.max_uses - c.used_count),
+        remaining_time_ms: Math.max(0, c.expires_at - now)
+      };
+    });
+  },
+
+  deletePromoCode: (id) => {
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM promo_code_redemptions WHERE code_id = ?').run(id);
+      return db.prepare('DELETE FROM promo_codes WHERE id = ?').run(id);
+    });
+    return tx();
+  },
+
+  togglePromoCode: (id) => {
+    return db.prepare('UPDATE promo_codes SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?').run(id);
+  },
+
+  redeemPromoCode: (telegram_id, codeStr) => {
+    const cleanCode = String(codeStr || '').trim().toUpperCase();
+    if (!cleanCode) throw new Error('EMPTY_CODE');
+
+    const tx = db.transaction(() => {
+      const user = db.prepare('SELECT telegram_id, balance, xp_points, is_banned FROM users WHERE telegram_id = ?').get(telegram_id);
+      if (!user) throw new Error('USER_NOT_FOUND');
+      if (user.is_banned) throw new Error('USER_BANNED');
+
+      const promo = db.prepare('SELECT * FROM promo_codes WHERE code = ? COLLATE NOCASE').get(cleanCode);
+      if (!promo) throw new Error('CODE_NOT_FOUND');
+      if (!promo.is_active) throw new Error('CODE_INACTIVE');
+
+      const now = Date.now();
+      if (now > promo.expires_at) throw new Error('CODE_EXPIRED');
+      if (promo.used_count >= promo.max_uses) throw new Error('CODE_EXHAUSTED');
+
+      const already = db.prepare('SELECT 1 FROM promo_code_redemptions WHERE code_id = ? AND telegram_id = ?').get(promo.id, telegram_id);
+      if (already) throw new Error('ALREADY_REDEEMED');
+
+      // Update user balance & xp
+      const newBalance = (user.balance || 0) + promo.reward_rex;
+      const newXp = (user.xp_points || 0) + (promo.reward_xp || 0);
+
+      db.prepare('UPDATE users SET balance = balance + ?, xp_points = xp_points + ? WHERE telegram_id = ?')
+        .run(promo.reward_rex, promo.reward_xp || 0, telegram_id);
+
+      // Increment used count
+      db.prepare('UPDATE promo_codes SET used_count = used_count + 1 WHERE id = ?').run(promo.id);
+
+      // Insert redemption record
+      db.prepare('INSERT INTO promo_code_redemptions (code_id, code, telegram_id, reward_rex, reward_xp, redeemed_at) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(promo.id, promo.code, telegram_id, promo.reward_rex, promo.reward_xp || 0, now);
+
+      // Record double-entry financial ledger
+      recordLedgerEntry({
+        telegram_id,
+        type: 'PROMO_CODE_REDEEM',
+        amount: promo.reward_rex,
+        balance_after: newBalance,
+        reference_id: `promo_${promo.id}_${telegram_id}_${now}`,
+        details: `Redeemed Promo Code: ${promo.code} (+${promo.reward_rex} REX, +${promo.reward_xp || 0} XP)`
+      });
+
+      return {
+        code: promo.code,
+        reward_rex: promo.reward_rex,
+        reward_xp: promo.reward_xp || 0,
+        new_balance: newBalance,
+        new_xp: newXp
+      };
+    });
+
+    return tx();
   },
 
   claimDailyCheckin: (telegram_id) => {
