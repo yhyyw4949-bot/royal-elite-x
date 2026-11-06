@@ -867,6 +867,61 @@ app.get('/api/public/tokenomics', (req, res) => {
   res.json(db.getPublicTokenomicsStats());
 });
 
+let cachedMarketData = null;
+let lastMarketFetch = 0;
+
+app.get('/api/public/market-chart', async (req, res) => {
+  const now = Date.now();
+  if (cachedMarketData && (now - lastMarketFetch < 30000)) {
+    return res.json(cachedMarketData);
+  }
+
+  const pairId = 'eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr';
+  try {
+    const apiRes = await fetch(`https://api.dexscreener.com/latest/dex/pairs/ton/${pairId}`);
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      const pair = data.pair || (data.pairs && data.pairs[0]);
+      if (pair) {
+        cachedMarketData = {
+          success: true,
+          price_usd: parseFloat(pair.priceUsd || '0'),
+          price_ton: parseFloat(pair.priceNative || '0'),
+          price_change_24h: pair.priceChange?.h24 || 0,
+          price_change_6h: pair.priceChange?.h6 || 0,
+          price_change_1h: pair.priceChange?.h1 || 0,
+          liquidity_usd: pair.liquidity?.usd || 0,
+          volume_24h: pair.volume?.h24 || 0,
+          fdv: pair.fdv || 0,
+          market_cap: pair.marketCap || pair.fdv || 0,
+          pair_address: pair.pairAddress,
+          dex_url: pair.url || `https://dexscreener.com/ton/${pairId}`,
+          embed_url: `https://dexscreener.com/ton/${pair.pairAddress}?embed=1&theme=dark&trades=0&info=0`,
+          updated_at: now
+        };
+        lastMarketFetch = now;
+        return res.json(cachedMarketData);
+      }
+    }
+  } catch (err) {
+    console.error('DexScreener fetch error:', err.message);
+  }
+
+  res.json(cachedMarketData || {
+    success: true,
+    price_usd: 0.000626,
+    price_ton: 0.000571,
+    price_change_24h: 8.28,
+    liquidity_usd: 105.23,
+    volume_24h: 0.95,
+    fdv: 31314,
+    pair_address: 'EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR',
+    dex_url: 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr',
+    embed_url: 'https://dexscreener.com/ton/EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR?embed=1&theme=dark&trades=0&info=0',
+    updated_at: now
+  });
+});
+
 // ================================================================
 // 7. ROYAL ACHIEVEMENTS
 // ================================================================

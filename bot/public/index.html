@@ -826,6 +826,24 @@
         <span class="val rex" id="onChainRex">— REX</span>
       </div>
     </div>
+
+    <!-- Live Market Ticker & Chart Pill -->
+    <div class="market-price-pill" onclick="openChartModal()" style="margin-top: 12px; padding: 10px 14px; background: rgba(15,23,42,0.85); border: 1px solid rgba(234,179,8,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">📈</span>
+        <div>
+          <div style="font-size: 10.5px; color: var(--muted); font-weight: 700;" id="lblLivePriceTitle">سعر REX المباشر:</div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-family: Orbitron; font-size: 13px; font-weight: 900; color: #fff;" id="livePriceUsd">$0.000626</span>
+            <span style="font-size: 10.5px; color: var(--cyan);" id="livePriceTon">(0.00057 TON)</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="livePriceChange" class="badge-green" style="font-size: 11px; font-weight: 800; padding: 3px 7px;">+8.28% 🟢</span>
+        <span style="color: var(--gold-lt); font-size: 11px; font-weight: 800;" id="lblTapChartHint">الشارت ❯</span>
+      </div>
+    </div>
   </div>
 
   <!-- ════ CHANNEL SUBSCRIPTION GATE (SOVEREIGN CHANNEL LOCK) ════ -->
@@ -1228,6 +1246,87 @@
       <div class="hub-card-name" id="hubTiersName">HODL Mining Tiers</div>
       <div class="hub-card-desc" id="hubTiersDesc">Boost mining rate up to 25X</div>
     </div>
+
+    <!-- Card 10: Live Chart & Market Price -->
+    <div class="hub-card-item" onclick="openChartModal()">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap cyan"><span>📊</span></div>
+        <span class="hub-card-badge green" id="hubChartBadge">LIVE</span>
+      </div>
+      <div class="hub-card-name" id="hubChartName">Live Market & Chart</div>
+      <div class="hub-card-desc" id="hubChartDesc">Real-time TradingView DexScreener chart & stats</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: LIVE TOKEN CHART & MARKET ════ -->
+<div id="chartModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'chartModal')">
+  <div class="modal-sheet" style="max-height: 92vh; display: flex; flex-direction: column;">
+    <div class="modal-header">
+      <div class="modal-title"><span>📊</span> <span id="mChartTitle">شارت وسعر REX الحي</span></div>
+      <div class="modal-close" onclick="closeModal('chartModal')">✕</div>
+    </div>
+
+    <div style="padding: 12px 14px; overflow-y: auto; flex: 1;">
+      <!-- Price & 24h Stats Header -->
+      <div style="background: rgba(13,20,38,0.9); border: 1px solid rgba(234,179,8,0.3); border-radius: 14px; padding: 14px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700;" id="mChartPriceLabel">سعر ROYAL ELITE X الحالي:</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <span style="font-family: Orbitron; font-size: 20px; font-weight: 900; color: var(--gold-lt);" id="modalPriceUsd">$0.000626</span>
+              <span style="font-size: 12px; color: var(--cyan); font-weight: 800;" id="modalPriceTon">≈ 0.00057 TON</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 10px; color: var(--muted);" id="mChartChangeLabel">تغير 24 ساعة:</div>
+            <div id="modalPriceChange" style="font-family: Orbitron; font-size: 13.5px; font-weight: 900; color: #10b981;">+8.28% 🟢</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; text-align: center;">
+          <div>
+            <div style="font-size: 10px; color: var(--muted);" id="mChartLiqLabel">💧 السيولة</div>
+            <div id="modalLiquidity" style="font-family: Orbitron; font-size: 11.5px; font-weight: 800; color: #fff;">$105.23</div>
+          </div>
+          <div>
+            <div style="font-size: 10px; color: var(--muted);" id="mChartVolLabel">📈 حجم 24h</div>
+            <div id="modalVolume" style="font-family: Orbitron; font-size: 11.5px; font-weight: 800; color: #fff;">$0.95</div>
+          </div>
+          <div>
+            <div style="font-size: 10px; color: var(--muted);" id="mChartFdvLabel">🏛️ القيمة (FDV)</div>
+            <div id="modalFdv" style="font-family: Orbitron; font-size: 11.5px; font-weight: 800; color: var(--gold-lt);">$31,314</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Embedded DexScreener TradingView Chart -->
+      <div style="position: relative; width: 100%; height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #0c101c; margin-bottom: 14px;">
+        <iframe 
+          id="dexscreenerIframe"
+          src="https://dexscreener.com/ton/EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR?embed=1&theme=dark&trades=0&info=0"
+          style="width: 100%; height: 100%; border: none;"
+          title="REX DexScreener Chart"
+          loading="lazy">
+        </iframe>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn btn-gold w-100" style="padding: 11px; font-size: 13px; font-weight: 800; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>🛒</span> <span id="mChartBuyBtn">شراء / تداول REX على STON.fi DEX</span> <span>↗</span>
+        </a>
+
+        <div style="display: flex; gap: 8px;">
+          <a href="https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr" target="_blank" class="action-btn w-100" style="padding: 9px; font-size: 11.5px; background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>📊</span> <span id="mChartDexBtn">فتح في DexScreener</span>
+          </a>
+          <a href="https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" target="_blank" class="action-btn w-100" style="padding: 9px; font-size: 11.5px; background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🔍</span> <span id="mChartExplorerBtn">مستكشف TON</span>
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1518,6 +1617,8 @@
   FingerprintJS.load().then(fp => fp.get()).then(r => {
     deviceFP = r.visitorId;
     fetchUserData();
+    loadMarketData();
+    setInterval(loadMarketData, 45000);
   });
 
   // ── TON Connect UI ──
@@ -2350,6 +2451,7 @@
     if (id === 'portfolioModal') loadPortfolio();
     if (id === 'whitepaperModal') loadWhitepaper();
     if (id === 'tiersModal') renderHoldingTiersModal();
+    if (id === 'chartModal') loadMarketData();
   }
 
   function closeModal(id) {
@@ -2359,6 +2461,56 @@
 
   function closeModalOnBackdrop(e, id) {
     if (e.target.id === id) closeModal(id);
+  }
+
+  function openChartModal() {
+    openModal('chartModal');
+    loadMarketData();
+  }
+
+  let cachedLiveMarket = null;
+  async function loadMarketData() {
+    try {
+      const res = await fetch('/api/public/market-chart');
+      if (!res.ok) return;
+      const d = await res.json();
+      if (!d || !d.success) return;
+      cachedLiveMarket = d;
+
+      const formattedUsd = '$' + (d.price_usd < 0.01 ? d.price_usd.toFixed(6) : d.price_usd.toFixed(4));
+      const formattedTon = '(' + (d.price_ton < 0.01 ? d.price_ton.toFixed(6) : d.price_ton.toFixed(4)) + ' TON)';
+      const isPositive = (d.price_change_24h || 0) >= 0;
+      const changeText = (isPositive ? '+' : '') + Number(d.price_change_24h || 0).toFixed(2) + '% ' + (isPositive ? '🟢' : '🔴');
+
+      const liveUsd = document.getElementById('livePriceUsd');
+      const liveTon = document.getElementById('livePriceTon');
+      const liveChange = document.getElementById('livePriceChange');
+      if (liveUsd) liveUsd.textContent = formattedUsd;
+      if (liveTon) liveTon.textContent = formattedTon;
+      if (liveChange) {
+        liveChange.textContent = changeText;
+        liveChange.className = isPositive ? 'badge-green' : 'badge-red';
+      }
+
+      const mUsd = document.getElementById('modalPriceUsd');
+      const mTon = document.getElementById('modalPriceTon');
+      const mChange = document.getElementById('modalPriceChange');
+      const mLiq = document.getElementById('modalLiquidity');
+      const mVol = document.getElementById('modalVolume');
+      const mFdv = document.getElementById('modalFdv');
+
+      if (mUsd) mUsd.textContent = formattedUsd;
+      if (mTon) mTon.textContent = '≈ ' + (d.price_ton < 0.01 ? d.price_ton.toFixed(6) : d.price_ton.toFixed(4)) + ' TON';
+      if (mChange) {
+        mChange.textContent = changeText;
+        mChange.style.color = isPositive ? '#10b981' : '#ef4444';
+      }
+      if (mLiq) mLiq.textContent = '$' + Number(d.liquidity_usd || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      if (mVol) mVol.textContent = '$' + Number(d.volume_24h || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      if (mFdv) mFdv.textContent = '$' + Number(d.fdv || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    } catch(e) {
+      console.error('Market data fetch error:', e);
+    }
   }
 
   // ── 1. REX Intelligence Loader ──
@@ -3198,6 +3350,21 @@
       setElText('mWpTitle', 'Official Sovereign Whitepaper 2026');
       setElText('mTiersTitle', '10% Daily HODL Mining Protocol');
       setElText('lblBuyRexSton', 'Buy REX on STON.fi to Boost Daily Yield');
+
+      // Live Chart & Market
+      setElText('lblLivePriceTitle', 'REX Live Market Price:');
+      setElText('lblTapChartHint', 'Chart ❯');
+      setElText('mChartTitle', 'REX Live Chart & Market');
+      setElText('mChartPriceLabel', 'Current ROYAL ELITE X Price:');
+      setElText('mChartChangeLabel', '24h Change:');
+      setElText('mChartLiqLabel', '💧 Liquidity');
+      setElText('mChartVolLabel', '📈 24h Volume');
+      setElText('mChartFdvLabel', '🏛️ Market Cap');
+      setElText('mChartBuyBtn', 'Buy / Trade REX on STON.fi DEX');
+      setElText('mChartDexBtn', 'Open in DexScreener');
+      setElText('mChartExplorerBtn', 'TON Explorer');
+      setElText('hubChartName', 'Live Market & Chart');
+      setElText('hubChartDesc', 'Real-time TradingView DexScreener chart & stats');
     } else {
       // Splash
       setElText('splashSubText', 'إمبراطورية التعدين الملكية · TON BLOCKCHAIN');
@@ -3311,6 +3478,21 @@
       setElText('mWpTitle', 'الورقة البيضاء الرسمية 2026');
       setElText('mTiersTitle', 'بروتوكول تعدين الحيازة (10% يومياً)');
       setElText('lblBuyRexSton', 'شراء REX من STON.fi لرفع إنتاج التعدين اليومي');
+
+      // Live Chart & Market
+      setElText('lblLivePriceTitle', 'سعر REX المباشر:');
+      setElText('lblTapChartHint', 'الشارت ❯');
+      setElText('mChartTitle', 'شارت وسعر REX الحي');
+      setElText('mChartPriceLabel', 'سعر ROYAL ELITE X الحالي:');
+      setElText('mChartChangeLabel', 'تغير 24 ساعة:');
+      setElText('mChartLiqLabel', '💧 السيولة');
+      setElText('mChartVolLabel', '📈 حجم 24h');
+      setElText('mChartFdvLabel', '🏛️ القيمة السوقية');
+      setElText('mChartBuyBtn', 'شراء / تداول REX على STON.fi DEX');
+      setElText('mChartDexBtn', 'فتح في DexScreener');
+      setElText('mChartExplorerBtn', 'مستكشف TON');
+      setElText('hubChartName', 'شارت وسعر السوق');
+      setElText('hubChartDesc', 'شارت التداول الحي والأسعار اللحظية');
     }
 
     // Dynamic Updates
@@ -3330,7 +3512,8 @@
       academyModal: loadAcademy,
       portfolioModal: loadPortfolio,
       whitepaperModal: loadWhitepaper,
-      tiersModal: renderHoldingTiersModal
+      tiersModal: renderHoldingTiersModal,
+      chartModal: loadMarketData
     };
     Object.keys(modalLoaders).forEach(id => {
       const el = document.getElementById(id);
