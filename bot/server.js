@@ -616,7 +616,11 @@ app.post('/api/user/connect-wallet', telegramAuth, checkMaintenance, async (req,
 
     db.setMultiplier(telegram_id, multiplier);
 
-    sendMsg(req, res, true, 'تم ربط المحفظة بنجاح!', 'Wallet connected successfully!', { friendlyAddr, multiplier, onChainBalance });
+    // Award referral offer ONLY after wallet verification!
+    const userObj = db.getUser(telegram_id);
+    await checkAndAwardReferralOffer(telegram_id, userObj?.first_name);
+
+    sendMsg(req, res, true, 'تم ربط المحفظة وتوثيقها بنجاح!', 'Wallet verified and connected successfully!', { friendlyAddr, multiplier, onChainBalance });
   } catch (e) {
     sendMsg(req, res, false, 'عنوان المحفظة غير صالح', 'Invalid TON wallet address');
   }
@@ -1880,6 +1884,7 @@ async function checkAndAwardReferralOffer(newUserId, firstName) {
 
     const user = db.getUser(newUserId);
     if (!user || !user.referrer_id || user.ref_bonus_awarded === 1) return;
+    if (!user.wallet_address) return; // Referral only counted & awarded after wallet connection!
 
     const refBonus = offer.referrer_rex;
     const newBonus = offer.referee_rex;
@@ -1892,8 +1897,8 @@ async function checkAndAwardReferralOffer(newUserId, firstName) {
     bot.telegram.sendMessage(
       user.referrer_id,
       `🎉 *${offer.title || 'Royal Referral Campaign'} Bonus!* 👑\n\n` +
-      `A new knight (*${firstName || 'Knight'}*) joined via your invite link!\n` +
-      `💰 Your royal reward: *+${refBonus.toLocaleString()} REX* has been credited immediately!\n\n` +
+      `Your invited knight (*${firstName || 'Knight'}*) has just verified their TON wallet!\n` +
+      `💰 Your referral reward: *+${refBonus.toLocaleString()} REX* has been credited immediately!\n\n` +
       `💳 Total Balance Now: *${Number(awardRes.referrer.balance).toLocaleString()} REX* 🚀`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
@@ -1902,7 +1907,7 @@ async function checkAndAwardReferralOffer(newUserId, firstName) {
     bot.telegram.sendMessage(
       newUserId,
       `🎁 *Royal Welcome Gift from ${offer.title || 'Referral Campaign'}!* 🎉\n\n` +
-      `Because you joined via your friend's invite (*${awardRes.referrer.name || 'Royal Knight'}*), you received a special welcome bonus:\n` +
+      `Because you verified your TON wallet after joining via your friend's invite (*${awardRes.referrer.name || 'Royal Knight'}*), you received a special welcome bonus:\n` +
       `💰 *+${newBonus.toLocaleString()} REX* credited to your wallet immediately!\n\n` +
       `💳 Current Balance: *${Number(awardRes.new_user.balance).toLocaleString()} REX* 👑`,
       { parse_mode: 'Markdown' }
@@ -1913,7 +1918,6 @@ async function checkAndAwardReferralOffer(newUserId, firstName) {
 }
 
 async function sendWelcomeMessage(ctx, firstName, payload) {
-  await checkAndAwardReferralOffer(ctx.from?.id, firstName);
   await ctx.reply(
     `👑 *Welcome to ROYAL ELITE X (REX) — Sovereign Platform*\n\n` +
     `🏰 Welcome, ${firstName}! The official Web3 Cloud Mining and Telegram Mini App for *REX* on *TON Blockchain* is now LIVE.\n\n` +

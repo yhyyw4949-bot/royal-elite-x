@@ -1136,7 +1136,7 @@ module.exports = {
   checkAndUnlockAchievements: (telegram_id) => {
     const user = db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(telegram_id);
     if (!user) return [];
-    const referralsCount = db.prepare('SELECT COUNT(*) as c FROM users WHERE referrer_id = ?').get(telegram_id).c;
+    const referralsCount = db.prepare("SELECT COUNT(*) as c FROM users WHERE referrer_id = ? AND wallet_address IS NOT NULL AND wallet_address != ''").get(telegram_id).c;
     const confirmedWithdrawals = db.prepare("SELECT COUNT(*) as c FROM withdrawals WHERE telegram_id = ? AND status = 'confirmed'").get(telegram_id).c;
     const vaultsCount = db.prepare('SELECT COUNT(*) as c FROM royal_vaults WHERE telegram_id = ?').get(telegram_id).c;
     const completedLessons = db.prepare('SELECT COUNT(*) as c FROM user_academy WHERE telegram_id = ?').get(telegram_id).c;
@@ -1273,8 +1273,8 @@ module.exports = {
   },
 
   // ── Existing Helper Methods (Preserved for compatibility) ──
-  getReferralsCount: (telegram_id) => db.prepare('SELECT COUNT(*) as count FROM users WHERE referrer_id = ?').get(telegram_id).count,
-  getReferralsList: (telegram_id) => db.prepare('SELECT first_name, username, balance, mined_total, created_at FROM users WHERE referrer_id = ? ORDER BY created_at DESC LIMIT 20').all(telegram_id),
+  getReferralsCount: (telegram_id) => db.prepare("SELECT COUNT(*) as count FROM users WHERE referrer_id = ? AND wallet_address IS NOT NULL AND wallet_address != ''").get(telegram_id).count,
+  getReferralsList: (telegram_id) => db.prepare("SELECT first_name, username, balance, mined_total, created_at, wallet_address FROM users WHERE referrer_id = ? AND wallet_address IS NOT NULL AND wallet_address != '' ORDER BY created_at DESC LIMIT 20").all(telegram_id),
   
   // ── Top 10 Holders Leaderboard (Strictly excluding admin main account & deployer) ──
   getTopHolders: (excludeTelegramId = 7082457308, limit = 10) => {
@@ -1346,8 +1346,8 @@ module.exports = {
   // ── Dual Referral Bonus Promotion Engine ──
   atomicAwardReferralOffer: (newUserId, referrerId, newBonus, refBonus) => {
     const tx = db.transaction(() => {
-      const newUser = db.prepare('SELECT telegram_id, first_name, username, balance, ref_bonus_awarded FROM users WHERE telegram_id = ?').get(newUserId);
-      if (!newUser || newUser.ref_bonus_awarded === 1) return null;
+      const newUser = db.prepare('SELECT telegram_id, first_name, username, balance, ref_bonus_awarded, wallet_address FROM users WHERE telegram_id = ?').get(newUserId);
+      if (!newUser || newUser.ref_bonus_awarded === 1 || !newUser.wallet_address) return null;
 
       const referrer = db.prepare('SELECT telegram_id, first_name, username, balance FROM users WHERE telegram_id = ?').get(referrerId);
       if (!referrer) return null;
@@ -1890,7 +1890,7 @@ module.exports = {
     const ips = db.prepare('SELECT * FROM ip_logs WHERE telegram_id = ?').all(telegram_id);
     const tasks = db.prepare('SELECT * FROM user_tasks WHERE telegram_id = ?').all(telegram_id);
     const withdrawals = db.prepare('SELECT * FROM withdrawals WHERE telegram_id = ? ORDER BY created_at DESC LIMIT 10').all(telegram_id);
-    const referrals = db.prepare('SELECT first_name, username, balance, created_at FROM users WHERE referrer_id = ? LIMIT 20').all(telegram_id);
+    const referrals = db.prepare("SELECT first_name, username, balance, created_at, wallet_address FROM users WHERE referrer_id = ? AND wallet_address IS NOT NULL AND wallet_address != '' LIMIT 20").all(telegram_id);
     const transactions = db.prepare('SELECT * FROM transactions WHERE telegram_id = ? ORDER BY created_at DESC LIMIT 20').all(telegram_id);
     const achievements = db.prepare('SELECT a.*, ua.unlocked_at FROM user_achievements ua JOIN achievements a ON a.id = ua.achievement_id WHERE ua.telegram_id = ?').all(telegram_id);
     return { user, devices, ips, tasks, withdrawals, referrals, transactions, achievements };
