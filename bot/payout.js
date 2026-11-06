@@ -153,7 +153,7 @@ async function getBotWalletInfo() {
     let rexBalance = 0;
     let senderJwStr = null;
     try {
-      const masterStr = process.env.REX_MASTER_CONTRACT || 'EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH';
+      const masterStr = process.env.REX_MASTER_CONTRACT || 'EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX';
       const jw = await getSenderJettonWallet(client, masterStr, wallet.address.toString());
       senderJwStr = jw.toString({ bounceable: true });
       const res = await callWithRetry(() => client.runMethod(jw, 'get_wallet_data'));
@@ -205,7 +205,7 @@ async function sendOnChainRexPayout({ recipientAddress, amountRex, memo = 'REX W
   }
 
   // 2. Resolve Master Contract & Sender Jetton Wallet
-  const masterContractStr = process.env.REX_MASTER_CONTRACT || 'EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH';
+  const masterContractStr = process.env.REX_MASTER_CONTRACT || 'EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX';
   const senderJettonWallet = await getSenderJettonWallet(client, masterContractStr, senderWallet.address.toString());
 
   // Check REX balance

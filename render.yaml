@@ -21,7 +21,7 @@ services:
       - key: ADMIN_SECRET
         value: REX_ADMIN_2026
       - key: REX_MASTER_CONTRACT
-        value: EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH
+        value: EQBjOwteVkpjofTFQRFRLqRSb7SSYDxtJSXh8DnIFV7_oaLX
       - key: WEBAPP_URL
         value: https://royal-elite-x.onrender.com
       - key: REQUIRED_CHANNEL
