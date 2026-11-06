@@ -75,6 +75,8 @@ function getRequiredChannel() {
 }
 
 async function isUserSubscribedToChannel(userId) {
+  if (!userId || parseInt(userId) === ADMIN_TG_ID) return true;
+
   const isEnabled = db.getSetting('force_sub_enabled', '1');
   if (isEnabled !== '1') return true;
 
@@ -88,7 +90,7 @@ async function isUserSubscribedToChannel(userId) {
     const validStatuses = ['creator', 'administrator', 'member', 'restricted'];
     return validStatuses.includes(member.status);
   } catch (err) {
-    if (err.message && err.message.includes('user not found')) {
+    if (err.message && (err.message.includes('user not found') || err.message.includes('PARTICIPANT_ID_INVALID') || err.message.includes('USER_NOT_PARTICIPANT'))) {
       return false;
     }
     console.error(`[FORCE SUB CHECK] Error checking user ${userId} in ${channel}:`, err.message);
@@ -1340,6 +1342,55 @@ app.post('/api/admin/broadcast', adminAuth, async (req, res) => {
   res.json({ success: true, sent, failed });
 });
 
+// Endpoint for Web Verification of Channel Subscription
+app.post('/api/user/check-channel', telegramAuth, async (req, res) => {
+  const telegram_id = req.telegramUser?.id || req.body?.telegram_id;
+  const isSub = await isUserSubscribedToChannel(telegram_id);
+  const chan = getRequiredChannel();
+  return res.json({
+    success: isSub || parseInt(telegram_id) === ADMIN_TG_ID,
+    is_subscribed: isSub || parseInt(telegram_id) === ADMIN_TG_ID,
+    required_channel: chan,
+    channel_url: `https://t.me/${chan.replace(/^@/, '')}`
+  });
+});
+
+// Admin Diagnostic Endpoint to verify bot permissions in required channel
+app.get('/api/admin/check-channel-status', adminAuth, async (req, res) => {
+  const chan = getRequiredChannel();
+  try {
+    const chat = await bot.telegram.getChat(chan);
+    const botMe = await bot.telegram.getMe();
+    let botMember = null;
+    try {
+      botMember = await bot.telegram.getChatMember(chan, botMe.id);
+    } catch(be) {
+      botMember = { error: be.message };
+    }
+    let adminMember = null;
+    try {
+      adminMember = await bot.telegram.getChatMember(chan, ADMIN_TG_ID);
+    } catch(ae) {
+      adminMember = { error: ae.message };
+    }
+    res.json({
+      success: true,
+      channel: chan,
+      chat_title: chat.title,
+      bot_username: botMe.username,
+      bot_membership: botMember,
+      admin_membership: adminMember,
+      force_sub_enabled: db.getSetting('force_sub_enabled', '1')
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      channel: chan,
+      error: err.message
+    });
+  }
+});
+
 // ================================================================
 // 13. TELEGRAM BOT COMMANDS & INTERACTIVE FLOWS (ENGLISH)
 // ================================================================
@@ -1359,39 +1410,6 @@ async function sendWelcomeMessage(ctx, firstName, payload) {
     }
   );
 }
-
-// Global subscription gate for bot commands
-bot.use(async (ctx, next) => {
-  if (ctx.from && ctx.chat?.type === 'private') {
-    const tid = ctx.from.id;
-    if (tid === ADMIN_TG_ID) return next();
-
-    const text = ctx.message?.text || '';
-    if (text.startsWith('/start') || ctx.callbackQuery) {
-      return next();
-    }
-
-    const isSub = await isUserSubscribedToChannel(tid);
-    if (!isSub) {
-      const channel = getRequiredChannel();
-      const cleanUsername = channel.replace(/^@/, '');
-      const channelUrl = `https://t.me/${cleanUsername}`;
-
-      return ctx.reply(
-        `🔒 *Channel Subscription Required*\n\n` +
-        `You must join our official channel *${channel}* first to use bot commands and features!`,
-        {
-          parse_mode: 'Markdown',
-          ...Markup.inlineKeyboard([
-            [Markup.button.url('📢 Join Official Channel', channelUrl)],
-            [Markup.button.callback('✅ Verify & Unlock', 'verify_sub_none')]
-          ])
-        }
-      );
-    }
-  }
-  return next();
-});
 
 bot.start(async (ctx) => {
   const tid = ctx.from.id;
@@ -1423,30 +1441,6 @@ bot.start(async (ctx) => {
 
   if (user.is_banned) {
     return ctx.reply(`⛔ *Account Suspended*\nReason: ${user.ban_reason || 'Anti-Sybil security policy violation'}`);
-  }
-
-  // ── Mandatory Channel Subscription Check ──
-  const isSubscribed = await isUserSubscribedToChannel(tid);
-  if (!isSubscribed && tid !== ADMIN_TG_ID) {
-    const channel = getRequiredChannel();
-    const cleanUsername = channel.replace(/^@/, '');
-    const channelUrl = `https://t.me/${cleanUsername}`;
-
-    return ctx.reply(
-      `🔒 *Subscription Required — Access Locked* 👑\n\n` +
-      `Welcome, ${firstName}!\n\n` +
-      `To enter the *ROYAL ELITE X* court and start mining REX, you must join our official Telegram channel first:\n\n` +
-      `📢 *Official Channel:* ${channel}\n\n` +
-      `👉 1. Tap *Join Official Channel* below.\n` +
-      `👉 2. Tap *Verify & Enter Platform* to unlock access. 👇`,
-      {
-        parse_mode: 'Markdown',
-        ...Markup.inlineKeyboard([
-          [Markup.button.url('📢 Join Official Channel', channelUrl)],
-          [Markup.button.callback('✅ Verify & Enter Platform', `verify_sub_${payload || 'none'}`)]
-        ])
-      }
-    );
   }
 
   await sendWelcomeMessage(ctx, firstName, payload);

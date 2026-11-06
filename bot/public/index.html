@@ -828,6 +828,34 @@
     </div>
   </div>
 
+  <!-- ════ CHANNEL SUBSCRIPTION GATE (SOVEREIGN CHANNEL LOCK) ════ -->
+  <div id="channelGateScreen" style="display:none; padding: 32px 18px 24px; margin: 20px auto; max-width: 440px; text-align: center; background: rgba(13,20,38,0.95); border: 1px solid rgba(234,179,8,0.3); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+    <div style="font-size: 58px; margin-bottom: 12px; filter: drop-shadow(0 0 16px rgba(234,179,8,0.35));">📢</div>
+    <h3 style="color: var(--gold-lt); font-size: 21px; font-weight: 900; margin-bottom: 10px;" id="cgTitle">الاشتراك في القناة إلزامي</h3>
+    <p style="color: #94a3b8; font-size: 13.5px; line-height: 1.6; margin-bottom: 20px;" id="cgDesc">
+      للوصول إلى منظومة <strong>ROYAL ELITE X</strong> ومتابعة التعدين والجوائز، يجب أن تكون عضواً في القناة الرسمية:
+    </p>
+
+    <div style="background: rgba(15,23,42,0.85); border: 1px solid rgba(234,179,8,0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <span style="font-size: 20px;">👑</span>
+      <span style="color: var(--cyan); font-weight: 800; font-size: 16px; letter-spacing: 0.5px;" id="cgChannelBadge">@REXCEO1A</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <button class="action-btn btn-gold w-100" style="padding: 13px; font-size: 14px; font-weight: 800; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="openOfficialChannel()">
+        📢 <span id="cgJoinBtnText">انضم إلى القناة الرسمية الآن</span>
+      </button>
+
+      <button id="cgVerifyBtn" class="action-btn w-100" style="padding: 13px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="verifyChannelSubscription()">
+        🔄 <span id="cgVerifyBtnText">تحقق من الاشتراك وتفعيل الوصول</span>
+      </button>
+    </div>
+
+    <p style="color: #64748b; font-size: 12px; margin-top: 18px; line-height: 1.5;" id="cgHint">
+      💡 بعد الضغط على "انضم"، اشترك في القناة ثم عد واضغط على "تحقق من الاشتراك".
+    </p>
+  </div>
+
   <!-- ════ GATEKEEPER CARD (LOCKDOWN SCREEN) ════ -->
   <div id="gateScreen" style="display:none; padding: 28px 18px 24px; margin: 15px auto; max-width: 440px;">
     <div class="gate-icon-large">🔐</div>
@@ -1534,28 +1562,75 @@
     return d;
   }
 
+  let activeRequiredChannel = '@REXCEO1A';
+
+  function openOfficialChannel() {
+    const clean = (activeRequiredChannel || '@REXCEO1A').replace(/^@/, '');
+    const url = `https://t.me/${clean}`;
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  async function verifyChannelSubscription() {
+    const btn = document.getElementById('cgVerifyBtn');
+    const btnText = document.getElementById('cgVerifyBtnText');
+    const originalText = btnText ? btnText.textContent : '';
+    if (btnText) btnText.textContent = currentLang === 'ar' ? '⏳ جاري التحقق...' : '⏳ Verifying...';
+    if (btn) btn.disabled = true;
+
+    try {
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+      }
+
+      const res = await api('/api/user/check-channel', { telegram_id: user.id });
+      if (res && res.is_subscribed) {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+        }
+        showToast(currentLang === 'ar' ? '✅ تم التحقق بنجاح! أهلاً بك في رويال إيليت إكس 👑' : '✅ Verified! Welcome to Royal Elite X 👑', 'success');
+        
+        const cgs = document.getElementById('channelGateScreen');
+        if (cgs) cgs.style.display = 'none';
+        await fetchUserData();
+      } else {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+        }
+        showToast(currentLang === 'ar' ? '⚠️ لم تنضم إلى القناة بعد! يرجى الانضمام أولاً ثم المحاولة ثانية.' : '⚠️ You have not joined the channel yet! Please join first.', 'warning');
+      }
+    } catch (e) {
+      console.error(e);
+      showToast(currentLang === 'ar' ? 'تعذر التحقق حالياً، يرجى المحاولة ثانية' : 'Verification failed, please try again', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = originalText;
+    }
+  }
+
   function showChannelLockScreen(chan = '@REXCEO1A') {
-    const cleanChan = chan.replace(/^@/, '');
-    const chanUrl = `https://t.me/${cleanChan}`;
-    document.body.innerHTML = `
-      <div style="padding:60px 24px; text-align:center; min-height:100vh; background:#050811; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-        <div style="font-size:64px; margin-bottom:16px;">📢</div>
-        <h2 style="color:var(--gold-lt); font-size:22px; font-weight:900; margin-bottom:12px;">
-          ${currentLang === 'ar' ? 'الاشتراك في القناة إلزامي' : 'Channel Subscription Required'}
-        </h2>
-        <p style="color:#94a3b8; font-size:13.5px; line-height:1.6; max-width:320px; margin-bottom:24px;">
-          ${currentLang === 'ar' 
-            ? 'لقد غادرت القناة الرسمية أو لم تشترك بعد! للوصول إلى المنصة ومتابعة التعدين، يرجى الانضمام إلى القناة:' 
-            : 'You have left our official channel or have not joined yet! To access the platform and continue mining, please join our official channel:'}
-          <br><strong style="color:var(--cyan); font-size:16px; display:block; margin-top:8px;">${chan}</strong>
-        </p>
-        <a href="${chanUrl}" target="_blank" class="action-btn btn-gold" style="display:inline-block; max-width:280px; padding:12px 24px; text-decoration:none; margin-bottom:12px;">
-          📢 ${currentLang === 'ar' ? 'الانضمام إلى القناة الآن' : 'Join Official Channel'}
-        </a>
-        <button class="action-btn" style="max-width:280px; padding:12px 24px; background:rgba(255,255,255,0.08); color:#fff;" onclick="location.reload()">
-          🔄 ${currentLang === 'ar' ? 'تحقق واستعادة الوصول' : 'Verify & Resume Access'}
-        </button>
-      </div>`;
+    activeRequiredChannel = chan || '@REXCEO1A';
+    const badge = document.getElementById('cgChannelBadge');
+    if (badge) badge.textContent = activeRequiredChannel;
+
+    const cgs = document.getElementById('channelGateScreen');
+    const bNav = document.getElementById('bottomNav');
+    const vc = document.getElementById('vaultCard');
+    const gs = document.getElementById('gateScreen');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    if (bNav) bNav.style.display = 'none';
+    if (vc) vc.style.display = 'none';
+    if (gs) gs.style.display = 'none';
+    tabPanels.forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+
+    if (cgs) cgs.style.display = 'block';
   }
 
   // ── Sync User Data ──
@@ -1580,6 +1655,8 @@
         if (vc) vc.style.display = 'none';
         const gs = document.getElementById('gateScreen');
         if (gs) gs.style.display = 'none';
+        const cgs = document.getElementById('channelGateScreen');
+        if (cgs) cgs.style.display = 'none';
         return;
       } else {
         const ms = document.getElementById('maintenanceScreen');
@@ -1599,9 +1676,12 @@
       }
 
       // Mandatory Channel Subscription Gate
+      const cgs = document.getElementById('channelGateScreen');
       if (d.is_subscribed_channel === false && d.telegram_id !== 7082457308) {
         showChannelLockScreen(d.required_channel || '@REXCEO1A');
         return;
+      } else {
+        if (cgs) cgs.style.display = 'none';
       }
       renderAll(d);
     } catch(e) {
@@ -1692,6 +1772,8 @@
       if (bottomNav) bottomNav.style.display = 'flex';
       if (vaultCard) vaultCard.style.display = 'block';
       if (gateScreen) gateScreen.style.display = 'none';
+      const cgs = document.getElementById('channelGateScreen');
+      if (cgs) cgs.style.display = 'none';
 
       const curActive = document.querySelector('.tab-panel.active') || document.getElementById('tab-mine');
       if (curActive) {
@@ -3019,6 +3101,13 @@
       setElText('dailyRateUnit', 'REX / day');
       setElText('tierTapHint', 'Yield Calculator ❯');
 
+      // Channel Gate
+      setElText('cgTitle', 'Official Channel Subscription Required');
+      setElHtml('cgDesc', 'To enter the <strong>ROYAL ELITE X</strong> court and continue mining & rewards, you must be a member of our official channel:');
+      setElText('cgJoinBtnText', 'Join Official Channel Now');
+      setElText('cgVerifyBtnText', 'Verify Subscription & Enter');
+      setElText('cgHint', '💡 After tapping "Join", subscribe to the channel, then return and tap "Verify Subscription".');
+
       // Sovereign Gate
       setElText('gateTitle', 'Sovereign Royal Gate Locked');
       setElHtml('gateDesc', 'Welcome to <strong>ROYAL ELITE X</strong> 👑.<br>To defend the ecosystem against sybil accounts, all platform modules are locked until completing two verification steps:');
@@ -3124,6 +3213,13 @@
       setElText('hourlyRateUnit', 'REX / ساعة');
       setElText('dailyRateUnit', 'REX / يوم');
       setElText('tierTapHint', 'حاسبة العائد ❯');
+
+      // Channel Gate
+      setElText('cgTitle', 'الاشتراك في القناة إلزامي');
+      setElHtml('cgDesc', 'للوصول إلى منظومة <strong>ROYAL ELITE X</strong> ومتابعة التعدين والجوائز، يجب أن تكون عضواً في القناة الرسمية:');
+      setElText('cgJoinBtnText', 'انضم إلى القناة الرسمية الآن');
+      setElText('cgVerifyBtnText', 'تحقق من الاشتراك وتفعيل الوصول');
+      setElText('cgHint', '💡 بعد الضغط على "انضم"، اشترك في القناة ثم عد واضغط على "تحقق من الاشتراك".');
 
       // Sovereign Gate
       setElText('gateTitle', 'بوابة البلاط الملكي المقفولة');
