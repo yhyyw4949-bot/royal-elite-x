@@ -342,30 +342,29 @@ async function checkAntiDumpViolation(user, currentOnChain) {
     // 3. Notify user on Telegram
     bot.telegram.sendMessage(
       user.telegram_id,
-      `⛔ *حظر تلقائي نهائي من البلاط الملكي* 🛡️\n\n` +
-      `تم حظر حسابك نهائياً من منصة *ROYAL ELITE X* لمخالفتك قواعد الأمان والتوكنوميكس.\n\n` +
-      `• *السبب:* بيع أو تصريف عملات REX في غضون 24 ساعة من استلام السحب (مخالفة سياسة مكافحة الإغراق Anti-Dump Protection).\n` +
-      `• *الرصيد المرصود بعد السحب:* ${Number(baseline).toLocaleString()} REX\n` +
-      `• *الرصيد بعد البيع:* ${Number(currentOnChain).toLocaleString()} REX\n` +
-      `• *الكمية المباعة:* -${soldAmount.toLocaleString()} REX\n\n` +
-      `تم تجميد حسابك وإلغاء صلاحية الوصول نهائياً.`,
+      `⛔ *Permanent Ban from Royal Court* 🛡️\n\n` +
+      `Your account has been permanently suspended from *ROYAL ELITE X* for violating tokenomics and anti-dump protection policies.\n\n` +
+      `• *Reason:* Selling or transferring REX tokens within 24 hours of receiving a withdrawal (Anti-Dump Sentinel violation).\n` +
+      `• *Monitored Baseline Balance:* ${Number(baseline).toLocaleString()} REX\n` +
+      `• *Balance After Transfer:* ${Number(currentOnChain).toLocaleString()} REX\n` +
+      `• *Transferred Amount:* -${soldAmount.toLocaleString()} REX\n\n` +
+      `Your account has been permanently frozen and access revoked.`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
 
     // 4. Alert Admin on Telegram
     bot.telegram.sendMessage(
       ADMIN_TG_ID,
-      `🚨 *إنذار أمني فوري: حظر تلقائي (Anti-Dump Sentinel)* 👑\n\n` +
-      `تم ضبط وحظر مستخدم قام ببيع العملات بعد السحب مباشرة!\n\n` +
-      `👤 المستخدم: *${user.first_name}* (@${user.username || 'بلا'})\n` +
-      `🆔 المعرف: \`${user.telegram_id}\`\n` +
-      `💼 المحفظة: \`${user.wallet_address}\`\n` +
-      `📊 الرصيد المرصود: *${Number(baseline).toLocaleString()} REX*\n` +
-      `📉 الرصيد بعد البيع: *${Number(currentOnChain).toLocaleString()} REX*\n` +
-      `⚠️ الكمية المباعة/المحولة: *${soldAmount.toLocaleString()} REX*\n` +
-      `⏱️ التوقيت: خلال فترة الـ 24 ساعة بعد تأكيد السحب.\n\n` +
-      `✅ *تم حظر الحساب فوراً بنجاح.*\n` +
-      `تم حماية حوض السيولة ومنع تدهور سعر العملة 🛡️`,
+      `🚨 *Security Alert: Anti-Dump Auto-Ban Triggered* 👑\n\n` +
+      `A user was detected selling tokens within 24 hours of withdrawal!\n\n` +
+      `👤 User: *${user.first_name}* (@${user.username || 'None'})\n` +
+      `🆔 Telegram ID: \`${user.telegram_id}\`\n` +
+      `💼 Wallet: \`${user.wallet_address}\`\n` +
+      `📊 Monitored Baseline: *${Number(baseline).toLocaleString()} REX*\n` +
+      `📉 Balance After Transfer: *${Number(currentOnChain).toLocaleString()} REX*\n` +
+      `⚠️ Amount Transferred: *${soldAmount.toLocaleString()} REX*\n` +
+      `⏱️ Timing: Within 24-hour post-withdrawal hold lock.\n\n` +
+      `✅ *Account banned automatically.* Liquidity pool protected 🛡️`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
 
@@ -786,15 +785,15 @@ app.post('/api/user/withdraw', telegramAuth, checkMaintenance, requireChannelSub
 
     // Notify Admin Telegram
     bot.telegram.sendMessage(ADMIN_TG_ID,
-      `📤 *طلب سحب جديد مؤكد On-Chain!* 👑\n\n` +
-      `🆔 رقم الطلب: #${reserveRes.withdrawal_id}\n` +
-      `👤 المستخدم: ${user.first_name} (@${user.username || 'بلا'})\n` +
-      `💰 المبلغ المطلوب: *${reqAmount.toLocaleString()} REX*\n` +
-      `🏷️ رسوم السحب (Fee): *${withdrawalFee.toLocaleString()} REX*\n` +
-      `💵 صافي المستلم للمحفظة: *${netAmount.toLocaleString()} REX*\n` +
-      `💼 رصيد محفظته On-Chain: *${onChainBalance.toLocaleString()} REX* (مستوفي شرط الـ 20% ✅)\n` +
-      `📍 المحفظة: \`${user.wallet_address}\`\n\n` +
-      `الحالة الحالية: \`PENDING\` (قيد التدقيق)`,
+      `📤 *New On-Chain Withdrawal Request!* 👑\n\n` +
+      `🆔 Order ID: #${reserveRes.withdrawal_id}\n` +
+      `👤 User: ${user.first_name} (@${user.username || 'None'})\n` +
+      `💰 Requested Amount: *${reqAmount.toLocaleString()} REX*\n` +
+      `🏷️ Withdrawal Fee: *${withdrawalFee.toLocaleString()} REX*\n` +
+      `💵 Net Payout to Wallet: *${netAmount.toLocaleString()} REX*\n` +
+      `💼 On-Chain Wallet Balance: *${onChainBalance.toLocaleString()} REX* (20% Hold Condition Met ✅)\n` +
+      `📍 Wallet: \`${user.wallet_address}\`\n\n` +
+      `Current Status: \`PENDING\` (Under Audit)`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
 
@@ -1298,9 +1297,9 @@ app.post('/api/admin/request-otp', adminAuth, async (req, res) => {
   const otp = security.adminOtpManager.generateOtp(ADMIN_TG_ID);
   try {
     await bot.telegram.sendMessage(ADMIN_TG_ID,
-      `🔐 *رمز التحقق بخطوتين (Admin 2FA OTP):*\n\n` +
-      `🔑 الرمز السري: \`${otp}\`\n\n` +
-      `⏳ صالح لمدة 3 دقائق فقط. لا تشارك هذا الرمز مع أي شخص.`,
+      `🔐 *Admin Security OTP (2FA):*\n\n` +
+      `🔑 Secret Code: \`${otp}\`\n\n` +
+      `⏳ Valid for 3 minutes. Do not share this code with anyone.`,
       { parse_mode: 'Markdown' }
     );
     res.json({ success: true, message: 'تم إرسال رمز الأمان إلى حساب التيليجرام الخاص بالأدمين.' });
@@ -1407,27 +1406,27 @@ app.post('/api/admin/withdrawals/status', adminAuth, async (req, res) => {
       db.logAdminAction('ANTI_DUMP_MONITOR_START', `بدء مراقبة مكافحة الإغراق للمستخدم ${telegram_id} لـ 24 ساعة برصيد ${baselineRex} REX`, ADMIN_TG_ID);
 
       bot.telegram.sendMessage(telegram_id,
-        `✅ *تم تأكيد وإرسال سحبك على البلوكتشين بنجاح!* 👑\n\n` +
-        `💰 *المبلغ المستلم:* *+${wdAmt.toLocaleString()} REX*\n` +
-        (tx_hash ? `🔗 *هاش المعاملة:* \`${tx_hash}\`\n` : '') +
-        (explorer_url ? `🌐 *رابط المستكشف:* [عرض المعاملة في Tonviewer](${explorer_url})\n\n` : '\n') +
-        `🛡️ *قانون الأمان الملكي (Anti-Dump Protection - 24h):*\n` +
-        `يُحظر بيع أو تصريف أي جزء من عملاتك (المثبتة بـ *${baselineRex.toLocaleString()} REX*) خلال الـ *24 ساعة القادمة (يوم كامل)* لحماية استقرار السعر والتوكنوميكس.\n\n` +
-        `⚠️ *تنبيه حازم:* بيع أي عملة خلال الـ 24 ساعة سيتسبب في **حظر حسابك تلقائياً ونهائياً** من المنصة!`,
+        `✅ *Your Withdrawal Has Been Confirmed & Dispatched On-Chain!* 👑\n\n` +
+        `💰 *Amount Received:* *+${wdAmt.toLocaleString()} REX*\n` +
+        (tx_hash ? `🔗 *Transaction Hash:* \`${tx_hash}\`\n` : '') +
+        (explorer_url ? `🌐 *Explorer Link:* [View Transaction on Tonviewer](${explorer_url})\n\n` : '\n') +
+        `🛡️ *Royal Security Law (Anti-Dump Protection — 24h):*\n` +
+        `Selling or transferring any part of your REX tokens (locked baseline: *${baselineRex.toLocaleString()} REX*) is strictly forbidden for the next *24 hours* to safeguard tokenomics stability.\n\n` +
+        `⚠️ *Strict Warning:* Selling any tokens within 24h will trigger an **instant permanent ban** from the platform!`,
         { parse_mode: 'Markdown' }
       ).catch(() => {});
     } else if (new_status === 'approved') {
       bot.telegram.sendMessage(telegram_id,
-        `✅ *تمت الموافقة على طلب سحبك بنجاح!* 👑\n\n` +
-        `⏳ *موعد الوصول:* سيصل السحب لمحفظتك على البلوكتشين خلال 24 ساعة كحد أقصى.\n\n` +
-        `شكراً لثقتك بالبلاط الملكي ROYAL ELITE X.`,
+        `✅ *Your Withdrawal Request Has Been Approved!* 👑\n\n` +
+        `⏳ *Estimated Delivery:* Your withdrawal will be dispatched to your blockchain wallet within a maximum of 24 hours.\n\n` +
+        `Thank you for your trust in ROYAL ELITE X Sovereign Court.`,
         { parse_mode: 'Markdown' }
       ).catch(() => {});
     } else if (new_status === 'rejected' || new_status === 'failed') {
       bot.telegram.sendMessage(telegram_id,
-        `❌ تم تحديث حالة طلب سحبك إلى (${new_status}).\n` +
-        `السبب: ${audit_note || 'مراجعة أمنية'}\n` +
-        `تمت إعادة رصيدك المحجوز إلى رصيدك المتاح في المنصة.`
+        `❌ Your withdrawal request status was updated to (${new_status}).\n` +
+        `Reason: ${audit_note || 'Security Review'}\n` +
+        `Your reserved balance has been safely restored to your available balance.`
       ).catch(() => {});
     }
 
@@ -1479,14 +1478,14 @@ app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
     db.setPostWithdrawalMonitoring(withdrawal.telegram_id, id, baselineRex, 24);
 
     bot.telegram.sendMessage(withdrawal.telegram_id,
-      `✅ *تمت الموافقة وصرف سحبك تلقائياً على البلوكتشين!* 👑\n\n` +
-      `💰 *المبلغ الصافي المستلم:* *+${netPayout.toLocaleString()} REX*\n` +
-      `🏷️ *رسوم السحب:* *${(withdrawal.fee || 500).toLocaleString()} REX*\n` +
-      `📥 *المحفظة المستلمة:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
-      `🌐 *رابط التحقق:* [عرض المعاملة في Tonviewer](${explorerUrl})\n\n` +
-      `🛡️ *قانون الأمان الملكي (Anti-Dump Protection - 24h):*\n` +
-      `يُحظر بيع أو تصريف أي جزء من عملاتك (المثبتة بـ *${baselineRex.toLocaleString()} REX*) خلال الـ *24 ساعة القادمة (يوم كامل)* لحماية استقرار السعر والتوكنوميكس.\n\n` +
-      `⚠️ *تنبيه حازم:* بيع أي عملة خلال الـ 24 ساعة سيتسبب في **حظر حسابك تلقائياً ونهائياً** من المنصة!`,
+      `✅ *Your Withdrawal Was Dispatched Automatically On-Chain!* 👑\n\n` +
+      `💰 *Net Amount Received:* *+${netPayout.toLocaleString()} REX*\n` +
+      `🏷️ *Withdrawal Fee:* *${(withdrawal.fee || 500).toLocaleString()} REX*\n` +
+      `📥 *Recipient Wallet:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
+      `🌐 *Verification Link:* [View Transaction on Tonviewer](${explorerUrl})\n\n` +
+      `🛡️ *Royal Security Law (Anti-Dump Protection — 24h):*\n` +
+      `Selling or transferring any part of your REX tokens (monitored baseline: *${baselineRex.toLocaleString()} REX*) is strictly prohibited for the next *24 hours* to protect liquidity stability.\n\n` +
+      `⚠️ *Strict Warning:* Selling any tokens within 24h will trigger an **instant permanent ban** from the platform!`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
 
@@ -1565,7 +1564,7 @@ app.post('/api/admin/ban', adminAuth, (req, res) => {
   db.banUser(telegram_id, reason || 'حظر إداري');
   db.logAdminAction('BAN_USER', `حظر ${telegram_id}: ${reason || 'حظر إداري'}`, ADMIN_TG_ID);
   bot.telegram.sendMessage(telegram_id,
-    `⛔ تم حظر حسابك في منصة ROYAL ELITE X.\nالسبب: ${reason || 'مخالفة شروط الاستخدام'}`
+    `⛔ Your account has been suspended from ROYAL ELITE X.\nReason: ${reason || 'Terms of Service violation'}`
   ).catch(() => {});
   res.json({ success: true });
 });
@@ -1575,7 +1574,7 @@ app.post('/api/admin/unban', adminAuth, (req, res) => {
   db.unbanUser(telegram_id);
   db.logAdminAction('UNBAN_USER', `فك حظر ${telegram_id}`, ADMIN_TG_ID);
   bot.telegram.sendMessage(telegram_id,
-    '✅ تم رفع الحظر عن حسابك في ROYAL ELITE X بنجاح! مرحباً بعودتك 👑'
+    '✅ Your account suspension has been lifted! Welcome back to ROYAL ELITE X 👑'
   ).catch(() => {});
   res.json({ success: true });
 });
@@ -1598,9 +1597,9 @@ app.post('/api/admin/add-balance', adminAuth, (req, res) => {
     if (amt > 0) {
       bot.telegram.sendMessage(
         tid,
-        `🎁 *إيداع رصيد ملكي جديد!*\n\n` +
-        `تمت إضافة *+${amt.toLocaleString()} REX* إلى حسابك من إدارة البلاط الملكي 👑\n` +
-        `رصيدك المتاح الحالي: *${Number(result.balance).toFixed(2)} REX*`,
+        `🎁 *Royal Balance Credited!*\n\n` +
+        `*+${amt.toLocaleString()} REX* has been deposited into your account by Royal Administration 👑\n` +
+        `Current Available Balance: *${Number(result.balance).toFixed(2)} REX*`,
         { parse_mode: 'Markdown' }
       ).catch(() => {});
     }
@@ -1652,14 +1651,14 @@ app.post('/api/admin/send-message', adminAuth, async (req, res) => {
     try {
       await bot.telegram.sendMessage(
         tid,
-        `👑 *رسالة خاصة من إدارة ROYAL ELITE X:*\n\n${message}`,
+        `👑 *Direct Message from ROYAL ELITE X Administration:*\n\n${message}`,
         { parse_mode: 'Markdown' }
       );
     } catch (parseErr) {
       // Attempt 2: Fallback to plain text if Markdown parsing fails
       await bot.telegram.sendMessage(
         tid,
-        `👑 رسالة خاصة من إدارة ROYAL ELITE X:\n\n${message}`
+        `👑 Direct Message from ROYAL ELITE X Administration:\n\n${message}`
       );
     }
 
@@ -1685,13 +1684,13 @@ app.post('/api/admin/broadcast', adminAuth, async (req, res) => {
       try {
         await bot.telegram.sendMessage(
           u.telegram_id,
-          `📢 *إشعار رسمي من إدارة ROYAL ELITE X*\n\n${message}`,
+          `📢 *Official Announcement from ROYAL ELITE X Administration*\n\n${message}`,
           { parse_mode: 'Markdown' }
         );
       } catch (mdErr) {
         await bot.telegram.sendMessage(
           u.telegram_id,
-          `📢 إشعار رسمي من إدارة ROYAL ELITE X\n\n${message}`
+          `📢 Official Announcement from ROYAL ELITE X Administration\n\n${message}`
         );
       }
       sent++;
@@ -1774,20 +1773,20 @@ async function checkAndAwardReferralOffer(newUserId, firstName) {
     // Send notification to Referrer in Telegram
     bot.telegram.sendMessage(
       user.referrer_id,
-      `🎉 *مكافأة ${offer.title}!* 👑\n\n` +
-      `انضم الفارس الجديد (*${firstName || 'Knight'}*) عبر رابط دعوتك!\n` +
-      `💰 تم إضافة مكافأتك الملكية: *+${refBonus.toLocaleString()} REX* إلى رصيدك فوراً!\n\n` +
-      `💳 رصيدك الإجمالي الآن: *+${Number(awardRes.referrer.balance).toLocaleString()} REX* 🚀`,
+      `🎉 *${offer.title || 'Royal Referral Campaign'} Bonus!* 👑\n\n` +
+      `A new knight (*${firstName || 'Knight'}*) joined via your invite link!\n` +
+      `💰 Your royal reward: *+${refBonus.toLocaleString()} REX* has been credited immediately!\n\n` +
+      `💳 Total Balance Now: *${Number(awardRes.referrer.balance).toLocaleString()} REX* 🚀`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
 
     // Send notification to New User in Telegram
     bot.telegram.sendMessage(
       newUserId,
-      `🎁 *هدية ترحيبية ملكية من ${offer.title}!* 🎉\n\n` +
-      `لأنك انضممت عبر دعوة صديقك (*${awardRes.referrer.name || 'Royal Knight'}*)، حصلت على مكافأة ترحيبية خاصة:\n` +
-      `💰 *+${newBonus.toLocaleString()} REX* أضيفت إلى محفظتك في المنصة فوراً!\n\n` +
-      `💳 رصيدك الحالي: *+${Number(awardRes.new_user.balance).toLocaleString()} REX* 👑`,
+      `🎁 *Royal Welcome Gift from ${offer.title || 'Referral Campaign'}!* 🎉\n\n` +
+      `Because you joined via your friend's invite (*${awardRes.referrer.name || 'Royal Knight'}*), you received a special welcome bonus:\n` +
+      `💰 *+${newBonus.toLocaleString()} REX* credited to your wallet immediately!\n\n` +
+      `💳 Current Balance: *${Number(awardRes.new_user.balance).toLocaleString()} REX* 👑`,
       { parse_mode: 'Markdown' }
     ).catch(() => {});
   } catch (err) {
@@ -1972,7 +1971,7 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
 // Bot Command: Redeem Promo / Gift Code
 bot.command(['redeem', 'code', 'promo', 'gift'], async (ctx) => {
   if (isMaintenanceActive() && ctx.from.id !== ADMIN_TG_ID) {
-    return ctx.reply('🛠 *النظام تحت الصيانة حالياً*\n\nيرجى المحاولة بعد قليل! 👑', { parse_mode: 'Markdown' });
+    return ctx.reply('🛠 *System Under Maintenance*\n\nPlease check back shortly! 👑', { parse_mode: 'Markdown' });
   }
 
   const tid = ctx.from.id;
@@ -1980,10 +1979,10 @@ bot.command(['redeem', 'code', 'promo', 'gift'], async (ctx) => {
 
   if (parts.length < 2) {
     return ctx.reply(
-      '🎁 *استرداد كود الهدية الملكي (Redeem Promo Code)*\n\n' +
-      'يرجى كتابة الكود بجانب الأمر بالشكل التالي:\n' +
+      '🎁 *Redeem Royal Promo Code*\n\n' +
+      'Please enter your promo code next to the command:\n' +
       '`/redeem <CODE>`\n\n' +
-      '📌 *مثال:* `/redeem REX100`',
+      '📌 *Example:* `/redeem REX100`',
       { parse_mode: 'Markdown' }
     );
   }
@@ -1995,33 +1994,33 @@ bot.command(['redeem', 'code', 'promo', 'gift'], async (ctx) => {
     const firstName = ctx.from.first_name || 'Knight';
 
     const msg =
-      '👑 *تهانينا الملكية يا ' + firstName + '! تم تفعيل الكود بنجاح* 🎉\n\n' +
-      '🎁 *الكود المسترد:* `' + redeemRes.code + '`\n' +
-      '💰 *المكافأة المضافة:* *+' + Number(redeemRes.reward_rex).toLocaleString() + ' REX*\n' +
-      (redeemRes.reward_xp > 0 ? '⚡ *نقاط الخبرة:* *+' + redeemRes.reward_xp + ' XP*\n' : '') +
-      '💳 *رصيدك الإجمالي الآن:* *' + Number(redeemRes.new_balance).toLocaleString() + ' REX*\n\n' +
-      'تم إيداع الرصيد في حسابك الملكي فوراً! 🚀';
+      '👑 *Royal Congratulations, ' + firstName + '! Promo Code Redeemed Successfully* 🎉\n\n' +
+      '🎁 *Redeemed Code:* `' + redeemRes.code + '`\n' +
+      '💰 *Reward Credited:* *+' + Number(redeemRes.reward_rex).toLocaleString() + ' REX*\n' +
+      (redeemRes.reward_xp > 0 ? '⚡ *Experience Points:* *+' + redeemRes.reward_xp + ' XP*\n' : '') +
+      '💳 *Total Balance Now:* *' + Number(redeemRes.new_balance).toLocaleString() + ' REX*\n\n' +
+      'Tokens have been deposited into your royal account immediately! 🚀';
 
     return ctx.reply(msg, {
       parse_mode: 'Markdown',
       ...Markup.inlineKeyboard([
-        [Markup.button.webApp('👑 فتح المنصة واستعراض الرصيد', WEBAPP_URL)]
+        [Markup.button.webApp('👑 Open Platform & Check Balance', WEBAPP_URL)]
       ])
     });
   } catch (err) {
-    let errorMsg = '⚠️ حدث خطأ أثناء تفعيل الكود.';
+    let errorMsg = '⚠️ An error occurred while redeeming this promo code.';
     if (err.message === 'CODE_NOT_FOUND') {
-      errorMsg = '❌ *عذراً، هذا الكود غير صالح أو غير موجود.*\nتأكد من كتابة الرمز بشكل صحيح وجرب ثانية.';
+      errorMsg = '❌ *Invalid or Non-Existent Code.*\nPlease check the code and try again.';
     } else if (err.message === 'CODE_EXPIRED') {
-      errorMsg = '⏳ *عذراً، انتهت صلاحية هذا الكود الزمنيّة ولم يعد متاحاً للاستخدام.*';
+      errorMsg = '⏳ *Expired Code.*\nThis promo code has expired and is no longer available.';
     } else if (err.message === 'CODE_EXHAUSTED') {
-      errorMsg = '🚫 *عذراً، لقد نفذت كمية هذا الكود بالكامل ووصل للحد الأقصى لعدد المستخدمين المسموح به.*';
+      errorMsg = '🚫 *Claim Limit Reached.*\nThis promo code has reached its maximum user limit.';
     } else if (err.message === 'ALREADY_REDEEMED') {
-      errorMsg = '⚠️ *لقد قمت باستخدام هذا الكود مسبقاً!*\nكل مستخدم يمكنه الاستفادة من الكود لمرة واحدة فقط.';
+      errorMsg = '⚠️ *Already Claimed!*\nYou have already redeemed this promo code. Each user can redeem once.';
     } else if (err.message === 'CODE_INACTIVE') {
-      errorMsg = '🔒 *تم إيقاف هذا الكود مؤقتاً من قِبل الإدارة.*';
+      errorMsg = '🔒 *This promo code has been temporarily disabled by administration.*';
     } else if (err.message === 'USER_BANNED') {
-      errorMsg = '⛔ *حسابك محظور من الاستفادة من هذه الميزة.*';
+      errorMsg = '⛔ *Your account is restricted from claiming rewards.*';
     }
 
     return ctx.reply(errorMsg, { parse_mode: 'Markdown' });
@@ -2043,16 +2042,16 @@ bot.command(['checkin', 'daily'], async (ctx) => {
       const streakIcons = ['🪙', '💰', '💎', '⚡', '🔥', '🏆', '👑'];
       const icon = streakIcons[claimRes.day - 1] || '🎁';
       return ctx.reply(
-        '🎉 *تم تسجيل الحضور اليومي بنجاح!* 👑\n\n' +
-        '• اليوم المستلم: *اليوم ' + claimRes.day + '* ' + icon + '\n' +
-        '• المكافأة: *+' + claimRes.reward + ' REX*\n' +
-        '• نقاط الخبرة: *+' + claimRes.xp + ' XP*\n' +
-        '• سلسلة الحضور: *' + claimRes.new_streak + ' أيام متتالية* 🔥\n' +
-        '• رصيدك الإجمالي الآن: *' + Number(claimRes.new_balance).toLocaleString() + ' REX*\n\n' +
-        'احرص على تسجيل الحضور غداً لمكافأة أكبر! 🚀',
+        '🎉 *Daily Check-in Claimed Successfully!* 👑\n\n' +
+        '• Claimed Day: *Day ' + claimRes.day + '* ' + icon + '\n' +
+        '• Reward: *+' + claimRes.reward + ' REX*\n' +
+        '• Experience Points: *+' + claimRes.xp + ' XP*\n' +
+        '• Streak: *' + claimRes.new_streak + ' consecutive days* 🔥\n' +
+        '• Total Balance Now: *' + Number(claimRes.new_balance).toLocaleString() + ' REX*\n\n' +
+        'Check in tomorrow for even greater rewards! 🚀',
         {
           parse_mode: 'Markdown',
-          ...Markup.inlineKeyboard([[Markup.button.webApp('📅 فتح تقويم الحضور في التطبيق', WEBAPP_URL + '?tab=quests')]])
+          ...Markup.inlineKeyboard([[Markup.button.webApp('📅 Open Quests Calendar in App', WEBAPP_URL + '?tab=quests')]])
         }
       );
     } catch (e) {
@@ -2063,15 +2062,15 @@ bot.command(['checkin', 'daily'], async (ctx) => {
   const waitH = Math.floor(status.cooldown_remaining / 3600000);
   const waitM = Math.ceil((status.cooldown_remaining % 3600000) / 60000);
   ctx.reply(
-    '📅 *سجل الحضور الملكي اليومي (Daily Check-in)* 👑\n\n' +
-    '• سلسلة الحضور الحالية: *' + status.current_streak + ' أيام* 🔥\n' +
-    '• اليوم القادم: *اليوم ' + status.next_day + '* (+' + status.today_reward + ' REX)\n' +
-    '• حالة اليوم: *تم الاستلام بنجاح* ✅\n' +
-    '• وقت التجديد: *بعد ' + waitH + ' ساعة و ' + waitM + ' دقيقة* ⏳\n\n' +
-    'سجّل حضورك يومياً للوصول لمكافأة اليوم السابع (1,000 REX)! 🎁',
+    '📅 *Royal Daily Check-in Status* 👑\n\n' +
+    '• Current Streak: *' + status.current_streak + ' days* 🔥\n' +
+    '• Next Reward: *Day ' + status.next_day + '* (+' + status.today_reward + ' REX)\n' +
+    '• Today\'s Status: *Claimed Successfully* ✅\n' +
+    '• Next Reset: *In ' + waitH + 'h ' + waitM + 'm* ⏳\n\n' +
+    'Check in daily to unlock the Day 7 grand reward (1,000 REX)! 🎁',
     {
       parse_mode: 'Markdown',
-      ...Markup.inlineKeyboard([[Markup.button.webApp('📅 فتح تقويم الحضور في التطبيق', WEBAPP_URL + '?tab=quests')]])
+      ...Markup.inlineKeyboard([[Markup.button.webApp('📅 Open Quests Calendar in App', WEBAPP_URL + '?tab=quests')]])
     }
   );
 });
@@ -2085,9 +2084,9 @@ bot.command(['top', 'leaderboard', 'holders', 'top10', 'whales'], (ctx) => {
   const topHolders = db.getTopHolders(ADMIN_TG_ID, 10);
   const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
-  let msg = `🏆 *لوحة صدارة أكبر 10 حاملين لعملة REX* 👑\n` +
+  let msg = `🏆 *Top 10 REX Token Holders Leaderboard* 👑\n` +
     `*(Top 10 Sovereign REX Holders)*\n\n` +
-    `📊 *أقوى كبار حاملي العملة في المنظومة:*\n\n`;
+    `📊 *Largest Verified Holders Across The Ecosystem:*\n\n`;
 
   topHolders.forEach((u, i) => {
     const medal = medals[i] || `#${i+1}`;
@@ -2098,15 +2097,15 @@ bot.command(['top', 'leaderboard', 'holders', 'top10', 'whales'], (ctx) => {
            `   └ 💰 *${Number(u.balance).toLocaleString()} REX* • ${badge} ${u.tier_title}\n\n`;
   });
 
-  msg += `🛡️ _ملاحظة: يتم استبعاد الحسابات الإدارية ومجمعات السيولة لضمان الشفافية والمنافسة العادلة بين المجتمع._\n\n` +
-         `🚀 *زد رصيدك وحيازتك لترتقي في لوحة الصدارة الملكية!*`;
+  msg += `🛡️ _Note: Admin wallets and liquidity pool reserves are excluded to guarantee full transparency._\n\n` +
+         `🚀 *Increase your holdings to climb the Royal Leaderboard!*\n`;
 
   ctx.reply(msg, {
     parse_mode: 'Markdown',
     ...Markup.inlineKeyboard([
-      [Markup.button.webApp('🏆 عرض لوحة الصدارة في التطبيق', `${WEBAPP_URL}?tab=friends`)],
-      [Markup.button.url('🛒 شراء REX على STON.fi', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')],
-      [Markup.button.url('📊 مخطط العملة DexScreener', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
+      [Markup.button.webApp('🏆 View Full Leaderboard in App', `${WEBAPP_URL}?tab=friends`)],
+      [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')],
+      [Markup.button.url('📊 DexScreener Live Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
     ])
   });
 });
