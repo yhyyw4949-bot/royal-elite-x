@@ -850,6 +850,18 @@
         <span style="color: var(--gold-lt); font-size: 11px; font-weight: 800;" id="lblTapChartHint">الشارت ❯</span>
       </div>
     </div>
+
+    <!-- Royal Promo Code Fast Redeem Banner -->
+    <div class="promo-quick-banner" onclick="openModal('redeemPromoModal')" style="margin-top: 10px; padding: 11px 14px; background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(168,85,247,0.18)); border: 1px solid rgba(245,158,11,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.12); transition: all 0.2s ease;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">🎟️</span>
+        <div>
+          <div style="font-size: 12px; font-weight: 900; color: #fff;" id="bannerRedeemTitle">استرداد كود الهدية (Promo Code)</div>
+          <div style="font-size: 10px; color: var(--gold-lt); font-weight: 700;" id="bannerRedeemSub">لديك كود ترويجي؟ اضغط هنا للحصول على عملات REX فوراً ❯</div>
+        </div>
+      </div>
+      <span class="badge" style="background: rgba(245,158,11,0.25); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.4);">REDEEM</span>
+    </div>
   </div>
 
   <!-- ════ CHANNEL SUBSCRIPTION GATE (SOVEREIGN CHANNEL LOCK) ════ -->
@@ -1535,7 +1547,7 @@
     <span class="nav-icon">⛏️</span><span id="navMineText">Mining</span>
   </div>
   <div class="nav-btn" id="btn-tab-quests" onclick="switchTab('tab-quests', this)">
-    <span class="nav-icon">📅</span><span id="navQuestsText">Check-in</span>
+    <span class="nav-icon">🎁</span><span id="navQuestsText">الهدايا والأكواد</span>
   </div>
 
   <!-- CENTER GLOW MENU BUTTON -->
@@ -3549,7 +3561,9 @@
 
       // Bottom Nav
       setElText('navMineText', 'Mining');
-      setElText('navQuestsText', 'Quests');
+      setElText('navQuestsText', 'Rewards & Codes');
+      setElText('bannerRedeemTitle', 'Redeem Promo Code 🎟️');
+      setElText('bannerRedeemSub', 'Have a promo code? Tap here to claim instant REX rewards ❯');
       setElText('centerMenuLabel', typeof isHubOpen !== 'undefined' && isHubOpen ? 'Close' : 'Menu');
       setElText('navFriendsText', 'Friends');
       setElText('navWithdrawText', 'Withdraw');
@@ -3697,7 +3711,9 @@
 
       // Bottom Nav
       setElText('navMineText', 'التعدين');
-      setElText('navQuestsText', 'المهام');
+      setElText('navQuestsText', 'الهدايا والأكواد');
+      setElText('bannerRedeemTitle', 'استرداد كود الهدية (Promo Code) 🎟️');
+      setElText('bannerRedeemSub', 'لديك كود ترويجي؟ اضغط هنا للحصول على عملات REX فوراً ❯');
       setElText('centerMenuLabel', typeof isHubOpen !== 'undefined' && isHubOpen ? 'إغلاق' : 'القائمة');
       setElText('navFriendsText', 'الأصدقاء');
       setElText('navWithdrawText', 'السحب');
