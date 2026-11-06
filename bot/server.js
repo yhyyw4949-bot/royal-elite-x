@@ -10,11 +10,12 @@
  *    Royal Guilds, REX Academy, Royal Achievements, and Admin 2FA
  */
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const db = require('./database');
 const security = require('./security');
 const { TonClient, Address, beginCell } = require('@ton/ton');
