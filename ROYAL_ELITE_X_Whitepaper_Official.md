@@ -1,141 +1,205 @@
-# ROYAL ELITE X (REX) — Official Sovereign Whitepaper 2026
-**Ecosystem Architecture, Jetton Tokenomics & Proof-of-Engagement Protocol**
-*Native Token on TON (The Open Network) Blockchain*
+# 👑 الورقة البيضاء الرسمية لمنظومة ROYAL ELITE X (REX) — إصدار 2026
+## الدليل الشامل للبنية التحتية، التوكنوميكس، بروتوكول تعدين الحيازة، ومحرك السحب المؤسسي
+### المبني أصلياً على شبكة بلوكتشين TON (The Open Network) وتيليجرام
 
 ---
 
-## 1. Executive Summary & Vision
-
-**ROYAL ELITE X (REX)** is a next-generation decentralized Web3 cloud-mining ecosystem built natively on the **TON Blockchain** and deeply integrated into Telegram. Designed with a luxury sovereign aesthetic, REX merges social Web3 gaming with real on-chain decentralized finance (DeFi), automated market-making (AMM) liquidity on **STON.fi DEX**, and an ACID-compliant double-entry financial ledger.
-
-The project addresses the fatal flaws of prior tap-to-earn tokens: hyperinflation, sybil bot abuse, liquidity draining, and lack of holding utility. By introducing a mandatory **On-Chain 5,000 REX 3-Day Holding Verification**, **Platform Anti-Sybil Defense Fee (0.1 TON)**, and an immutable 50,000,000 max supply, REX creates permanent organic demand, continuous liquidity expansion, and verifiable scarcity.
+> [!IMPORTANT]
+> **وثيقة معتمدة ورسمية لمنظومة ROYAL ELITE X**  
+> تلخص هذه الورقة البيضاء كافة التفاصيل التقنية، المالية، الاقتصادية، والأمنية لبوت وتطبيق **ROYAL ELITE X (REX)**، ومحرك السحب المؤسسي، وضوابط السيولة على منصة STON.fi اللامركزية.
 
 ---
 
-## 2. On-Chain Smart Contract Specifications
+## 1. الملخص التنفيذي والرؤية الاستراتيجية (Executive Summary)
 
-| Specification | Technical Detail |
+**ROYAL ELITE X (REX)** هي منظومة تعدين سحابي واقتصاد ويب 3 (Web3) متكاملة مبنية أصلياً على بلوكتشين **TON (The Open Network)** ومدمجة مباشرة داخل منصة **Telegram**. صُممت المنظومة بطابع ملكي سيادي يجمع بين التفاعل الاجتماعي والتمويل اللامركزي (DeFi)، والتداول المباشر عبر مجمعات السيولة الآلية (AMM) على منصة **STON.fi DEX**، مع سجل تدقيق مالي مزدوج (Double-Entry Financial Ledger).
+
+### المشكلات القاتلة في مشاريع التاب السابقة وكيف تحلها REX:
+1. **التضخم المفرط (Hyperinflation):** معظم البوتات تطبع مليارات العملات الوهمية دون سقف، بينما تمتلك REX **معروضاً ثابتاً ومغلقاً نهائياً قدره 50,000,000 عملة فقط** يستحيل زيادته.
+2. **جيوش البوتات والمزارع الوهمية (Sybil Farms):** تم القضاء عليها نهائياً عبر **بوابة التحقق السيادية برسم رمزي (0.1 TON)** مع ربط محفظة خارجية غير احتجازية وبصمة جهاز فريدة.
+3. **انهيار الأسعار الفوري عند السحب (Liquidity Draining & Instant Dump):** تم حلها عبر **شرط حيازة 5,000 REX في المحفظة لمدة 3 أيام متتالية (72 ساعة)** لفتح السحب، ونظام **مراقبة ما بعد السحب لمدة 24 ساعة (Anti-Dump Guard)**.
+4. **انعدام فائدة الاحتفاظ بالعملة:** في REX، كلما احتفظت بعملات أكثر في محفظتك On-Chain، تضاعفت سرعة تعدينك حتى **25 ضعفاً (25x)**، مما يخلق ضغط شراء مستمر على منصة التداول STON.fi.
+
+---
+
+## 2. المواصفات التقنية والعقد الذكي على بلوكتشين TON
+
+| البند التقني | التفاصيل الرسمية والمعتمدة |
 | :--- | :--- |
-| **Token Name** | ROYAL ELITE X |
-| **Symbol** | **REX** |
-| **Blockchain** | TON (The Open Network) Mainnet |
-| **Standard** | TEP-74 Jetton Fungible Token Standard |
-| **Total Fixed Supply** | **50,000,000 REX** (Immutable, Non-Mintable) |
-| **Jetton Master Contract** | `EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH` |
-| **Official DEX Pair** | **REX / GRAM (STON.fi DEX v2)** |
-| **STON.fi Pool Address** | `EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR` |
-| **Live Chart & Audit** | [DexScreener Live Candlestick Pair](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr) |
-| **Primary Blockchain Explorer** | [Tonviewer REX Jetton Explorer](https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH) |
+| **اسم العملة** | ROYAL ELITE X |
+| **رمز التداول (Ticker)** | **REX** |
+| **شبكة البلوكتشين** | TON Mainnet (شبكة TON الرئيسية) |
+| **معيار الرمز (Standard)** | TEP-74 Jetton Fungible Standard |
+| **إجمالي المعروض الثابت (Total Supply)** | **50,000,000 REX** (مغلق نهائياً وغير قابل للسك أو التضخم) |
+| **العقد الذكي الرئيسي (Jetton Master)** | `EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH` |
+| **زوج التداول الرسمي اللامركزي** | **REX / GRAM** على منصة **STON.fi DEX v2** |
+| **عنوان مجمع السيولة (STON.fi Pool)** | `EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR` |
+| **الشارت والأسعار اللحظية** | [شارت مباشر على DexScreener](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr) |
+| **مستكشف المعاملات الرسمي** | [Tonviewer REX Jetton Explorer](https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH) |
+| **البوت الرسمي على تيليجرام** | [@Royalelitexbot](https://t.me/Royalelitexbot) |
+| **القناة الإلزامية للمجتمع** | [@REXCEO1A](https://t.me/REXCEO1A) |
 
 ---
 
-## 3. Token Allocation & Sustainable Tokenomics
+## 3. التوكنوميكس والتوزيع المالي العادل (Strategic Tokenomics)
 
-REX features a fixed, deflationary token model capped permanently at **50,000,000 REX**:
+تم تقسيم إجمالي المعروض الثابت البالغ **50,000,000 REX** وفق دراسة اقتصادية دقيقة تضمن استدامة المنظومة لسنوات:
 
+```mermaid
+pie title التوزيع الاستراتيجي لمعروض REX (50M)
+    "احتياطي التعدين السحابي المجتمعي (40%)" : 20000000
+    "الخزينة الملكية والسيولة والإدراجات (30%)" : 15000000
+    "خزائن الحيازة الملكية وبطولات النقابات (15%)" : 7500000
+    "مكافآت الإحالة وبرنامج السفراء (10%)" : 5000000
+    "التطوير والأمان والبنية التحتية (5%)" : 2500000
 ```
-50,000,000 REX (100%)
-├── 20,000,000 REX (40%) : Community Cloud Mining Reserve (Gradual Distribution)
-├── 15,000,000 REX (30%) : Platform Treasury, Future CEX Listings & Liquidity Provision
-├──  7,500,000 REX (15%) : Sovereign Staking Vaults & Guild Tournaments
-├──  5,000,000 REX (10%) : Ambassador Knights & Ecosystem Referrals
-└──  2,500,000 REX ( 5%) : Core Development, Security Audits & Infrastructure
-```
 
-### Emission & Deflation Controls:
-- **Maximum Daily Emission Cap:** 50,000 REX across the entire global user base.
-- **Dynamic Emission Halving:** Mining yields adjust algorithmically according to user rank level and global network participation.
-
----
-
-## 4. The Sovereign Royal Gate (Anti-Sybil Defense)
-
-To ensure that 100% of platform participants are genuine human Web3 users and to permanently eradicate multi-account automated sybil farming:
-1. **Mandatory Non-Custodial TON Wallet Connection:** Users must link an official external TON wallet (Tonkeeper, MyTonWallet, OpenMask, or Telegram Wallet).
-2. **0.1 TON Verification Fee:** A nominal anti-sybil entry fee sent directly on-chain. This nominal barrier completely deters bot farms from spawning thousands of fake accounts.
-3. **Hardware & Fingerprint Radar:** Multi-account detection using client-side cryptographic device fingerprinting.
+### تفاصيل الحصص:
+1. **40% (20,000,000 REX) — احتياطي التعدين السحابي المجتمعي:**
+   * يتم توزيعه تدريجياً عبر دورات التعدين اليومية (Proof-of-Engagement).
+   * **سقف الانبعاث اليومي الأقصى:** 50,000 REX لجميع المستخدمين حول العالم لمنع الإغراق.
+2. **30% (15,000,000 REX) — الخزينة الملكية، توفير السيولة، وإدراجات المنصات (CEX):**
+   * مخصصة لتزويد مجمعات السيولة على STON.fi وتمويل الإدراج في المنصات المركزية العالمية.
+3. **15% (7,500,000 REX) — خزائن الحيازة (Vaults) وبطولات النقابات:**
+   * مكافآت للمستخدمين الذين يقفلون أرصدتهم طوعياً ومكافآت بطولات النقابات الأسبوعية.
+4. **10% (5,000,000 REX) — مكافآت الإحالة وبرنامج الفرسان السفراء:**
+   * تمويل برنامج الشراكة وعمولات الإحالة مدى الحياة (5%) وعروض الإحالة المزدوجة.
+5. **5% (2,500,000 REX) — التطوير المستمر، التدقيق الأمني، والخوادم السحابية:**
+   * حماية البنية التحتية وصيانة السيرفرات والترقيات البرمجية.
 
 ---
 
-## 5. Sovereign Holding Tiers & The STON.fi Flywheel (نظام مستويات الحيازة ومضاعف التعدين)
+## 4. بوابة الأمان الملكية ومكافحة الحسابات الوهمية (Anti-Sybil Defense)
 
-Unlike inflationary projects where users dump mined tokens instantly, ROYAL ELITE X aligns token holding with accelerated mining power, creating an unstoppable buy-and-hold flywheel:
+لضمان أن 100% من المشاركين هم مستخدمون حقيقيون وحماية القيمة المالية للعملة:
+1. **ربط محفظة TON اللامركزية:** لا يمكن لأي مستخدم بدء النشاط دون ربط محفظة خارجية حقيقية (Tonkeeper، MyTonWallet، Telegram Wallet).
+2. **رسم التحقق السيادي الرمزي (0.1 TON):**
+   * يدفع المستخدم 0.1 TON لمرة واحدة على البلوكتشين لتفعيل حسابه.
+   * هذا الحاجز يمنع إنشاء آلاف الحسابات الوهمية من قبل السكربتات الخبيثة، لأن تكلفة تشغيل 10,000 بوت ستتطلب 1,000 TON حقيقي، مما يجعل الاحتيال مستحيلاً اقتصادياً.
+3. **رادار بصمة الأجهزة والشبكات (Device Fingerprinting & IP Clustering):**
+   * تتبع البصمات البرمجية ومصادقة `Telegram initData` المشفرة عبر `HMAC-SHA256`.
+4. **الاشتراك الإلزامي بالقناة الرسمية (@REXCEO1A):**
+   * التحقق الآلي من عضوية المستخدم بالقناة قبل السماح بالدخول.
 
-### 5.1 The 6 Sovereign Holding Boost Tiers (جدول المستويات الملكية)
+---
 
-| Tier Level | Sovereign Rank (الرتبة) | Required On-Chain REX | Multiplier | Daily Reward | Hourly Reward | Key Ecosystem Benefit |
+## 5. بروتوكول تعدين الحيازة ومضاعفات الرتب الملكية (The 6 Holding Tiers)
+
+في ROYAL ELITE X، العملة ليست مجرد أرقام تُجمع، بل هي أصل استثماري يمنحك **قوة تعدين مضاعفة** كلما احتفظت بها في محفظتك الشخصية:
+
+### جدول الرتب ومضاعفات التعدين:
+
+| مستوى الرتبة | اسم الرتبة السيادية | شرط الحيازة في المحفظة (On-Chain) | مضاعف السرعة | الإنتاج اليومي (24 ساعة) | الإنتاج في الساعة | الميزة الاستراتيجية الرئيسية |
 | :---: | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Tier 1** | 🥉 **المستكشف البرونزي (Bronze Explorer)** | $0 - 499\text{ REX}$ | **1.0x** | $100\text{ REX}$ | $4.16\text{ REX}$ | Standard base mining rate (Zero barrier) |
-| **Tier 2** | 🥈 **الحارس الفضي (Silver Guardian)** | $500 - 1,999\text{ REX}$ | **2.0x** | $200\text{ REX}$ | $8.33\text{ REX}$ | Double daily output |
-| **Tier 3** | 🥇 **الفارس الذهبي (Gold Knight)** | $2,000 - 4,999\text{ REX}$ | **4.0x** | $400\text{ REX}$ | $16.66\text{ REX}$ | $4\times$ mining output boost |
-| **Tier 4** | 💠 **البارون البلاتيني (Platinum Baron)** | $5,000 - 14,999\text{ REX}$ | **7.0x** | $700\text{ REX}$ | $29.16\text{ REX}$ | **Unlocks 72h withdrawal eligibility** |
-| **Tier 5** | 💎 **الدوق الماسي VIP (Diamond Duke)** | $15,000 - 49,999\text{ REX}$ | **15.0x** | $1,500\text{ REX}$ | $62.50\text{ REX}$ | Elite VIP mining status |
-| **Tier 6** | 👑 **الإمبراطور الملكي (Crown Sovereign)** | $50,000+\text{ REX}$ | **25.0x** | $2,500\text{ REX}$ | $104.16\text{ REX}$ | **Maximum apex multiplier in ecosystem** |
-
-### 5.2 The 5,000 REX 3-Day Holding Rule (شرط فك قفل السحب)
-1. **Holding Threshold:** The user must hold at least **5,000 REX** (Tier 4) in their connected external TON wallet.
-2. **Time Duration:** The tokens must be held for **3 consecutive days (72 continuous hours)** without selling or transferring.
-3. **Live Ticking Countdown:** A real-time countdown timer and progress bar (0% to 100%) ticks live inside the Telegram Mini App withdrawal terminal.
-4. **Instant Reset on Sell:** The backend server continuously inspects the user's on-chain Jetton wallet balance. If the user sells or drops below 5,000 REX, the timer **immediately resets to zero (0%)**, requiring a fresh 3-day holding period.
-5. **Economic Flywheel:** Because thousands of miners purchase and hold REX tokens on STON.fi DEX to increase their mining multiplier and unlock withdrawals, persistent buy pressure is channeled directly into the liquidity pool, driving prices upwards and rewarding long-term holders.
+| **Tier 1** | 🥉 **المستكشف البرونزي (Bronze Explorer)** | $0 - 499\text{ REX}$ | **1.0x** | $100\text{ REX}$ | $4.16\text{ REX}$ | البداية الأساسية دون شروط حيازة |
+| **Tier 2** | 🥈 **الحارس الفضي (Silver Guardian)** | $500 - 1,999\text{ REX}$ | **2.0x** | $200\text{ REX}$ | $8.33\text{ REX}$ | مضاعفة الإنتاج اليومي 100% |
+| **Tier 3** | 🥇 **الفارس الذهبي (Gold Knight)** | $2,000 - 4,999\text{ REX}$ | **4.0x** | $400\text{ REX}$ | $16.66\text{ REX}$ | أربعة أضعاف سرعة التعدين الأساسية |
+| **Tier 4** | 💠 **البارون البلاتيني (Platinum Baron)** | $5,000 - 14,999\text{ REX}$ | **7.0x** | $700\text{ REX}$ | $29.16\text{ REX}$ | **فتح أهلية السحب وبدء عداد الـ 3 أيام** |
+| **Tier 5** | 💎 **الدوق الماسي VIP (Diamond Duke)** | $15,000 - 49,999\text{ REX}$ | **15.0x** | $1,500\text{ REX}$ | $62.50\text{ REX}$ | رتبة كبار المستثمرين VIP |
+| **Tier 6** | 👑 **الإمبراطور الملكي (Crown Sovereign)** | $50,000+\text{ REX}$ | **25.0x** | $2,500\text{ REX}$ | $104.16\text{ REX}$ | **أقصى مضاعف تعدين في المنظومة (25x)** |
 
 ---
 
-## 6. Multi-Stage Withdrawal Workflow & 24h Settlement Guarantee
+## 6. شرط فك قفل السحب الإلزامي (The 5,000 REX 3-Day Rule)
 
-To protect platform solvency and conduct security screening:
-1. **Atomic Ledger Balance Reservation:** When a user submits a withdrawal, the amount is reserved instantly in an ACID double-entry ledger, preventing double-spending.
-2. **Multi-Stage Workflow:** `pending` $\rightarrow$ `reviewing` $\rightarrow$ `approved` $\rightarrow$ `processing` $\rightarrow$ `confirmed`.
-3. **Manual Sovereign Approval:** Platform administrators manually inspect transactions in the Enterprise Command Center (`/admin/`).
-4. **24-Hour Settlement Notification:** Upon administrative approval, the user receives an instant Telegram Bot notification confirming delivery within 24 hours.
-5. **Public Proof of Rewards:** Confirmed transactions are recorded on the public TON blockchain and broadcast live in the platform feed with direct clickable links to **Tonviewer**.
+لضمان استقرار سعر العملة ومنع استنزاف السيولة، وُضعت شروط أمان حازمة للسحب:
 
----
-
-## 7. Platform Core Modules
-
-### ⛏️ 24h Royal Cloud Mining
-A 24-hour cycle where users accrue REX second-by-second. The cycle requires user re-activation every 24 hours (Proof-of-Engagement), preventing dead accounts from accruing rewards.
-
-### 📜 Repeatable Royal Quests
-Five recurring Web3 missions:
-- Daily Sovereign Check-in (+50 REX / 24h)
-- Mystery Royal Chest (+20-60 REX / 4h)
-- Cloud Energy Turbo (+35 REX / 6h)
-- Sovereign Social Share (+75 REX / 12h)
-- Royal Elite Community Engagement (+30 REX / 8h)
-
-### 🏛️ Royal Vaults (Staking)
-Time-locked staking vaults (30, 90, 180, and 365 days) offering high-yield multipliers from 1.25x up to 3.0x on base daily rewards.
-
-### 🛡️ Royal Guilds
-Community syndicates where knights pool mining power, unlock collective bonuses, and wage weekly yield tournaments.
-
-### 🎓 REX Academy
-Interactive Web3 educational lessons covering TON architecture, Jettons (TEP-74), seed phrase security, blockchain explorers, and DeFi tokenomics, with instant rewarded quizzes.
-
-### 👥 Knights Ambassador Program
-A two-tier viral referral architecture:
-- **Instant Bounty:** 50 REX credited on friend activation.
-- **Lifetime Sovereign Commission:** 5% of all friend mining claims for life.
+1. **الحد الأدنى لحيازة المحفظة:**
+   * يجب أن يمتلك المستخدم في محفظته الخارجية المتصلة ما لا يقل عن **5,000 REX** (شراؤها من منصة STON.fi DEX أو الاحتفاظ بها).
+2. **فترة الحيازة الإلزامية (3 أيام متتالية / 72 ساعة):**
+   * يجب بقاء الـ 5,000 REX داخل المحفظة لمدة 72 ساعة متواصلة دون بيع أو تحويل.
+   * يظهر عداد تنازلي حي وشريط تقدم (0% إلى 100%) داخل قسم السحب بالتطبيق.
+3. **التصفير الفوري عند البيع (Instant Reset):**
+   * إذا قام المستخدم ببيع أي جزء من رصيده وانخفض الرصيد عن 5,000 REX، **يتم تصفير العداد فوراً وإلغاء التقدم**، ويجب عليه البدء من جديد لمدة 3 أيام كاملة.
+4. **شرط الـ 20% On-Chain:**
+   * يجب أن تعادل حيازة المستخدم في محفظته الخارجية 20% على الأقل من المبلغ المراد سحبه.
 
 ---
 
-## 8. Security Architecture & Enterprise Ledger
+## 7. محرك السحب المؤسسي خماسي المراحل ورسوم السحب (Withdrawals & 500 REX Fee)
 
-- **HMAC-SHA256 InitData Authentication:** Server-verified cryptographic signatures for all Telegram WebApp communication.
-- **Double-Entry Financial Ledger:** Every reward, claim, reserve, and payout is logged as balanced credit/debit entries with unique idempotency keys.
-- **Anti-Sybil IP & Device Correlation:** Automatic flags for duplicate fingerprints or clustered IP ranges.
-- **Zero-Custody Guarantee:** ROYAL ELITE X never requests, receives, or stores private keys or 24-word recovery seed phrases.
+### أ. رسوم السحب (500 REX Fee):
+* يُفرض رسم معالجة وشبكة قدره **500 REX** على كل عملية سحب.
+* **طريقة التطبيق:**
+  * يطلب المستخدم سحب المبلغ (مثلاً: الحد الأدنى `5,000 REX`).
+  * يُحجز كامل المبلغ من رصيده في سجل المعاملات المزدوج.
+  * تُستقطع رسوم المنظومة: **`500 REX`**.
+  * **صافي المبلغ الذي يصل للمحفظة على البلوكتشين:** **`4,500 REX`** (`المبلغ المطلوب - 500`).
+* إذا تم رفض أو إلغاء الطلب لأي سبب، يُسترجع كامل المبلغ إلى رصيد المستخدم فوراً.
+
+### ب. دورة حياة طلب السحب خماسية المراحل:
+```mermaid
+flowchart LR
+    A["1. PENDING (قيد المراجعة وحجز الرصيد)"] --> B["2. REVIEWING (فحص شروط الأمان)"]
+    B --> C["3. APPROVED (موافقة الإدارة)"]
+    C --> D["4. PROCESSING (إعداد المعاملة On-Chain)"]
+    D --> E["5. CONFIRMED (الصرف على شبكة TON)"]
+```
+
+### ج. ضمان التسليم خلال 24 ساعة:
+* فور الموافقة على الطلب، يتم التحويل المباشر لمحفظة المستخدم عبر محفظة البوت المعتمدة (`v4R2`).
+* يحصل المستخدم على إشعار تيليجرام فوري يتضمن رابط المعاملة المباشر على **Tonviewer**.
 
 ---
 
-## 9. Official Links & Community Verification
+## 8. سياسة مكافحة الإغراق بعد السحب (24h Anti-Dump Guard)
 
-- **Telegram Bot:** [@Royalelitexbot](https://t.me/Royalelitexbot)
-- **STON.fi Swap Pair:** [Trade REX on STON.fi](https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH)
-- **DexScreener Chart:** [Live Candlestick & Volume](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr)
-- **Tonviewer Smart Contract:** [EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH](https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH)
+* **حظر بيع لمدة 24 ساعة:** بعد استلام السحب بنجاح على المحفظة الخارجية، يمنع بيع أو تحويل العملات المستلمة لمدة 24 ساعة كاملة.
+* **رادار المراقبة الآلي:** يقوم السيرفر بفحص رصيد المحفظة On-Chain، وإذا تم رصد عملية بيع أو تصريف، يتم **حظر الحساب نهائياً وتجميد أي وصول مستقبلي**، لحماية حاملي العملة والمستثمرين على STON.fi.
 
 ---
-*© 2026 ROYAL ELITE X Foundation. All rights reserved. Sovereign Web3 Infrastructure on TON Blockchain.*
+
+## 9. أقسام وميزات المنظومة الملكية (Ecosystem Modules)
+
+### ⛏️ 1. التعدين السحابي (Royal Mining)
+* دورة تعدين ذكية تمتد 24 ساعة وتعمل بنظام الإثبات التفاعلي (Proof-of-Engagement)، حيث يتطلب الأمر نقرة تفعيل يومية لمنع الحسابات المهجورة من مراكمة المكافآت.
+
+### 📋 2. المهام الملكية المتجددة (Repeatable Quests)
+* خمس مهام متكررة تمنح عملات REX ونقاط XP:
+  * تسجيل الدخول اليومي المتتابع (+50 REX / 24h) مع حماية ضد التكرار.
+  * الصندوق الملكي الغامض (+20 إلى 60 REX / 4h).
+  * شاحن الطاقة السحابي (+35 REX / 6h).
+  * المشاركة الاجتماعية الملكية (+75 REX / 12h).
+  * التفاعل المجتمعي الملكي (+30 REX / 8h).
+
+### 🏛️ 3. الخزينة الملكية وقفل الحيازة (Royal Staking Vaults)
+* خزائن قفل طوعي لمدد (30، 90، 180، 365 يوماً) تمنح مضاعفات إضافية من 1.25x إلى 3.0x دون فقدان ملكية العملة.
+
+### 🛡️ 4. النقابات الملكية والتحالفات (Royal Guilds)
+* تحالفات جماعية ينشئها القادة لجمع قوى التعدين، التنافس في بطولات أسبوعية، والحصول على حصة من مجمع المكافآت الملكي.
+
+### 🎓 5. أكاديمية REX لعلوم البلوكتشين (REX Web3 Academy)
+* مساقات تعليمية تفاعلية حول شبكة TON، معايير Jetton، أمان الكلمات المفتاحية، ومفاهيم DeFi مع اختبارات قصيرة ومكافآت فورية.
+
+### 🎟️ 6. محرك استرداد الأكواد الترويجية (Promo Code Engine)
+* محرك ذري مدمج يتيح للأدمن إنشاء أكواد هدايا محددة بعدد استخدامات وتاريخ صلاحية ومكافآت فورية، مع نظام حماية يمنع استخدام الكود أكثر من مرة للحساب الواحد.
+
+### 👥 7. برنامج الفرسان السفراء وعرض الإحالة المزدوجة (Referral Bounty)
+* نظام إحالة من مستويين:
+  * **مكافأة فورية:** 50 REX للمحيل فور تفعيل الصديق.
+  * **عرض الإحالة المزدوجة:** 1,000 REX للمحيل و 500 REX للصديق الجديد.
+  * **عمولة سيادية مدى الحياة:** 5% من كل أرباح تعدين الصديق تضاف تلقائياً لحساب المحيل.
+
+---
+
+## 10. الأمان المعماري وسجل المعاملات المزدوج (Architecture & Ledger)
+
+* **المصادقة المشفرة (Cryptographic Authentication):** التحقق من هوية المستخدمين وبيانات Telegram WebApp عبر توقيع `HMAC-SHA256` باستخدام مفتاح البوت السري.
+* **سجل التدقيق المالي المزدوج (Double-Entry Financial Ledger):** كل حركة مالية (تعدين، مهمة، إحالة، حجز، سحب، استرداد كود) تُسجل كحركة ائتمان/خصم مع مفتاح فريد لمنع تكرار العمليات (Idempotency).
+* **قاعدة بيانات SQLite بوضع WAL المتطور:** معالجة آلاف العمليات المتزامنة في الثانية مع دعم أكثر من 100,000 مستخدم نشط يومياً.
+* **الصفرية الاحتجازية (Zero-Custody):** لا يطلب البوت ولا يخزن مفاتيح المستخدمين الخاصة نهائياً.
+
+---
+
+## 11. الروابط الرسمية وقنوات التحقق
+
+* **البوت الرسمي:** [@Royalelitexbot](https://t.me/Royalelitexbot)
+* **قناة الإعلانات الرسمية:** [@REXCEO1A](https://t.me/REXCEO1A)
+* **رابط التداول والشراء على STON.fi:** [Trade REX on STON.fi DEX](https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH)
+* **رابط الشارت على DexScreener:** [REX / GRAM Live Chart](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr)
+* **مستكشف العقد الذكي على Tonviewer:** [EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH](https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH)
+
+---
+
+*حقوق النشر © 2026 مؤسسة ROYAL ELITE X (REX). جميع الحقوق محفوظة.*  
+*البنية التحتية اللامركزية والسيادية على بلوكتشين TON.*
