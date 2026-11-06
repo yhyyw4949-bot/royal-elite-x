@@ -1127,9 +1127,14 @@
     <!-- Leaderboard -->
     <div class="card">
       <div class="card-head">
-        <div class="card-title">
-          <span class="card-title-icon">🏆</span>
-          <span id="lbTitle">Mining Emperors Leaderboard</span>
+        <div>
+          <div class="card-title">
+            <span class="card-title-icon">🏆</span>
+            <span id="lbTitle">Top 10 REX Holders Leaderboard</span>
+          </div>
+          <div id="lbSubtitle" style="font-size:11px; color:var(--muted-lt); margin-top:3px;">
+            Top currency holders across the ecosystem (excluding admin & liquidity pools)
+          </div>
         </div>
       </div>
       <div id="podiumWrap" style="display:flex; align-items:flex-end; justify-content:center; gap:10px; margin-bottom:16px;"></div>
@@ -1255,6 +1260,16 @@
       </div>
       <div class="hub-card-name" id="hubChartName">Live Market & Chart</div>
       <div class="hub-card-desc" id="hubChartDesc">Real-time TradingView DexScreener chart & stats</div>
+    </div>
+
+    <!-- Card 11: Top 10 Currency Holders Leaderboard -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); switchTab('tab-friends', document.getElementById('btn-tab-friends')); loadLeaderboard();">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>🏆</span></div>
+        <span class="hub-card-badge gold">TOP 10</span>
+      </div>
+      <div class="hub-card-name" id="hubLbName">Top 10 Holders</div>
+      <div class="hub-card-desc" id="hubLbDesc">Elite REX holders leaderboard</div>
     </div>
   </div>
 </div>
@@ -2335,38 +2350,81 @@
     }).join('');
   }
 
-  // ── Leaderboard ──
+  // ── Top 10 Currency Holders Leaderboard ──
   async function loadLeaderboard() {
     const list = await fetch('/api/leaderboard').then(r => r.json()).catch(() => []);
     const podiumWrap = document.getElementById('podiumWrap');
     const lbList = document.getElementById('leaderboardList');
     const isAr = currentLang === 'ar';
 
-    if (!list?.length) {
+    // Strict frontend filter: never display the admin account under any circumstance
+    const safeList = (list || []).filter(u => 
+      u.telegram_id !== 7082457308 && 
+      u.telegram_id !== 7790601616 && 
+      u.username?.toLowerCase() !== 'gramdrouv' && 
+      u.username?.toLowerCase() !== 'yehiawael'
+    ).slice(0, 10);
+
+    if (!safeList.length) {
       if (podiumWrap) podiumWrap.innerHTML = '';
-      if (lbList) lbList.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted)">${isAr ? 'لا توجد بيانات صدارة' : 'No leaderboard data yet'}</div>`;
+      if (lbList) lbList.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted)">${isAr ? 'لا توجد بيانات صدارة متاحة حالياً' : 'No leaderboard data available yet'}</div>`;
       return;
     }
 
-    const top3 = list.slice(0, 3);
-    podiumWrap.innerHTML = top3.map((u, i) => `
-      <div style="display:flex; flex-direction:column; align-items:center; flex:1; text-align:center;">
-        <div style="font-size:20px;">${['🥇','🥈','🥉'][i]}</div>
-        <div style="font-size:12px; font-weight:800; color:#fff; max-width:80px; overflow:hidden; text-overflow:ellipsis;">${esc(u.first_name)}</div>
-        <div style="font-family:'Orbitron', monospace; font-size:11px; color:var(--gold-lt);">${Number(u.balance).toFixed(0)}</div>
-      </div>
-    `).join('');
+    // Top 3 Podium
+    const p1 = safeList[0];
+    const p2 = safeList[1];
+    const p3 = safeList[2];
 
-    const rest = list.slice(3);
-    lbList.innerHTML = rest.map((u, i) => `
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:rgba(0,0,0,0.25); border-radius:12px; margin-bottom:6px; font-size:12px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-family:'Orbitron', monospace; color:var(--muted); font-size:11px;">#${i + 4}</span>
-          <span style="font-weight:700; color:#fff;">${esc(u.first_name)}</span>
+    const renderPodiumCol = (u, rank, height, medal, glowColor) => {
+      if (!u) return '<div style="flex:1;"></div>';
+      return `
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; position:relative;">
+          <div style="font-size:${rank === 1 ? '28px' : '22px'}; margin-bottom:4px; filter:drop-shadow(0 2px 8px ${glowColor});">${medal}</div>
+          <div style="font-size:12px; font-weight:800; color:#fff; max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(u.first_name)}</div>
+          ${u.username ? `<div style="font-size:10px; color:var(--muted); max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(u.username)}</div>` : ''}
+          <div style="background:rgba(255,255,255,0.06); border:1px solid ${glowColor}; border-radius:12px 12px 6px 6px; width:100%; height:${height}px; display:flex; flex-direction:column; justify-content:center; align-items:center; margin-top:6px; box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+            <span style="font-size:11px;">${u.tier_badge || '💎'}</span>
+            <span style="font-family:'Orbitron', monospace; font-size:12px; font-weight:900; color:${glowColor};">${Number(u.balance).toLocaleString()}</span>
+            <span style="font-size:9px; color:var(--muted); letter-spacing:0.5px;">REX</span>
+          </div>
         </div>
-        <span style="font-family:'Orbitron', monospace; font-weight:800; color:var(--gold-lt);">${Number(u.balance).toFixed(1)}</span>
-      </div>
-    `).join('');
+      `;
+    };
+
+    if (podiumWrap) {
+      podiumWrap.innerHTML = `
+        <div style="display:flex; align-items:flex-end; justify-content:center; gap:8px; width:100%; padding:10px 4px 4px;">
+          ${renderPodiumCol(p2, 2, 70, '🥈', '#94a3b8')}
+          ${renderPodiumCol(p1, 1, 95, '👑', 'var(--gold-lt)')}
+          ${renderPodiumCol(p3, 3, 60, '🥉', '#cd7f32')}
+        </div>
+      `;
+    }
+
+    // Positions #4 to #10
+    const rest = safeList.slice(3);
+    if (lbList) {
+      lbList.innerHTML = rest.map((u, i) => {
+        const rankNum = i + 4;
+        return `
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; margin-bottom:6px; transition:transform 0.2s;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-family:'Orbitron', monospace; font-size:12px; font-weight:800; color:var(--muted); min-width:24px;">#${rankNum}</span>
+              <span style="font-size:16px;">${u.tier_badge || '💠'}</span>
+              <div>
+                <div style="font-weight:700; color:#fff; font-size:12.5px;">${esc(u.first_name)}</div>
+                ${u.username ? `<div style="font-size:10px; color:var(--muted);">${esc(u.username)}</div>` : ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Orbitron', monospace; font-weight:800; color:var(--gold-lt); font-size:13px;">${Number(u.balance).toLocaleString()} <span style="font-size:10px; color:var(--muted);">REX</span></div>
+              <div style="font-size:9.5px; color:${u.tier_color || 'var(--cyan)'}; font-weight:600;">${esc(u.tier_title || 'Platinum Baron')}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   }
 
   // ── Social & Share ──
@@ -3294,7 +3352,8 @@
       setElText('btnShareRef', '✈️ Share');
 
       // Leaderboard Tab
-      setElText('lbTitle', 'Mining Emperors Leaderboard');
+      setElText('lbTitle', 'Top 10 REX Holders Leaderboard');
+      setElText('lbSubtitle', 'Top currency holders across the ecosystem (excluding admin & liquidity pools)');
 
       // Bottom Nav
       setElText('navMineText', 'Mining');
@@ -3351,6 +3410,8 @@
       setElText('mChartExplorerBtn', 'TON Explorer');
       setElText('hubChartName', 'Live Market & Chart');
       setElText('hubChartDesc', 'Real-time TradingView DexScreener chart & stats');
+      setElText('hubLbName', 'Top 10 Holders');
+      setElText('hubLbDesc', 'Elite REX holders leaderboard');
     } else {
       // Splash
       setElText('splashSubText', 'إمبراطورية التعدين الملكية · TON BLOCKCHAIN');
@@ -3420,7 +3481,8 @@
       setElText('btnShareRef', '✈️ مشاركة');
 
       // Leaderboard Tab
-      setElText('lbTitle', 'لوحة صدارة ملوك التعدين');
+      setElText('lbTitle', 'لوحة صدارة أفضل 10 حاملين لعملة REX 👑');
+      setElText('lbSubtitle', 'أكبر حاملي العملة في المنظومة (باستثناء الحسابات الإدارية ومجمعات السيولة)');
 
       // Bottom Nav
       setElText('navMineText', 'التعدين');
@@ -3477,6 +3539,8 @@
       setElText('mChartExplorerBtn', 'مستكشف TON');
       setElText('hubChartName', 'شارت وسعر السوق');
       setElText('hubChartDesc', 'شارت التداول الحي والأسعار اللحظية');
+      setElText('hubLbName', 'أكبر 10 حاملين للعملة');
+      setElText('hubLbDesc', 'لوحة صدارة كبار حاملي REX');
     }
 
     // Dynamic Updates

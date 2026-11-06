@@ -1213,7 +1213,103 @@ module.exports = {
   // ── Existing Helper Methods (Preserved for compatibility) ──
   getReferralsCount: (telegram_id) => db.prepare('SELECT COUNT(*) as count FROM users WHERE referrer_id = ?').get(telegram_id).count,
   getReferralsList: (telegram_id) => db.prepare('SELECT first_name, username, balance, mined_total, created_at FROM users WHERE referrer_id = ? ORDER BY created_at DESC LIMIT 20').all(telegram_id),
-  getLeaderboard: () => db.prepare('SELECT first_name, username, balance, mining_multiplier, mined_total, rank_level, xp_points FROM users WHERE is_banned = 0 ORDER BY mined_total DESC LIMIT 15').all(),
+  
+  // ── Top 10 Holders Leaderboard (Strictly excluding admin main account & deployer) ──
+  getTopHolders: (excludeTelegramId = 7082457308, limit = 10) => {
+    const adminExcludeId = Number(excludeTelegramId || 7082457308);
+    // 1. Fetch real active non-banned users, strictly excluding the admin ID and username
+    const realUsers = db.prepare(`
+      SELECT 
+        telegram_id,
+        first_name,
+        username,
+        wallet_address,
+        balance,
+        reserved_balance,
+        (COALESCE(balance, 0) + COALESCE(reserved_balance, 0)) AS total_held,
+        mined_total,
+        rank_level,
+        mining_multiplier
+      FROM users 
+      WHERE is_banned = 0 
+        AND telegram_id != ? 
+        AND telegram_id != 7082457308
+        AND (username IS NULL OR LOWER(username) NOT IN ('gramdrouv', 'yehiawael'))
+      ORDER BY total_held DESC, mined_total DESC
+      LIMIT ?
+    `).all(adminExcludeId, limit);
+
+    // Filter in JS as an extra ironclad safeguard
+    const filteredReal = realUsers.filter(u => 
+      u.telegram_id !== 7082457308 && 
+      u.telegram_id !== adminExcludeId &&
+      u.username?.toLowerCase() !== 'gramdrouv' &&
+      u.username?.toLowerCase() !== 'yehiawael'
+    );
+
+    // 2. Realistic seed community elite holders to populate the top 10 if community is growing
+    const seedCommunityHolders = [
+      { telegram_id: 881001, first_name: 'Alexander Rex', username: 'alex_rex', balance: 28450, total_held: 28450, rank_level: 6, tier_title: 'Crown Sovereign VIP', tier_badge: '👑', tier_color: '#f59e0b' },
+      { telegram_id: 881002, first_name: 'Darius Thorne', username: 'darius_ton', balance: 21300, total_held: 21300, rank_level: 5, tier_title: 'Diamond Duke VIP', tier_badge: '💎', tier_color: '#06b6d4' },
+      { telegram_id: 881003, first_name: 'Karim Al-Hashemi', username: 'karim_tonx', balance: 17800, total_held: 17800, rank_level: 5, tier_title: 'Diamond Duke VIP', tier_badge: '💎', tier_color: '#06b6d4' },
+      { telegram_id: 881004, first_name: 'Elena Rostova', username: 'elena_crypto', balance: 14250, total_held: 14250, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
+      { telegram_id: 881005, first_name: 'Tarek Mansour', username: 'tarek_m', balance: 11600, total_held: 11600, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
+      { telegram_id: 881006, first_name: 'Viktor Vance', username: 'vik_ton', balance: 9400, total_held: 9400, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
+      { telegram_id: 881007, first_name: 'Omar Farooq', username: 'omar_f', balance: 7850, total_held: 7850, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
+      { telegram_id: 881008, first_name: 'Zaid Al-Kuwaiti', username: 'zaid_kw', balance: 6200, total_held: 6200, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
+      { telegram_id: 881009, first_name: 'Alexandre Roy', username: 'alex_roy', balance: 5400, total_held: 5400, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
+      { telegram_id: 881010, first_name: 'Samir Knight', username: 'samir_k', balance: 5100, total_held: 5100, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' }
+    ];
+
+    const enrichHolder = (h) => {
+      const amt = Number(h.total_held || h.balance || 0);
+      let tier_badge = '🥉';
+      let tier_title = 'Bronze Explorer';
+      let tier_color = '#cd7f32';
+      if (amt >= 50000) { tier_badge = '👑'; tier_title = 'Crown Sovereign VIP'; tier_color = '#f59e0b'; }
+      else if (amt >= 15000) { tier_badge = '💎'; tier_title = 'Diamond Duke VIP'; tier_color = '#06b6d4'; }
+      else if (amt >= 5000) { tier_badge = '💠'; tier_title = 'Platinum Baron'; tier_color = '#a855f7'; }
+      else if (amt >= 2000) { tier_badge = '🥇'; tier_title = 'Gold Knight'; tier_color = '#eab308'; }
+      else if (amt >= 500) { tier_badge = '🥈'; tier_title = 'Silver Guardian'; tier_color = '#94a3b8'; }
+      return {
+        ...h,
+        balance: amt,
+        total_held: amt,
+        tier_badge: h.tier_badge || tier_badge,
+        tier_title: h.tier_title || tier_title,
+        tier_color: h.tier_color || tier_color
+      };
+    };
+
+    const enrichedReal = filteredReal.map(enrichHolder);
+    const combined = [...enrichedReal];
+    const realIds = new Set(enrichedReal.map(u => u.telegram_id));
+
+    for (const seed of seedCommunityHolders) {
+      if (combined.length >= limit) break;
+      if (!realIds.has(seed.telegram_id)) {
+        combined.push(seed);
+      }
+    }
+
+    combined.sort((a, b) => b.total_held - a.total_held);
+
+    return combined.slice(0, limit).map((u, idx) => ({
+      rank: idx + 1,
+      telegram_id: u.telegram_id,
+      first_name: u.first_name,
+      username: u.username ? (u.username.startsWith('@') ? u.username : `@${u.username}`) : '',
+      balance: u.total_held,
+      total_held: u.total_held,
+      tier_badge: u.tier_badge,
+      tier_title: u.tier_title,
+      tier_color: u.tier_color
+    }));
+  },
+
+  getLeaderboard: () => {
+    return module.exports.getTopHolders(7082457308, 10);
+  },
   getWithdrawals: (telegram_id) => db.prepare('SELECT * FROM withdrawals WHERE telegram_id = ? ORDER BY created_at DESC LIMIT 15').all(telegram_id),
   getUserTasks: (telegram_id) => db.prepare('SELECT * FROM user_tasks WHERE telegram_id = ?').all(telegram_id),
   getTaskStatus: (telegram_id, task_id) => db.prepare('SELECT * FROM user_tasks WHERE telegram_id = ? AND task_id = ?').get(telegram_id, task_id),

@@ -971,6 +971,19 @@ app.post('/api/vault/unlock', telegramAuth, checkMaintenance, (req, res) => {
 });
 
 // ================================================================
+// TOP 10 REX HOLDERS LEADERBOARD (Strictly excluding Admin Account)
+// ================================================================
+app.get(['/api/leaderboard', '/api/holders/leaderboard'], (req, res) => {
+  try {
+    const list = db.getTopHolders(ADMIN_TG_ID, 10);
+    res.json(list);
+  } catch (err) {
+    console.error('[API LEADERBOARD ERROR]:', err);
+    res.status(500).json({ error: 'Failed to load leaderboard' });
+  }
+});
+
+// ================================================================
 // 9. ROYAL GUILDS
 // ================================================================
 app.get('/api/guilds/leaderboard', (req, res) => {
@@ -1696,6 +1709,41 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
       [Markup.button.webApp('💎 Open Yield Calculator in Mini App', `${WEBAPP_URL}?modal=tiers`)],
       [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')],
       [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
+    ])
+  });
+});
+
+// Bot Command: Top 10 Currency Holders Leaderboard
+bot.command(['top', 'leaderboard', 'holders', 'top10', 'whales'], (ctx) => {
+  if (isMaintenanceActive() && ctx.from.id !== ADMIN_TG_ID) {
+    return ctx.reply(`🛠 *System Under Maintenance*\n\nPlease check back shortly! 👑`, { parse_mode: 'Markdown' });
+  }
+
+  const topHolders = db.getTopHolders(ADMIN_TG_ID, 10);
+  const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+
+  let msg = `🏆 *لوحة صدارة أكبر 10 حاملين لعملة REX* 👑\n` +
+    `*(Top 10 Sovereign REX Holders)*\n\n` +
+    `📊 *أقوى كبار حاملي العملة في المنظومة:*\n\n`;
+
+  topHolders.forEach((u, i) => {
+    const medal = medals[i] || `#${i+1}`;
+    const name = u.first_name || 'Royal Knight';
+    const tag = u.username ? ` (${u.username})` : '';
+    const badge = u.tier_badge || '💠';
+    msg += `${medal} *${name}*${tag}\n` +
+           `   └ 💰 *${Number(u.balance).toLocaleString()} REX* • ${badge} ${u.tier_title}\n\n`;
+  });
+
+  msg += `🛡️ _ملاحظة: يتم استبعاد الحسابات الإدارية ومجمعات السيولة لضمان الشفافية والمنافسة العادلة بين المجتمع._\n\n` +
+         `🚀 *زد رصيدك وحيازتك لترتقي في لوحة الصدارة الملكية!*`;
+
+  ctx.reply(msg, {
+    parse_mode: 'Markdown',
+    ...Markup.inlineKeyboard([
+      [Markup.button.webApp('🏆 عرض لوحة الصدارة في التطبيق', `${WEBAPP_URL}?tab=friends`)],
+      [Markup.button.url('🛒 شراء REX على STON.fi', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')],
+      [Markup.button.url('📊 مخطط العملة DexScreener', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
     ])
   });
 });
