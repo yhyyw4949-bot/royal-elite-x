@@ -273,7 +273,9 @@ const safeAlterCols = [
   { table: 'users', col: 'ref_bonus_awarded', def: 'INTEGER DEFAULT 0' },
   { table: 'withdrawals', col: 'fee', def: 'REAL DEFAULT 500.0' },
   { table: 'withdrawals', col: 'net_amount', def: 'REAL DEFAULT NULL' },
-  { table: 'users', col: 'is_sybil_exempt', def: 'INTEGER DEFAULT 0' }
+  { table: 'users', col: 'is_sybil_exempt', def: 'INTEGER DEFAULT 0' },
+  { table: 'users', col: 'activated_via', def: "TEXT DEFAULT 'none'" },
+  { table: 'users', col: 'activation_code', def: "TEXT DEFAULT NULL" }
 ];
 
 for (const m of safeAlterCols) {
@@ -1660,55 +1662,105 @@ module.exports = {
       if (user.is_banned) throw new Error('USER_BANNED');
       if (user.is_activated === 1) throw new Error('ALREADY_ACTIVATED');
 
-      const codeObj = db.prepare('SELECT * FROM activation_codes WHERE code = ? COLLATE NOCASE').get(cleanCode);
-      if (!codeObj) throw new Error('CODE_NOT_FOUND');
-      if (!codeObj.is_active) throw new Error('CODE_INACTIVE');
-
       const now = Date.now();
-      if (now > codeObj.expires_at) throw new Error('CODE_EXPIRED');
-      if (codeObj.used_count >= codeObj.max_uses) throw new Error('CODE_EXHAUSTED');
 
-      const already = db.prepare('SELECT 1 FROM activation_code_redemptions WHERE code_id = ? AND telegram_id = ?').get(codeObj.id, telegram_id);
-      if (already) throw new Error('ALREADY_REDEEMED');
+      // 1. First, check dedicated activation_codes table
+      const codeObj = db.prepare('SELECT * FROM activation_codes WHERE code = ? COLLATE NOCASE').get(cleanCode);
+      if (codeObj) {
+        if (!codeObj.is_active) throw new Error('CODE_INACTIVE');
+        if (now > codeObj.expires_at) throw new Error('CODE_EXPIRED');
+        if (codeObj.used_count >= codeObj.max_uses) throw new Error('CODE_EXHAUSTED');
 
-      const bonus = codeObj.bonus_rex || 0;
-      const newBalance = (user.balance || 0) + bonus;
+        const already = db.prepare('SELECT 1 FROM activation_code_redemptions WHERE code_id = ? AND telegram_id = ?').get(codeObj.id, telegram_id);
+        if (already) throw new Error('ALREADY_REDEEMED');
 
-      // Activate user and grant fee waiver
-      db.prepare(`
-        UPDATE users 
-        SET is_activated = 1, 
-            activated_via = 'activation_code', 
-            activation_code = ?,
-            balance = balance + ?
-        WHERE telegram_id = ?
-      `).run(codeObj.code, bonus, telegram_id);
+        const bonus = codeObj.bonus_rex || 0;
+        const newBalance = (user.balance || 0) + bonus;
 
-      // Increment usage count
-      db.prepare('UPDATE activation_codes SET used_count = used_count + 1 WHERE id = ?').run(codeObj.id);
+        // Activate user and grant fee waiver
+        db.prepare(`
+          UPDATE users 
+          SET is_activated = 1, 
+              activated_via = 'activation_code', 
+              activation_code = ?,
+              balance = balance + ?
+          WHERE telegram_id = ?
+        `).run(codeObj.code, bonus, telegram_id);
 
-      // Record redemption
-      db.prepare('INSERT INTO activation_code_redemptions (code_id, code, telegram_id, bonus_rex, redeemed_at) VALUES (?, ?, ?, ?, ?)')
-        .run(codeObj.id, codeObj.code, telegram_id, bonus, now);
+        db.prepare('UPDATE activation_codes SET used_count = used_count + 1 WHERE id = ?').run(codeObj.id);
 
-      if (bonus > 0) {
-        recordLedgerEntry({
-          telegram_id,
-          type: 'ACTIVATION_BONUS',
-          amount: bonus,
-          balance_after: newBalance,
-          reference_id: `act_${codeObj.id}_${telegram_id}_${now}`,
-          details: `Activation Code Bonus: ${codeObj.code} (+${bonus} REX)`
-        });
+        db.prepare('INSERT INTO activation_code_redemptions (code_id, code, telegram_id, bonus_rex, redeemed_at) VALUES (?, ?, ?, ?, ?)')
+          .run(codeObj.id, codeObj.code, telegram_id, bonus, now);
+
+        if (bonus > 0) {
+          recordLedgerEntry({
+            telegram_id,
+            type: 'ACTIVATION_BONUS',
+            amount: bonus,
+            balance_after: newBalance,
+            reference_id: `act_${codeObj.id}_${telegram_id}_${now}`,
+            details: `Activation Code Bonus: ${codeObj.code} (+${bonus} REX)`
+          });
+        }
+
+        return {
+          success: true,
+          code: codeObj.code,
+          bonus_rex: bonus,
+          new_balance: newBalance,
+          is_activated: 1
+        };
       }
 
-      return {
-        success: true,
-        code: codeObj.code,
-        bonus_rex: bonus,
-        new_balance: newBalance,
-        is_activated: 1
-      };
+      // 2. Fallback: Also accept any valid promo_code as an activation pass!
+      const promoObj = db.prepare('SELECT * FROM promo_codes WHERE code = ? COLLATE NOCASE').get(cleanCode);
+      if (promoObj) {
+        if (!promoObj.is_active) throw new Error('CODE_INACTIVE');
+        if (now > promoObj.expires_at) throw new Error('CODE_EXPIRED');
+        if (promoObj.used_count >= promoObj.max_uses) throw new Error('CODE_EXHAUSTED');
+
+        const alreadyPromo = db.prepare('SELECT 1 FROM promo_code_redemptions WHERE code_id = ? AND telegram_id = ?').get(promoObj.id, telegram_id);
+        if (alreadyPromo) throw new Error('ALREADY_REDEEMED');
+
+        const rewardRex = promoObj.reward_rex || 0;
+        const rewardXp = promoObj.reward_xp || 0;
+        const newBalance = (user.balance || 0) + rewardRex;
+
+        // Activate user via promo code and credit REX + XP
+        db.prepare(`
+          UPDATE users 
+          SET is_activated = 1, 
+              activated_via = 'promo_code', 
+              activation_code = ?,
+              balance = balance + ?,
+              xp_points = xp_points + ?
+          WHERE telegram_id = ?
+        `).run(promoObj.code, rewardRex, rewardXp, telegram_id);
+
+        db.prepare('UPDATE promo_codes SET used_count = used_count + 1 WHERE id = ?').run(promoObj.id);
+
+        db.prepare('INSERT INTO promo_code_redemptions (code_id, code, telegram_id, reward_rex, reward_xp, redeemed_at) VALUES (?, ?, ?, ?, ?, ?)')
+          .run(promoObj.id, promoObj.code, telegram_id, rewardRex, rewardXp, now);
+
+        recordLedgerEntry({
+          telegram_id,
+          type: 'ACTIVATION_PROMO',
+          amount: rewardRex,
+          balance_after: newBalance,
+          reference_id: `act_promo_${promoObj.id}_${telegram_id}_${now}`,
+          details: `Activation via Promo Code: ${promoObj.code} (+${rewardRex} REX, +${rewardXp} XP)`
+        });
+
+        return {
+          success: true,
+          code: promoObj.code,
+          bonus_rex: rewardRex,
+          new_balance: newBalance,
+          is_activated: 1
+        };
+      }
+
+      throw new Error('CODE_NOT_FOUND');
     });
 
     return tx();

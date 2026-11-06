@@ -692,6 +692,9 @@ app.post('/api/user/redeem-activation-code', telegramAuth, checkMaintenance, asy
     } else if (err.message === 'ALREADY_ACTIVATED') {
       arErr = '✅ حسابك مفعّل بالفعل، لا حاجة لاستخدام الكود';
       enErr = '✅ Your account is already activated';
+    } else {
+      arErr = '⚠️ فشل التفعيل: ' + err.message;
+      enErr = '⚠️ Activation failed: ' + err.message;
     }
 
     return sendMsg(req, res, false, arErr, enErr, { error: err.message });
