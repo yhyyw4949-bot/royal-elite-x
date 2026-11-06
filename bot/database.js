@@ -241,7 +241,9 @@ const defaultSettings = [
   { key: 'max_daily_emission', val: '50000', description: 'الحد الأقصى للانبعاث اليومي لمكافآت التعدين (REX)' },
   { key: 'mining_reserve_cap', val: '20000000', description: 'سقف احتياطي التعدين الإجمالي المخصص (REX)' },
   { key: 'min_hold_rex', val: '5000', description: 'الحد الأدنى لحيازة المحفظة On-Chain لشرط المدة (REX)' },
-  { key: 'min_hold_days', val: '3', description: 'المدة الإلزامية لحيازة العملة في المحفظة قبل السحب (أيام)' }
+  { key: 'min_hold_days', val: '3', description: 'المدة الإلزامية لحيازة العملة في المحفظة قبل السحب (أيام)' },
+  { key: 'required_channel', val: '@RoyalEliteX', description: 'قناة التيليجرام الإلزامية للاشتراك قبل الدخول' },
+  { key: 'force_sub_enabled', val: '1', description: 'تفعيل شرط الاشتراك الإجباري في القناة (1: مفعل, 0: معطل)' }
 ];
 
 const insertSetting = db.prepare('INSERT OR IGNORE INTO system_settings (key, val, description, updated_at) VALUES (?, ?, ?, ?)');
@@ -1279,7 +1281,11 @@ module.exports = {
     return row ? row.val : defVal;
   },
   updateSetting: (key, val) => {
-    return db.prepare('UPDATE system_settings SET val = ?, updated_at = ? WHERE key = ?').run(val, Date.now(), key);
+    return db.prepare(`
+      INSERT INTO system_settings (key, val, description, updated_at) 
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET val = excluded.val, updated_at = excluded.updated_at
+    `).run(key, String(val), key, Date.now());
   },
 
   logAdminAction: (action, details, admin_id = 0, ip = '') => {

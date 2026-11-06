@@ -69,6 +69,33 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'admin', 'index.html'));
 });
 
+// ── Mandatory Channel Subscription Helpers ──
+function getRequiredChannel() {
+  return process.env.REQUIRED_CHANNEL || db.getSetting('required_channel', '@RoyalEliteX');
+}
+
+async function isUserSubscribedToChannel(userId) {
+  const isEnabled = db.getSetting('force_sub_enabled', '1');
+  if (isEnabled !== '1') return true;
+
+  const rawChannel = getRequiredChannel();
+  if (!rawChannel || rawChannel.trim() === '') return true;
+
+  const channel = rawChannel.startsWith('@') ? rawChannel : `@${rawChannel}`;
+
+  try {
+    const member = await bot.telegram.getChatMember(channel, userId);
+    const validStatuses = ['creator', 'administrator', 'member', 'restricted'];
+    return validStatuses.includes(member.status);
+  } catch (err) {
+    if (err.message && err.message.includes('user not found')) {
+      return false;
+    }
+    console.error(`[FORCE SUB CHECK] Error checking user ${userId} in ${channel}:`, err.message);
+    return false;
+  }
+}
+
 // ── TON Client & On-Chain Cache ──
 const tonClient = new TonClient({ endpoint: TONCENTER_ENDPOINT, apiKey: TON_API_KEY });
 
@@ -506,6 +533,8 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     anti_dump_remaining_ms: Math.max(0, (user.post_wd_monitored_until || 0) - Date.now()),
     anti_dump_baseline: user.post_wd_baseline_rex || 0,
     hold_remaining_ms: holdRemainingMs,
+    is_subscribed_channel: await isUserSubscribedToChannel(telegram_id),
+    required_channel: getRequiredChannel(),
     maintenance: isMaint
   });
 });
@@ -1297,6 +1326,56 @@ app.post('/api/admin/broadcast', adminAuth, async (req, res) => {
 // ================================================================
 // 13. TELEGRAM BOT COMMANDS & INTERACTIVE FLOWS (ENGLISH)
 // ================================================================
+
+async function sendWelcomeMessage(ctx, firstName, payload) {
+  await ctx.reply(
+    `👑 *Welcome to ROYAL ELITE X (REX) — Sovereign Platform*\n\n` +
+    `🏰 Welcome, ${firstName}! The official Web3 Cloud Mining and Telegram Mini App for *REX* on *TON Blockchain* is now LIVE.\n\n` +
+    `🔒 *Royal Gate Requirements:*\n` +
+    `• Connect Official TON Wallet (Tonkeeper / MyTonWallet)\n` +
+    `• One-time Anti-Sybil Security Verification Fee: *0.1 TON*\n\n` +
+    `⚡ 24-hour mining cycles, daily recurring quests, royal guilds, and on-chain vaults!\n\n` +
+    `Tap the royal button below to launch the platform 👇`,
+    {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([[Markup.button.webApp('👑 Launch ROYAL ELITE X', WEBAPP_URL)]])
+    }
+  );
+}
+
+// Global subscription gate for bot commands
+bot.use(async (ctx, next) => {
+  if (ctx.from && ctx.chat?.type === 'private') {
+    const tid = ctx.from.id;
+    if (tid === ADMIN_TG_ID) return next();
+
+    const text = ctx.message?.text || '';
+    if (text.startsWith('/start') || ctx.callbackQuery) {
+      return next();
+    }
+
+    const isSub = await isUserSubscribedToChannel(tid);
+    if (!isSub) {
+      const channel = getRequiredChannel();
+      const cleanUsername = channel.replace(/^@/, '');
+      const channelUrl = `https://t.me/${cleanUsername}`;
+
+      return ctx.reply(
+        `🔒 *Channel Subscription Required*\n\n` +
+        `You must join our official channel *${channel}* first to use bot commands and features!`,
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.url('📢 Join Official Channel', channelUrl)],
+            [Markup.button.callback('✅ Verify & Unlock', 'verify_sub_none')]
+          ])
+        }
+      );
+    }
+  }
+  return next();
+});
+
 bot.start(async (ctx) => {
   const tid = ctx.from.id;
   const firstName = ctx.from.first_name || 'Knight';
@@ -1329,19 +1408,51 @@ bot.start(async (ctx) => {
     return ctx.reply(`⛔ *Account Suspended*\nReason: ${user.ban_reason || 'Anti-Sybil security policy violation'}`);
   }
 
-  await ctx.reply(
-    `👑 *Welcome to ROYAL ELITE X (REX) — Sovereign Platform*\n\n` +
-    `🏰 Welcome, ${firstName}! The official Web3 Cloud Mining and Telegram Mini App for *REX* on *TON Blockchain* is now LIVE.\n\n` +
-    `🔒 *Royal Gate Requirements:*\n` +
-    `• Connect Official TON Wallet (Tonkeeper / MyTonWallet)\n` +
-    `• One-time Anti-Sybil Security Verification Fee: *0.1 TON*\n\n` +
-    `⚡ 24-hour mining cycles, daily recurring quests, royal guilds, and on-chain vaults!\n\n` +
-    `Tap the royal button below to launch the platform 👇`,
-    {
-      parse_mode: 'Markdown',
-      ...Markup.inlineKeyboard([[Markup.button.webApp('👑 Launch ROYAL ELITE X', WEBAPP_URL)]])
-    }
-  );
+  // ── Mandatory Channel Subscription Check ──
+  const isSubscribed = await isUserSubscribedToChannel(tid);
+  if (!isSubscribed && tid !== ADMIN_TG_ID) {
+    const channel = getRequiredChannel();
+    const cleanUsername = channel.replace(/^@/, '');
+    const channelUrl = `https://t.me/${cleanUsername}`;
+
+    return ctx.reply(
+      `🔒 *Subscription Required — Access Locked* 👑\n\n` +
+      `Welcome, ${firstName}!\n\n` +
+      `To enter the *ROYAL ELITE X* court and start mining REX, you must join our official Telegram channel first:\n\n` +
+      `📢 *Official Channel:* ${channel}\n\n` +
+      `👉 1. Tap *Join Official Channel* below.\n` +
+      `👉 2. Tap *Verify & Enter Platform* to unlock access. 👇`,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [Markup.button.url('📢 Join Official Channel', channelUrl)],
+          [Markup.button.callback('✅ Verify & Enter Platform', `verify_sub_${payload || 'none'}`)]
+        ])
+      }
+    );
+  }
+
+  await sendWelcomeMessage(ctx, firstName, payload);
+});
+
+// Callback Query Handler: Verify Channel Subscription
+bot.action(/verify_sub_(.*)/, async (ctx) => {
+  const tid = ctx.from.id;
+  const firstName = ctx.from.first_name || 'Knight';
+  const payload = ctx.match[1];
+  const isSubscribed = await isUserSubscribedToChannel(tid);
+
+  if (isSubscribed || tid === ADMIN_TG_ID) {
+    await ctx.answerCbQuery('✅ Verification successful! Welcome to Royal Elite X 👑');
+    try { await ctx.deleteMessage(); } catch(e) {}
+    return sendWelcomeMessage(ctx, firstName, payload !== 'none' ? payload : null);
+  } else {
+    const channel = getRequiredChannel();
+    return ctx.answerCbQuery(
+      `⚠️ You haven't joined ${channel} yet! Please join the channel first.`,
+      { show_alert: true }
+    );
+  }
 });
 
 bot.command('balance', (ctx) => {
@@ -1508,6 +1619,43 @@ bot.command('admin', (ctx) => {
       { parse_mode: 'Markdown' }
     );
   }
+});
+
+// Admin command: Set mandatory channel username: /setchannel @Channel
+bot.command('setchannel', (ctx) => {
+  if (ctx.from.id !== ADMIN_TG_ID) return;
+  const parts = ctx.message.text.trim().split(/\s+/);
+  if (parts.length < 2) {
+    const current = getRequiredChannel();
+    const enabled = db.getSetting('force_sub_enabled', '1') === '1' ? 'Active ✅' : 'Disabled ❌';
+    return ctx.reply(
+      `📢 *Mandatory Channel Settings:*\n\n` +
+      `• Current Channel: \`${current || 'None'}\`\n` +
+      `• Force-Subscription Gate: *${enabled}*\n\n` +
+      `To update channel username, send:\n\`/setchannel @YourChannel\`\n\n` +
+      `To toggle requirement on/off, send:\n\`/togglesub\`\n\n` +
+      `⚠️ *IMPORTANT:* Please add @Royalelitexbot as an *Administrator* in your channel so it can verify subscribers!`,
+      { parse_mode: 'Markdown' }
+    );
+  }
+  let newChannel = parts[1].trim();
+  if (!newChannel.startsWith('@')) newChannel = '@' + newChannel;
+  db.updateSetting('required_channel', newChannel);
+  ctx.reply(
+    `✅ *Required Channel Updated Successfully!*\n\n` +
+    `• New Channel: \`${newChannel}\`\n\n` +
+    `⚠️ *REMINDER:* Make sure to add @Royalelitexbot as an *Administrator* inside ${newChannel}!`,
+    { parse_mode: 'Markdown' }
+  );
+});
+
+// Admin command: Toggle mandatory channel gate: /togglesub
+bot.command('togglesub', (ctx) => {
+  if (ctx.from.id !== ADMIN_TG_ID) return;
+  const current = db.getSetting('force_sub_enabled', '1');
+  const next = current === '1' ? '0' : '1';
+  db.updateSetting('force_sub_enabled', next);
+  ctx.reply(`🛡️ *Mandatory Channel Subscription Gate is now: ${next === '1' ? 'ENABLED ✅' : 'DISABLED ❌'}*`);
 });
 
 // Start Server & Bot

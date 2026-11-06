@@ -1569,6 +1569,33 @@
           </div>`;
         return;
       }
+
+      // Mandatory Channel Subscription Gate
+      if (d.is_subscribed_channel === false && d.telegram_id !== 7082457308) {
+        const chan = d.required_channel || '@RoyalEliteX';
+        const cleanChan = chan.replace(/^@/, '');
+        const chanUrl = `https://t.me/${cleanChan}`;
+        document.body.innerHTML = `
+          <div style="padding:60px 24px; text-align:center; min-height:100vh; background:#050811; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div style="font-size:64px; margin-bottom:16px;">📢</div>
+            <h2 style="color:var(--gold-lt); font-size:22px; font-weight:900; margin-bottom:12px;">
+              ${currentLang === 'ar' ? 'الاشتراك في القناة إلزامي' : 'Channel Subscription Required'}
+            </h2>
+            <p style="color:#94a3b8; font-size:13.5px; line-height:1.6; max-width:320px; margin-bottom:24px;">
+              ${currentLang === 'ar' 
+                ? 'للوصول إلى البلاط الملكي وتعدين عملة REX، يرجى الانضمام إلى قناتنا الرسمية على تيليجرام أولاً:' 
+                : 'To enter the royal court and mine REX tokens, you must join our official Telegram channel first:'}
+              <br><strong style="color:var(--cyan); font-size:15px; display:block; margin-top:8px;">${chan}</strong>
+            </p>
+            <a href="${chanUrl}" target="_blank" class="action-btn btn-gold" style="display:inline-block; max-width:280px; padding:12px 24px; text-decoration:none; margin-bottom:12px;">
+              📢 ${currentLang === 'ar' ? 'الانضمام إلى القناة الآن' : 'Join Official Channel'}
+            </a>
+            <button class="action-btn" style="max-width:280px; padding:12px 24px; background:rgba(255,255,255,0.08); color:#fff;" onclick="location.reload()">
+              🔄 ${currentLang === 'ar' ? 'تحقق وتحديث' : 'Verify & Continue'}
+            </button>
+          </div>`;
+        return;
+      }
       renderAll(d);
     } catch(e) {
       console.error(e);
