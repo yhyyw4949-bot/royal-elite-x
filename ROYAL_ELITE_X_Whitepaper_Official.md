@@ -33,8 +33,8 @@
 | **إجمالي المعروض الثابت (Total Supply)** | **1,000,000 REX** (مغلق نهائياً وغير قابل للسك أو التضخم) |
 | **العقد الذكي الرئيسي (Jetton Master)** | `EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53` |
 | **زوج التداول الرسمي اللامركزي** | **REX / GRAM** على منصة **STON.fi DEX v2** |
-| **عنوان مجمع السيولة (STON.fi Pool)** | `EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR` |
-| **الشارت والأسعار اللحظية** | [شارت مباشر على DexScreener](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr) |
+| **عنوان مجمع السيولة (STON.fi Pool)** | `EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h` |
+| **الشارت والأسعار اللحظية** | [شارت مباشر على DexScreener](https://dexscreener.com/ton/eqang_73h-c1xvzrbk5ryhenu4gkqagtg7twiycva5vd9b4h) |
 | **مستكشف المعاملات الرسمي** | [Tonviewer REX Jetton Explorer](https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53) |
 | **البوت الرسمي على تيليجرام** | [@Royalelitexbot](https://t.me/Royalelitexbot) |
 | **القناة الإلزامية للمجتمع** | [@REXCEO1A](https://t.me/REXCEO1A) |
@@ -196,7 +196,7 @@ flowchart LR
 * **البوت الرسمي:** [@Royalelitexbot](https://t.me/Royalelitexbot)
 * **قناة الإعلانات الرسمية:** [@REXCEO1A](https://t.me/REXCEO1A)
 * **رابط التداول والشراء على STON.fi:** [Trade REX on STON.fi DEX](https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53)
-* **رابط الشارت على DexScreener:** [REX / GRAM Live Chart](https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr)
+* **رابط الشارت على DexScreener:** [REX / GRAM Live Chart](https://dexscreener.com/ton/eqang_73h-c1xvzrbk5ryhenu4gkqagtg7twiycva5vd9b4h)
 * **مستكشف العقد الذكي على Tonviewer:** [EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53](https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53)
 
 ---

@@ -996,7 +996,7 @@ app.get('/api/public/market-chart', async (req, res) => {
     return res.json(cachedMarketData);
   }
 
-  const pairId = 'eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr';
+  const pairId = 'EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h';
   try {
     const apiRes = await fetch(`https://api.dexscreener.com/latest/dex/pairs/ton/${pairId}`);
     if (apiRes.ok) {
@@ -1029,15 +1029,15 @@ app.get('/api/public/market-chart', async (req, res) => {
 
   res.json(cachedMarketData || {
     success: true,
-    price_usd: 0.000626,
-    price_ton: 0.000571,
-    price_change_24h: 8.28,
-    liquidity_usd: 105.23,
-    volume_24h: 0.95,
-    fdv: 31314,
-    pair_address: 'EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR',
-    dex_url: 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr',
-    embed_url: 'https://dexscreener.com/ton/EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR?embed=1&theme=dark&trades=0&info=0',
+    price_usd: 0.0002008,
+    price_ton: 0.0001823,
+    price_change_24h: 9.28,
+    liquidity_usd: 255.70,
+    volume_24h: 11.0,
+    fdv: 201,
+    pair_address: 'EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h',
+    dex_url: 'https://dexscreener.com/ton/eqang_73h-c1xvzrbk5ryhenu4gkqagtg7twiycva5vd9b4h',
+    embed_url: 'https://dexscreener.com/ton/EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h?embed=1&theme=dark&trades=0&info=0',
     updated_at: now
   });
 });
@@ -2095,7 +2095,7 @@ bot.command(['whitepaper', 'wp'], (ctx) => {
     `• Smart Contract: \`${REX_MASTER_CONTRACT}\`\n` +
     `• Total Fixed Supply: *1,000,000 REX* (100% Mint Revoked)\n` +
     `• Official DEX Pair: *REX / GRAM on STON.fi DEX*\n` +
-    `• Liquidity Pool: \`EQAkNyk6B1PgiEcBWkXG5d7C137Epx_iAQnB6ZCIVU7E4INR\`\n\n` +
+    `• Liquidity Pool: \`EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h\`\n\n` +
     `🛡️ *Sovereign Protocol & Withdrawal Rules:*\n` +
     `1. Anti-Sybil Gate: One-time *0.1 TON* access fee.\n` +
     `2. 10% Daily HODL Mining: Earn 10% daily yield of your held REX tokens.\n` +
@@ -2108,7 +2108,7 @@ bot.command(['whitepaper', 'wp'], (ctx) => {
       parse_mode: 'Markdown',
       ...Markup.inlineKeyboard([
         [Markup.button.webApp('📖 Open Whitepaper in Mini App', `${WEBAPP_URL}?modal=whitepaper`)],
-        [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')],
+        [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqang_73h-c1xvzrbk5ryhenu4gkqagtg7twiycva5vd9b4h')],
         [Markup.button.url('🦄 Trade REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53')]
       ])
     }
@@ -2142,7 +2142,7 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
     ...Markup.inlineKeyboard([
       [Markup.button.webApp('💎 Open Yield Calculator in Mini App', `${WEBAPP_URL}?modal=tiers`)],
       [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53')],
-      [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
+      [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqang_73h-c1xvzrbk5ryhenu4gkqagtg7twiycva5vd9b4h')]
     ])
   });
 });
@@ -2340,7 +2340,7 @@ bot.command(['top', 'leaderboard', 'holders', 'top10', 'whales'], (ctx) => {
     ...Markup.inlineKeyboard([
       [Markup.button.webApp('🏆 View Full Leaderboard in App', `${WEBAPP_URL}?tab=friends`)],
       [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53')],
-      [Markup.button.url('📊 DexScreener Live Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
+      [Markup.button.url('📊 DexScreener Live Chart', 'https://dexscreener.com/ton/eqang_73h-c1xvzrbk5ryhenu4gkqagtg7twiycva5vd9b4h')]
     ])
   });
 });

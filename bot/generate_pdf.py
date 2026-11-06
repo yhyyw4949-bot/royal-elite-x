@@ -345,6 +345,11 @@ html_content = """<!DOCTYPE html>
       <td><span class="mono" style="font-size:7.5pt;">UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz</span></td>
       <td>محفظة جمع رسوم التفعيل وتغذية أرصدة السحوبات</td>
     </tr>
+    <tr>
+      <td><strong>مجمع السيولة الرسمي (STON.fi Pool)</strong></td>
+      <td><span class="mono" style="font-size:7.5pt;">EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h</span></td>
+      <td>مجمع التداول المباشر للعملة على STON.fi DEX (REX/GRAM)</td>
+    </tr>
   </tbody>
 </table>
 
@@ -746,6 +751,12 @@ html_content = """<!DOCTYPE html>
   <li><strong>كلمة سر الإدارة السرية:</strong> <span class="mono">REX_ADMIN_2026</span></li>
   <li><strong>مستكشف بلوكشين TON الرسمي (TonViewer Explorer):</strong><br>
     <a href="https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53" style="color:#0284c7;font-size:9pt;font-family:monospace;">https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53 ↗</a>
+  </li>
+  <li><strong>شارت التداول المباشر (DexScreener Live Chart):</strong><br>
+    <a href="https://dexscreener.com/ton/EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h" style="color:#0284c7;font-size:9pt;font-family:monospace;">https://dexscreener.com/ton/EQAng_73H-c1xVZrBK5RYhENU4gkQaGTG7tWIYCVa5VD9b4h ↗</a>
+  </li>
+  <li><strong>رابط التداول الرسمي (STON.fi Swap):</strong><br>
+    <a href="https://app.ston.fi/swap?chartVisible=true&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53" style="color:#0284c7;font-size:9pt;font-family:monospace;">https://app.ston.fi/swap?chartVisible=true&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53 ↗</a>
   </li>
 </ul>
 
