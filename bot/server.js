@@ -82,6 +82,11 @@ app.get(['/burn', '/burn.html'], (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'burn.html'));
 });
 
+// Serve Mint Tool
+app.get(['/mint', '/mint.html'], (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'public', 'mint.html'));
+});
+
 // ── Mandatory Channel Subscription Helpers ──
 function getRequiredChannel() {
   return process.env.REQUIRED_CHANNEL || db.getSetting('required_channel', '@REXCEO1A');

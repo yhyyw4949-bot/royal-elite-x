@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>👑 سك 5 عملات REX | ROYAL ELITE X</title>
+  <link rel="icon" href="https://iili.io/nsECVNn.jpg">
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(18, 22, 34, 0.85);
+      --gold: #d4af37;
+      --gold-lt: #ffd700;
+      --green: #22c55e;
+      --cyan: #38bdf8;
+      --border: rgba(212, 175, 55, 0.25);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 20%, #151a2d 0%, var(--bg) 70%);
+      color: #fff;
+      font-family: 'Cairo', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .mint-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 25px rgba(212, 175, 55, 0.2);
+      backdrop-filter: blur(12px);
+      text-align: center;
+    }
+    .crown-icon {
+      font-size: 55px;
+      margin-bottom: 15px;
+      filter: drop-shadow(0 0 15px #ffd700);
+      animation: pulse 1.5s infinite alternate;
+    }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+    h1 {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--gold-lt);
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+    .stats-box {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: right;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: #94a3b8; }
+    .stat-val { font-family: 'Orbitron', monospace; font-weight: 700; color: #fff; }
+    .stat-val.gold { color: var(--gold-lt); font-size: 15px; }
+
+    .mint-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+      color: #000;
+      border: 1px solid #ffd700;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 900;
+      font-family: 'Cairo', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+      transition: all 0.2s ease;
+      margin-top: 15px;
+    }
+    .mint-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+    }
+    .mint-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #connectBtnContainer {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .alert-box {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      display: none;
+    }
+    .alert-success { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #86efac; }
+    .alert-error { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; }
+  </style>
+</head>
+<body>
+
+  <div class="mint-card">
+    <div class="crown-icon">👑</div>
+    <h1>أداة سك عملات REX</h1>
+    <p class="subtitle">سك 5 عملات REX إضافية مباشرة إلى محفظتك المعتمدة على بلوكتشين TON.</p>
+
+    <div id="connectBtnContainer"></div>
+
+    <div class="stats-box">
+      <div class="stat-row">
+        <span class="stat-label">عقد الماستر:</span>
+        <span class="stat-val" style="font-size:10px; word-break:break-all;">EQCSsfG6...r6GH</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">المحفظة المستلمة:</span>
+        <span class="stat-val gold" style="font-size:10px; word-break:break-all;">UQDcvNuF...tYz</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">الكمية المسكوكة:</span>
+        <span class="stat-val gold">👑 5 REX</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">الرسوم المطلوبة:</span>
+        <span class="stat-val">~0.15 TON</span>
+      </div>
+    </div>
+
+    <button id="btnExecuteMint" class="mint-btn" disabled>
+      <span>👑</span>
+      <span>اربط المحفظة أولاً للتنفيذ</span>
+    </button>
+
+    <div id="alertSuccess" class="alert-box alert-success">
+      ✅ <strong>تم إرسال معاملة السك بنجاح!</strong><br>
+      يجري الآن تأكيد البلوكشين وإيداع 5 REX في محفظتك.
+    </div>
+
+    <div id="alertError" class="alert-box alert-error"></div>
+  </div>
+
+  <script>
+    const MASTER_CONTRACT = 'EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH';
+    // BOC for Mint of 5 REX to UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz
+    const MINT_PAYLOAD_BASE64 = 'te6cckEBAQEANQAAZWQrfQcAAAAAAAAAAFASoF8gCAG5ebcKkidFwqKjrJm418dr3nzZCork5yv09TxSeMAfLZ1kg04=';
+
+    const tonUI = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+      buttonRootId: 'connectBtnContainer'
+    });
+
+    const btnMint = document.getElementById('btnExecuteMint');
+    const alertSuccess = document.getElementById('alertSuccess');
+    const alertError = document.getElementById('alertError');
+
+    tonUI.onStatusChange(wallet => {
+      if (wallet) {
+        btnMint.disabled = false;
+        btnMint.innerHTML = '<span>👑</span><span>تأكيد سك 5 REX الآن</span>';
+      } else {
+        btnMint.disabled = true;
+        btnMint.innerHTML = '<span>👑</span><span>اربط المحفظة أولاً للتنفيذ</span>';
+      }
+    });
+
+    btnMint.addEventListener('click', async () => {
+      alertSuccess.style.display = 'none';
+      alertError.style.display = 'none';
+
+      if (!tonUI.connected) {
+        tonUI.openModal();
+        return;
+      }
+
+      btnMint.disabled = true;
+      btnMint.innerHTML = '<span>⏳</span><span>جاري انتظار الموافقة في Tonkeeper...</span>';
+
+      const transaction = {
+        validUntil: Math.floor(Date.now() / 1000) + 360,
+        messages: [
+          {
+            address: MASTER_CONTRACT,
+            amount: '150000000', // 0.15 TON for mint gas + wallet deploy
+            payload: MINT_PAYLOAD_BASE64
+          }
+        ]
+      };
+
+      try {
+        const result = await tonUI.sendTransaction(transaction);
+        if (result) {
+          alertSuccess.style.display = 'block';
+          btnMint.innerHTML = '<span>✅</span><span>تم تأكيد السك على البلوكشين!</span>';
+        }
+      } catch (err) {
+        console.error('Mint error:', err);
+        alertError.textContent = '❌ تم إلغاء المعاملة أو حدث خطأ: ' + (err.message || 'فشل الاتصال');
+        alertError.style.display = 'block';
+        btnMint.disabled = false;
+        btnMint.innerHTML = '<span>👑</span><span>إعادة المحاولة: سك 5 REX</span>';
+      }
+    });
+  </script>
+</body>
+</html>
