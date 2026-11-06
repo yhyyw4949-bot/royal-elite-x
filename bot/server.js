@@ -96,6 +96,23 @@ async function isUserSubscribedToChannel(userId) {
   }
 }
 
+async function requireChannelSubMiddleware(req, res, next) {
+  const telegram_id = req.telegramUser?.id || req.body?.telegram_id || req.query?.telegram_id;
+  if (!telegram_id || parseInt(telegram_id) === ADMIN_TG_ID) return next();
+
+  const isSub = await isUserSubscribedToChannel(telegram_id);
+  if (!isSub) {
+    const chan = getRequiredChannel();
+    return sendMsg(
+      req, res, false,
+      `تم إيقاف الميزة لأنك لست عضواً في قناة ${chan}. يرجى الانضمام واستئناف الاستخدام.`,
+      `Access locked: You must be a member of ${chan}. Please join to resume.`,
+      { requires_channel: true, required_channel: chan }
+    );
+  }
+  next();
+}
+
 // ── TON Client & On-Chain Cache ──
 const tonClient = new TonClient({ endpoint: TONCENTER_ENDPOINT, apiKey: TON_API_KEY });
 
@@ -599,7 +616,7 @@ app.post('/api/user/confirm-activation', telegramAuth, checkMaintenance, (req, r
 // ================================================================
 // 3. ATOMIC MINING ENGINE
 // ================================================================
-app.post('/api/user/start-mining', telegramAuth, checkMaintenance, (req, res) => {
+app.post('/api/user/start-mining', telegramAuth, checkMaintenance, requireChannelSubMiddleware, (req, res) => {
   const { telegram_id } = req.body;
   const user = db.getUser(telegram_id);
   if (!user || user.is_banned) return sendMsg(req, res, false, 'حساب محظور', 'Account suspended');
@@ -611,7 +628,7 @@ app.post('/api/user/start-mining', telegramAuth, checkMaintenance, (req, res) =>
   sendMsg(req, res, true, '⚡ انطلقت دورة التعدين الملكية بنجاح!', '⚡ 24h Royal Mining cycle started!', { last_mining_start: now });
 });
 
-app.post('/api/user/claim-mining', telegramAuth, checkMaintenance, async (req, res) => {
+app.post('/api/user/claim-mining', telegramAuth, checkMaintenance, requireChannelSubMiddleware, async (req, res) => {
   const { telegram_id, idempotency_key } = req.body;
   const user = db.getUser(telegram_id);
   if (!user || user.is_banned) return sendMsg(req, res, false, 'حساب محظور', 'Account suspended');
@@ -664,7 +681,7 @@ app.post('/api/user/claim-mining', telegramAuth, checkMaintenance, async (req, r
 // ================================================================
 // 4. MULTI-STAGE WITHDRAWAL ENGINE
 // ================================================================
-app.post('/api/user/withdraw', telegramAuth, checkMaintenance, async (req, res) => {
+app.post('/api/user/withdraw', telegramAuth, checkMaintenance, requireChannelSubMiddleware, async (req, res) => {
   const { telegram_id, amount, idempotency_key } = req.body;
   const user = db.getUser(telegram_id);
 
@@ -864,7 +881,7 @@ app.post('/api/user/check-achievements', telegramAuth, (req, res) => {
 // ================================================================
 // 8. ROYAL VAULT (LOCKING)
 // ================================================================
-app.post('/api/vault/lock', telegramAuth, checkMaintenance, (req, res) => {
+app.post('/api/vault/lock', telegramAuth, checkMaintenance, requireChannelSubMiddleware, (req, res) => {
   const { telegram_id, amount, duration_days } = req.body;
   const parsedAmt = parseFloat(amount);
   const days = parseInt(duration_days);
@@ -963,7 +980,7 @@ app.post('/api/academy/submit-quiz', telegramAuth, checkMaintenance, (req, res) 
 // ================================================================
 // 11. REPEATABLE TASKS
 // ================================================================
-app.post('/api/user/claim-task', telegramAuth, checkMaintenance, (req, res) => {
+app.post('/api/user/claim-task', telegramAuth, checkMaintenance, requireChannelSubMiddleware, (req, res) => {
   const { telegram_id, task_id, idempotency_key } = req.body;
   const user = db.getUser(telegram_id);
   if (!user || user.is_banned) return sendMsg(req, res, false, 'حساب غير مصرح', 'Unauthorized account');
@@ -1656,6 +1673,42 @@ bot.command('togglesub', (ctx) => {
   const next = current === '1' ? '0' : '1';
   db.updateSetting('force_sub_enabled', next);
   ctx.reply(`🛡️ *Mandatory Channel Subscription Gate is now: ${next === '1' ? 'ENABLED ✅' : 'DISABLED ❌'}*`);
+});
+
+// Proactive channel departure event listener
+bot.on('chat_member', async (ctx) => {
+  try {
+    const chat = ctx.chat;
+    const required = getRequiredChannel().replace(/^@/, '').toLowerCase();
+    const chatUser = (chat.username || '').toLowerCase();
+
+    if (chatUser === required) {
+      const update = ctx.chatMember;
+      const newStatus = update.new_chat_member.status;
+      const oldStatus = update.old_chat_member.status;
+      const userId = update.new_chat_member.user.id;
+
+      // If user left or was kicked from the channel
+      if (['left', 'kicked'].includes(newStatus) && !['left', 'kicked'].includes(oldStatus)) {
+        bot.telegram.sendMessage(
+          userId,
+          `🔒 *Platform Access Paused*\n\n` +
+          `You have left our official channel *@REXCEO1A*!\n` +
+          `Your mining and platform access have been temporarily locked.\n\n` +
+          `Rejoin the channel anytime below to immediately restore full access! 👇`,
+          {
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard([
+              [Markup.button.url('📢 Rejoin @REXCEO1A', `https://t.me/${required}`)],
+              [Markup.button.callback('🔄 Restore Access', 'verify_sub_none')]
+            ])
+          }
+        ).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.error('[CHAT_MEMBER EVENT ERROR]:', err.message);
+  }
 });
 
 // Start Server & Bot

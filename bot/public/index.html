@@ -1527,7 +1527,35 @@
       headers,
       body: JSON.stringify(body)
     });
-    return res.json();
+    const d = await res.json();
+    if (d && d.requires_channel && user.id !== 7082457308) {
+      showChannelLockScreen(d.required_channel || '@REXCEO1A');
+    }
+    return d;
+  }
+
+  function showChannelLockScreen(chan = '@REXCEO1A') {
+    const cleanChan = chan.replace(/^@/, '');
+    const chanUrl = `https://t.me/${cleanChan}`;
+    document.body.innerHTML = `
+      <div style="padding:60px 24px; text-align:center; min-height:100vh; background:#050811; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="font-size:64px; margin-bottom:16px;">📢</div>
+        <h2 style="color:var(--gold-lt); font-size:22px; font-weight:900; margin-bottom:12px;">
+          ${currentLang === 'ar' ? 'الاشتراك في القناة إلزامي' : 'Channel Subscription Required'}
+        </h2>
+        <p style="color:#94a3b8; font-size:13.5px; line-height:1.6; max-width:320px; margin-bottom:24px;">
+          ${currentLang === 'ar' 
+            ? 'لقد غادرت القناة الرسمية أو لم تشترك بعد! للوصول إلى المنصة ومتابعة التعدين، يرجى الانضمام إلى القناة:' 
+            : 'You have left our official channel or have not joined yet! To access the platform and continue mining, please join our official channel:'}
+          <br><strong style="color:var(--cyan); font-size:16px; display:block; margin-top:8px;">${chan}</strong>
+        </p>
+        <a href="${chanUrl}" target="_blank" class="action-btn btn-gold" style="display:inline-block; max-width:280px; padding:12px 24px; text-decoration:none; margin-bottom:12px;">
+          📢 ${currentLang === 'ar' ? 'الانضمام إلى القناة الآن' : 'Join Official Channel'}
+        </a>
+        <button class="action-btn" style="max-width:280px; padding:12px 24px; background:rgba(255,255,255,0.08); color:#fff;" onclick="location.reload()">
+          🔄 ${currentLang === 'ar' ? 'تحقق واستعادة الوصول' : 'Verify & Resume Access'}
+        </button>
+      </div>`;
   }
 
   // ── Sync User Data ──
@@ -1572,28 +1600,7 @@
 
       // Mandatory Channel Subscription Gate
       if (d.is_subscribed_channel === false && d.telegram_id !== 7082457308) {
-        const chan = d.required_channel || '@REXCEO1A';
-        const cleanChan = chan.replace(/^@/, '');
-        const chanUrl = `https://t.me/${cleanChan}`;
-        document.body.innerHTML = `
-          <div style="padding:60px 24px; text-align:center; min-height:100vh; background:#050811; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <div style="font-size:64px; margin-bottom:16px;">📢</div>
-            <h2 style="color:var(--gold-lt); font-size:22px; font-weight:900; margin-bottom:12px;">
-              ${currentLang === 'ar' ? 'الاشتراك في القناة إلزامي' : 'Channel Subscription Required'}
-            </h2>
-            <p style="color:#94a3b8; font-size:13.5px; line-height:1.6; max-width:320px; margin-bottom:24px;">
-              ${currentLang === 'ar' 
-                ? 'للوصول إلى البلاط الملكي وتعدين عملة REX، يرجى الانضمام إلى قناتنا الرسمية على تيليجرام أولاً:' 
-                : 'To enter the royal court and mine REX tokens, you must join our official Telegram channel first:'}
-              <br><strong style="color:var(--cyan); font-size:15px; display:block; margin-top:8px;">${chan}</strong>
-            </p>
-            <a href="${chanUrl}" target="_blank" class="action-btn btn-gold" style="display:inline-block; max-width:280px; padding:12px 24px; text-decoration:none; margin-bottom:12px;">
-              📢 ${currentLang === 'ar' ? 'الانضمام إلى القناة الآن' : 'Join Official Channel'}
-            </a>
-            <button class="action-btn" style="max-width:280px; padding:12px 24px; background:rgba(255,255,255,0.08); color:#fff;" onclick="location.reload()">
-              🔄 ${currentLang === 'ar' ? 'تحقق وتحديث' : 'Verify & Continue'}
-            </button>
-          </div>`;
+        showChannelLockScreen(d.required_channel || '@REXCEO1A');
         return;
       }
       renderAll(d);
@@ -3264,6 +3271,9 @@
   } else if (targetModal === 'tiers' || targetModal === 'levels' || targetModal === 'boost') {
     setTimeout(() => { openModal('tiersModal'); }, 600);
   }
+
+  // Periodic Live Sync & Continuous Subscription Watchdog (every 30s)
+  setInterval(fetchUserData, 30000);
 </script>
 </body>
 </html>
