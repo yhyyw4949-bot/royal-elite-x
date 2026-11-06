@@ -89,8 +89,8 @@ async function main() {
     const balance = await callWithRetry(() => walletContract.getBalance());
     console.log(`💰 رصيد السيرفر المتاح       : ${Number(balance) / 1e9} TON`);
 
-    if (Number(balance) < 0.35 * 1e9) {
-        console.error('\n⚠️ الرصيد غير كافٍ لنشر العقد وسك العملات! يلزم على الأقل 0.4 TON.');
+    if (Number(balance) < 0.25 * 1e9) {
+        console.error('\n⚠️ الرصيد غير كافٍ لنشر العقد وسك العملات! يلزم على الأقل 0.3 TON.');
         process.exit(1);
     }
 
@@ -160,30 +160,9 @@ async function main() {
     await sleep(20000);
     console.log('✅ [2/3] تم سك 1,000,000 REX بالكامل لمحفظة الأدمن!');
 
-    // 3. Disable minting permanently (Revoke)
-    console.log('\n⏳ [3/3] جاري إغلاق خاصية السك نهائياً (Mint Revoke) لتثبيت المعروض...');
-    const disableBody = beginCell()
-        .storeUint(0, 32)
-        .storeStringTail('Disable minting')
-        .endCell();
+    // 3. Minting kept OPEN (بناءً على طلبك: خاصية السك مفتوحة ومتاحة)
+    console.log('\n🔓 خاصية السك (Minting) مفتوحة ومتاحة لك دائماً للأمام!');
 
-    let seqno3 = await callWithRetry(() => walletContract.getSeqno());
-    await callWithRetry(() => walletContract.sendTransfer({
-        secretKey: keyPair.secretKey,
-        seqno: seqno3,
-        messages: [
-            internal({
-                to: minterAddress,
-                value: toNano('0.05'),
-                body: disableBody,
-                bounce: false,
-            })
-        ],
-    }));
-
-    console.log('   ⏳ تم إرسال أمر إغلاق السك! انتظار التأكيد (15 ثانية)...');
-    await sleep(15000);
-    console.log('✅ [3/3] تم إغلاق السك نهائياً! أصبح إجمالي المعروض 1,000,000 REX مغلق 100% للأبد!');
 
     console.log('\n🎉 اكتملت العملية بنجاح كامل!');
     console.log(`📜 العقد الجديد : ${minterAddress.toString()}`);
