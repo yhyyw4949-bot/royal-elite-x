@@ -520,6 +520,33 @@
         </div>
       </div>
 
+      <!-- Bot Payout Wallet Info Card -->
+      <div id="botWalletCard" style="background: rgba(15,23,42,0.7); border: 1px solid rgba(234,179,8,0.3); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="font-size: 32px;">🤖</div>
+          <div>
+            <div style="font-weight: 800; font-size: 15px; color: var(--gold-lt); display: flex; align-items: center; gap: 8px;">
+              <span>محفظة البوت للصرف الآلي على TON</span>
+              <span id="botWalletBadge" class="badge-gold" style="font-size: 11px;">جاري الفحص...</span>
+            </div>
+            <div style="color: var(--muted); font-size: 12px; margin-top: 4px; font-family: monospace;">
+              العنوان: <span id="botWalletAddress" style="color: var(--cyan); user-select: all;">—</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 20px; align-items: center;">
+          <div style="text-align: center;">
+            <div style="font-size: 11px; color: var(--muted);">غاز الشبكة المتاح (TON)</div>
+            <div id="botWalletTon" style="font-family: Orbitron; font-size: 16px; font-weight: 900; color: #38bdf8;">— TON</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 11px; color: var(--muted);">رصيد الصرف (REX)</div>
+            <div id="botWalletRex" style="font-family: Orbitron; font-size: 16px; font-weight: 900; color: var(--gold-lt);">— REX</div>
+          </div>
+          <button class="btn btn-inspect" onclick="loadBotWalletStatus()" style="padding: 6px 12px; font-size: 12px;">🔄 تحديث</button>
+        </div>
+      </div>
+
       <div class="filter-tabs-bar">
         <div class="filter-chip active" onclick="filterWd('all', this)">الكل</div>
         <div class="filter-chip" onclick="filterWd('pending', this)">قيد الانتظار (PENDING)</div>
@@ -853,7 +880,7 @@
 
     if (id === 'overview') loadOverview();
     else if (id === 'users') loadUsers(0);
-    else if (id === 'withdrawals') loadWithdrawals();
+    else if (id === 'withdrawals') { loadWithdrawals(); loadBotWalletStatus(); }
     else if (id === 'sybil') loadSybilRadar();
     else if (id === 'settings') loadSettings();
     else if (id === 'audit') loadAuditLogs();
@@ -898,8 +925,8 @@
           <td style="color:var(--muted);font-size:11px">${fmtDate(w.created_at)}</td>
           <td>
             <div style="display:flex;gap:4px;">
-              <button class="btn btn-inspect" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'reviewing')">🔍 تدقيق</button>
-              <button class="btn btn-approve" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'approved')">✅ اعتماد</button>
+              <button class="btn btn-gold" style="font-weight:800; font-size:11px; padding:4px 8px;" onclick="executeAutoPayout(${w.id}, ${w.amount}, '${w.wallet_address}')">⚡ صرف تلقائي</button>
+              <button class="btn btn-inspect" onclick="inspectUser(${w.telegram_id})">🔍 كشف</button>
               <button class="btn btn-reject"  onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ رفض</button>
             </div>
           </td>
@@ -924,24 +951,22 @@
       else if (w.status === 'processing' || w.status === 'approved') badgeClass = 'badge-cyan';
 
       let actions = '';
-      if (w.status === 'pending') {
+      if (w.status === 'pending' || w.status === 'reviewing') {
         actions = `
-          <button class="btn btn-approve" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'approved')">✅ موافقة (خلال 24h)</button>
+          <button class="btn btn-gold" style="font-weight:800; font-size:11.5px; padding:5px 10px;" onclick="executeAutoPayout(${w.id}, ${w.amount}, '${w.wallet_address}')">⚡ موافقة وسحب تلقائي</button>
+          <button class="btn btn-approve" onclick="promptConfirmWdModal(${w.id}, ${w.telegram_id})">📝 اعتماد يدوي</button>
           <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ رفض</button>
           <button class="btn btn-inspect" onclick="inspectUser(${w.telegram_id})">🔍 كشف</button>
         `;
-      } else if (w.status === 'reviewing') {
-        actions = `
-          <button class="btn btn-approve" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'approved')">✅ موافقة (خلال 24h)</button>
-          <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ رفض</button>
-        `;
       } else if (w.status === 'approved') {
         actions = `
-          <button class="btn btn-gold" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'processing')">⚡ بدء التنفيذ</button>
+          <button class="btn btn-gold" style="font-weight:800; font-size:11.5px; padding:5px 10px;" onclick="executeAutoPayout(${w.id}, ${w.amount}, '${w.wallet_address}')">⚡ سحب تلقائي الآن</button>
+          <button class="btn btn-approve" onclick="promptConfirmWdModal(${w.id}, ${w.telegram_id})">📝 تأكيد يدوي</button>
           <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'rejected')">❌ إلغاء</button>
         `;
       } else if (w.status === 'processing') {
         actions = `
+          <button class="btn btn-gold" style="font-weight:800; font-size:11.5px; padding:5px 10px;" onclick="executeAutoPayout(${w.id}, ${w.amount}, '${w.wallet_address}')">⚡ إعادة المحاولة تلقائياً</button>
           <button class="btn btn-approve" onclick="promptConfirmWdModal(${w.id}, ${w.telegram_id})">💎 تأكيد On-Chain</button>
           <button class="btn btn-reject" onclick="setWithdrawalStatus(${w.id}, ${w.telegram_id}, 'failed')">⚠️ فشل المعاملة</button>
         `;
@@ -1029,6 +1054,58 @@
       loadOverview();
     } else {
       toast('❌ ' + (r?.message || 'فشل'));
+    }
+  }
+
+  async function executeAutoPayout(id, amount, wallet) {
+    const formatted = Number(amount).toLocaleString();
+    const conf = confirm(`👑 تأكيد الصرف الملكي الآلي:\n\nهل أنت متأكد من رغبتك في الموافقة على السحب #${id} وصرف (${formatted} REX) تلقائياً من محفظة البوت على البلوكتشين إلى محفظة المستخدم:\n${wallet}؟\n\nستتم المعاملة لحظياً على شبكة TON.`);
+    if (!conf) return;
+
+    toast('⏳ جاري توقيع المعاملة وإرسالها لبلوكتشين TON...');
+
+    const res = await api('/api/admin/withdrawals/auto-payout', 'POST', { id });
+    if (res && res.success) {
+      alert(`💎 تم صرف ${formatted} REX بنجاح على البلوكتشين!\n\nالمحفظة المستلمة: ${wallet}\nرابط المستكشف:\n${res.txResult?.explorerUrl || ''}`);
+      toast(`✅ تم الصرف التلقائي بنجاح للسحب #${id}`);
+      loadWithdrawals();
+      loadOverview();
+      loadBotWalletStatus();
+    } else {
+      alert(`❌ فشل الصرف التلقائي:\n\n${res?.message || 'خطأ غير معروف'}`);
+      toast(`❌ فشل الصرف: ${res?.message || 'خطأ'}`);
+    }
+  }
+
+  async function loadBotWalletStatus() {
+    try {
+      const res = await api('/api/admin/bot-wallet');
+      const badge = document.getElementById('botWalletBadge');
+      const addr = document.getElementById('botWalletAddress');
+      const ton = document.getElementById('botWalletTon');
+      const rex = document.getElementById('botWalletRex');
+
+      if (!res || !res.configured) {
+        if (badge) { badge.className = 'badge-red'; badge.textContent = 'غير متصلة (يلزم MNEMONIC)'; }
+        if (addr) addr.textContent = res?.error || 'غير مهيأة';
+        return;
+      }
+
+      if (addr) addr.textContent = res.address;
+      if (ton) ton.textContent = `${Number(res.ton_balance).toFixed(3)} TON`;
+      if (rex) rex.textContent = `${Number(res.rex_balance).toLocaleString()} REX`;
+
+      if (badge) {
+        if (res.has_gas) {
+          badge.className = 'badge-green';
+          badge.textContent = '✅ جاهزة للصرف التلقائي';
+        } else {
+          badge.className = 'badge-gold';
+          badge.textContent = '⚠️ رصيد غاز TON منخفض (يلزم 0.1 TON)';
+        }
+      }
+    } catch(e) {
+      console.error(e);
     }
   }
 

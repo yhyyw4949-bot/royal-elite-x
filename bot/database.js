@@ -554,7 +554,17 @@ module.exports = {
     return db.prepare('UPDATE users SET is_banned = 1, ban_reason = ? WHERE telegram_id = ?').run(reason, telegram_id);
   },
   unbanUser: (telegram_id) => {
-    return db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL WHERE telegram_id = ?').run(telegram_id);
+    try {
+      const u = db.prepare('SELECT device_fingerprint FROM users WHERE telegram_id = ?').get(telegram_id);
+      if (u && u.device_fingerprint) {
+        db.prepare('DELETE FROM device_fingerprints WHERE fingerprint = ?').run(u.device_fingerprint);
+      }
+      db.prepare('DELETE FROM device_fingerprints WHERE telegram_id = ?').run(telegram_id);
+      db.prepare('DELETE FROM ip_logs WHERE telegram_id = ?').run(telegram_id);
+    } catch (e) {
+      console.error('Error clearing device records on unban:', e.message);
+    }
+    return db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL, device_fingerprint = NULL WHERE telegram_id = ?').run(telegram_id);
   },
   // Admin Balance & Mining Management
   addBalance: (telegram_id, amount, admin_id = null, reason = 'Admin Adjustment') => {

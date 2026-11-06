@@ -18,6 +18,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./database');
 const security = require('./security');
+const payout = require('./payout');
 const { TonClient, Address, beginCell } = require('@ton/ton');
 
 // ── Environment & Secrets Management ──
@@ -398,10 +399,11 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
   }
 
   // Anti-Sybil Radar Check
-  if (fingerprint) {
+  if (fingerprint && parseInt(telegram_id) !== ADMIN_TG_ID) {
+    const isSybilAutoBan = db.getSetting('sybil_auto_ban', '1') === '1';
     const matched = db.checkFingerprintAccounts(fingerprint);
-    const others = matched.filter(a => a.telegram_id !== telegram_id);
-    if (others.length >= 1) {
+    const others = matched.filter(a => a.telegram_id !== telegram_id && a.telegram_id !== ADMIN_TG_ID);
+    if (others.length >= 1 && isSybilAutoBan) {
       db.banUser(telegram_id, 'تعدد حسابات على نفس الجهاز (Anti-Sybil)');
       return res.json({ is_banned: true, ban_reason: 'تعدد حسابات على نفس الجهاز' });
     }
@@ -1161,6 +1163,83 @@ app.post('/api/admin/withdrawals/status', adminAuth, async (req, res) => {
     res.json({ success: true, new_status });
   } catch (err) {
     res.json({ success: false, message: err.message });
+  }
+});
+
+// Admin Automated On-Chain Payout from Bot Wallet
+app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.json({ success: false, message: 'معرف طلب السحب مطلوب' });
+
+  const withdrawal = db.db.prepare('SELECT * FROM withdrawals WHERE id = ?').get(id);
+  if (!withdrawal) return res.json({ success: false, message: 'طلب السحب غير موجود' });
+  if (withdrawal.status !== 'pending' && withdrawal.status !== 'approved') {
+    return res.json({ success: false, message: `لا يمكن صرف طلب بحالة (${withdrawal.status})` });
+  }
+
+  const user = db.getUser(withdrawal.telegram_id);
+  const recipientWallet = withdrawal.wallet_address || user?.wallet_address;
+  if (!recipientWallet) {
+    return res.json({ success: false, message: 'المستخدم ليس لديه عنوان محفظة TON مسجل' });
+  }
+
+  try {
+    const txResult = await payout.sendOnChainRexPayout({
+      recipientAddress: recipientWallet,
+      amountRex: withdrawal.amount,
+      memo: `REX Withdrawal #${id} Payout 👑`
+    });
+
+    const txHash = `seqno-${txResult.seqno}`;
+    const explorerUrl = txResult.explorerUrl;
+
+    db.atomicUpdateWithdrawalStatus(id, 'confirmed', {
+      tx_hash: txHash,
+      explorer_url: explorerUrl,
+      audit_note: `تم الصرف الآلي على البلوكتشين من محفظة البوت (${txResult.sender})`
+    });
+
+    // Anti-Dump Monitoring for 24h
+    const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
+    let onChainBal = 0;
+    try { onChainBal = await getOnChainRexBalance(recipientWallet); } catch(e) {}
+    const baselineRex = Math.max(onChainBal, minHoldRex + withdrawal.amount);
+    db.setPostWithdrawalMonitoring(withdrawal.telegram_id, id, baselineRex, 24);
+
+    bot.telegram.sendMessage(withdrawal.telegram_id,
+      `✅ *تمت الموافقة وصرف سحبك تلقائياً على البلوكتشين!* 👑\n\n` +
+      `💰 *المبلغ المستلم:* *+${withdrawal.amount.toLocaleString()} REX*\n` +
+      `📥 *المحفظة المستلمة:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
+      `🌐 *رابط التحقق:* [عرض المعاملة في Tonviewer](${explorerUrl})\n\n` +
+      `🛡️ *قانون الأمان الملكي (Anti-Dump Protection - 24h):*\n` +
+      `يُحظر بيع أو تصريف أي جزء من عملاتك (المثبتة بـ *${baselineRex.toLocaleString()} REX*) خلال الـ *24 ساعة القادمة (يوم كامل)* لحماية استقرار السعر والتوكنوميكس.\n\n` +
+      `⚠️ *تنبيه حازم:* بيع أي عملة خلال الـ 24 ساعة سيتسبب في **حظر حسابك تلقائياً ونهائياً** من المنصة!`,
+      { parse_mode: 'Markdown' }
+    ).catch(() => {});
+
+    db.logAdminAction('AUTO_PAYOUT_SUCCESS', `تم صرف سحب #${id} بقيمة ${withdrawal.amount} REX إلى ${recipientWallet}`, ADMIN_TG_ID);
+
+    return res.json({
+      success: true,
+      message: `تم صرف ${withdrawal.amount.toLocaleString()} REX بنجاح على البلوكتشين وإرسالها للمستخدم!`,
+      txResult
+    });
+  } catch (err) {
+    console.error('Auto payout error:', err);
+    return res.json({
+      success: false,
+      message: `فشل التحويل التلقائي: ${err.message}`
+    });
+  }
+});
+
+// Admin Bot Payout Wallet Status
+app.get('/api/admin/bot-wallet', adminAuth, async (req, res) => {
+  try {
+    const info = await payout.getBotWalletInfo();
+    res.json(info);
+  } catch (err) {
+    res.json({ configured: false, error: err.message });
   }
 });
 
