@@ -1004,8 +1004,8 @@
 
       <!-- Action Claim Button -->
       <div id="checkinBtnContainer">
-        <button id="btnDailyCheckin" class="action-btn btn-gold" style="width:100%; padding:14px; font-size:14px; font-weight:900;" onclick="claimDailyCheckin()">
-          🎁 <span id="btnDailyText">Claim Today's Reward</span>
+        <button id="btnDailyCheckin" class="action-btn" style="width:100%; padding:14px; font-size:13px; font-weight:800; background:rgba(255,255,255,0.06); color:var(--muted); border:1px solid rgba(255,255,255,0.1);" disabled>
+          ⏳ <span id="btnDailyText">جاري التحقق من حالة الحضور...</span>
         </button>
       </div>
     </div>
@@ -2239,18 +2239,34 @@
     }
   }
 
+  let isClaimingCheckin = false;
   async function claimDailyCheckin() {
+    if (isClaimingCheckin) return;
+    isClaimingCheckin = true;
+    const btn = document.getElementById('btnDailyCheckin');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = currentLang === 'ar' ? '⏳ جاري الاستلام...' : '⏳ Claiming...';
+    }
     haptic('success');
-    const r = await api('/api/daily-checkin/claim', { telegram_id: user.id });
-    if (r.success) {
-      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
-      playWin();
-      const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
-      toast(msg);
-      fetchUserData();
-    } else {
-      const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
-      toast('⚠️ ' + msg);
+    try {
+      const r = await api('/api/daily-checkin/claim', { telegram_id: user.id });
+      if (r && r.success) {
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        playWin();
+        const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
+        toast(msg);
+        localStorage.setItem('rex_checkin_' + user.id, Date.now());
+      } else {
+        const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
+        toast('⚠️ ' + msg);
+      }
+      await fetchUserData();
+    } catch (e) {
+      console.error(e);
+      await fetchUserData();
+    } finally {
+      isClaimingCheckin = false;
     }
   }
 

@@ -1422,11 +1422,22 @@ module.exports = {
     let canClaim = false;
     let cooldownRemaining = 0;
 
-    if (lastCheckin === 0) {
+    // Double safeguard: check transaction ledger for any check-in within last 24h or today
+    const todayStr = new Date(now).toISOString().slice(0, 10);
+    const todayRefId = `checkin_${telegram_id}_${todayStr}`;
+    const recentTx = db.prepare(`
+      SELECT created_at FROM transactions 
+      WHERE telegram_id = ? AND (reference_id = ? OR (type = 'DAILY_CHECKIN' AND created_at > ?))
+      ORDER BY created_at DESC LIMIT 1
+    `).get(telegram_id, todayRefId, now - COOLDOWN_MS);
+
+    const effectiveLastCheckin = Math.max(lastCheckin, recentTx?.created_at || 0);
+
+    if (effectiveLastCheckin === 0) {
       canClaim = true;
       currentStreak = 0;
     } else {
-      const elapsed = now - lastCheckin;
+      const elapsed = now - effectiveLastCheckin;
       if (elapsed < COOLDOWN_MS) {
         canClaim = false;
         cooldownRemaining = COOLDOWN_MS - elapsed;
@@ -1617,8 +1628,18 @@ module.exports = {
       const COOLDOWN_MS = 24 * 3600 * 1000;
       const EXPIRE_MS = 48 * 3600 * 1000;
 
-      if (lastCheckin > 0) {
-        const elapsed = now - lastCheckin;
+      const todayStr = new Date(now).toISOString().slice(0, 10);
+      const todayRefId = `checkin_${telegram_id}_${todayStr}`;
+      const recentTx = db.prepare(`
+        SELECT created_at FROM transactions 
+        WHERE telegram_id = ? AND (reference_id = ? OR (type = 'DAILY_CHECKIN' AND created_at > ?))
+        ORDER BY created_at DESC LIMIT 1
+      `).get(telegram_id, todayRefId, now - COOLDOWN_MS);
+
+      const effectiveLastCheckin = Math.max(lastCheckin, recentTx?.created_at || 0);
+
+      if (effectiveLastCheckin > 0) {
+        const elapsed = now - effectiveLastCheckin;
         if (elapsed < COOLDOWN_MS) {
           throw new Error('COOLDOWN_ACTIVE');
         } else if (elapsed > EXPIRE_MS) {
@@ -1648,7 +1669,7 @@ module.exports = {
         type: 'DAILY_CHECKIN',
         amount: reward,
         balance_after: newBalance,
-        reference_id: `checkin_${telegram_id}_${now}`,
+        reference_id: `checkin_${telegram_id}_${new Date(now).toISOString().slice(0, 10)}`,
         details: `Day ${nextDay} Daily Check-In (+${reward} REX, +${xp} XP)`
       });
 

@@ -38,6 +38,13 @@ const app = express();
 // ── Middleware Pipeline ──
 app.use(cors());
 app.use(express.json());
+// Ironclad Anti-Cache Middleware for real-time mobile WebView sync
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
 app.use(security.createRateLimiter(60000, 180)); // 180 req/min limit per IP
 app.use(express.static(path.join(__dirname, 'public')));
 
