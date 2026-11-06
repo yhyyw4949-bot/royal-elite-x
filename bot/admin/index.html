@@ -966,7 +966,16 @@
   let curInspectTid = null;
   let curInspectUser = null;
 
-  async function api(path, method = 'GET', body = null) {
+  async function api(path, methodOrBody = 'GET', body = null) {
+    let method = 'GET';
+    let data = body;
+    if (typeof methodOrBody === 'object' && methodOrBody !== null) {
+      method = 'POST';
+      data = methodOrBody;
+    } else if (typeof methodOrBody === 'string') {
+      method = methodOrBody.toUpperCase();
+    }
+
     const opts = {
       method,
       headers: {
@@ -974,7 +983,7 @@
         'x-admin-secret': adminSecret
       }
     };
-    if (body) opts.body = JSON.stringify(body);
+    if (data) opts.body = JSON.stringify(data);
     try {
       const res = await fetch(path, opts);
       if (res.status === 403 || res.status === 401) {
@@ -1735,7 +1744,7 @@
     if (btn) btn.disabled = true;
 
     try {
-      const res = await api('/api/admin/referral-offer/update', {
+      const res = await api('/api/admin/referral-offer/update', 'POST', {
         enabled,
         referrer_rex,
         referee_rex,
@@ -1743,11 +1752,11 @@
         title
       });
 
-      if (res.success) {
+      if (res && res.success) {
         alert('✅ ' + (res.message_ar || res.message));
         loadReferralOfferSettings();
       } else {
-        alert('❌ ' + (res.message_ar || res.message));
+        alert('❌ ' + (res?.message_ar || res?.message || 'فشل الحفظ'));
       }
     } catch (err) {
       alert('❌ فشل الحفظ: ' + err.message);
@@ -1849,7 +1858,7 @@
     if (btn) btn.disabled = true;
 
     try {
-      const res = await api('/api/admin/promo-codes/create', {
+      const res = await api('/api/admin/promo-codes/create', 'POST', {
         code,
         reward_rex,
         reward_xp,
@@ -1857,13 +1866,13 @@
         duration_hours
       });
 
-      if (res.success) {
+      if (res && res.success) {
         alert('✅ ' + (res.message_ar || res.message));
         document.getElementById('createPromoForm')?.reset();
         generateRandomPromoCode();
         loadAdminPromoCodes();
       } else {
-        alert('❌ ' + (res.message_ar || res.message));
+        alert('❌ ' + (res?.message_ar || res?.message || 'فشل إنشاء الكود'));
       }
     } catch (err) {
       alert('❌ فشل إنشاء الكود: ' + err.message);
@@ -1875,11 +1884,11 @@
   async function deletePromoCode(id) {
     if (!confirm('هل أنت متأكد من حذف هذا الكود نهائياً؟')) return;
     try {
-      const res = await api('/api/admin/promo-codes/delete', { id });
-      if (res.success) {
+      const res = await api('/api/admin/promo-codes/delete', 'POST', { id });
+      if (res && res.success) {
         loadAdminPromoCodes();
       } else {
-        alert('❌ ' + res.message);
+        alert('❌ ' + (res?.message || 'فشل الحذف'));
       }
     } catch (err) {
       alert('❌ فشل الحذف: ' + err.message);
@@ -1888,11 +1897,11 @@
 
   async function togglePromoCode(id) {
     try {
-      const res = await api('/api/admin/promo-codes/toggle', { id });
-      if (res.success) {
+      const res = await api('/api/admin/promo-codes/toggle', 'POST', { id });
+      if (res && res.success) {
         loadAdminPromoCodes();
       } else {
-        alert('❌ ' + res.message);
+        alert('❌ ' + (res?.message || 'فشل التحديث'));
       }
     } catch (err) {
       alert('❌ ' + err.message);
