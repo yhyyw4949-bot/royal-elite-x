@@ -1007,6 +1007,7 @@
         </div>
       </div>
 
+      <div id="refOfferBanner"></div>
       <div class="metric-grid-dual">
         <div class="metric-box">
           <div class="metric-box-label" id="lblBotBal">Platform Balance</div>
@@ -2500,12 +2501,20 @@
     toast(currentLang === 'ar' ? '✅ تم نسخ رابط الدعوة الملكي!' : '✅ Referral link copied!');
   }
 
-  function shareRef() {
+    function shareRef() {
     haptic('medium');
     const link = `https://t.me/Royalelitexbot?start=ref_${user.id}`;
-    const shareMsg = currentLang === 'ar'
-      ? `انضم إلى إمبراطورية التعدين الملكية ROYAL ELITE X على شبكة TON واحصل على هدايا ومكافآت يومية! 👑\n${link}`
-      : `Join ROYAL ELITE X Web3 Cloud Mining on TON Blockchain and claim daily sovereign rewards! 👑\n${link}`;
+    const offer = userData?.referral_offer;
+    let shareMsg;
+    if (offer && offer.enabled) {
+      shareMsg = currentLang === 'ar'
+        ? `🎁 انضم عبر رابط دعوتي في ROYAL ELITE X واحصل أنت وأنا على +${Number(offer.referee_rex).toLocaleString()} عملة REX فوراً! 👑🔥\n${link}`
+        : `🎁 Join via my royal invite link on ROYAL ELITE X and both you & I get +${Number(offer.referee_rex).toLocaleString()} REX instantly! 👑🔥\n${link}`;
+    } else {
+      shareMsg = currentLang === 'ar'
+        ? `انضم إلى إمبراطورية التعدين الملكية ROYAL ELITE X على شبكة TON واحصل على هدايا ومكافآت يومية! 👑\n${link}`
+        : `Join ROYAL ELITE X Web3 Cloud Mining on TON Blockchain and claim daily sovereign rewards! 👑\n${link}`;
+    }
     const text = encodeURIComponent(shareMsg);
     if (tg?.openTelegramLink) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${text}`);
     else copyRef();

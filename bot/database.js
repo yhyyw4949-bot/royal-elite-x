@@ -246,7 +246,8 @@ const safeAlterCols = [
   { table: 'admin_audit_logs', col: 'admin_id', def: 'INTEGER DEFAULT 0' },
   { table: 'admin_audit_logs', col: 'ip', def: 'TEXT' },
   { table: 'users', col: 'daily_streak', def: 'INTEGER DEFAULT 0' },
-  { table: 'users', col: 'last_checkin_at', def: 'INTEGER DEFAULT 0' }
+  { table: 'users', col: 'last_checkin_at', def: 'INTEGER DEFAULT 0' },
+  { table: 'users', col: 'ref_bonus_awarded', def: 'INTEGER DEFAULT 0' }
 ];
 
 for (const m of safeAlterCols) {
@@ -270,6 +271,11 @@ const defaultSettings = [
   { key: 'min_hold_rex', val: '5000', description: 'الحد الأدنى لحيازة المحفظة On-Chain لشرط المدة (REX)' },
   { key: 'min_hold_days', val: '3', description: 'المدة الإلزامية لحيازة العملة في المحفظة قبل السحب (أيام)' },
   { key: 'required_channel', val: '@REXCEO1A', description: 'قناة التيليجرام الإلزامية للاشتراك قبل الدخول' },
+  { key: 'ref_offer_enabled', val: '1', description: 'تفعيل عرض مكافأة الإحالة المزدوجة (1: مفعل, 0: معطل)' },
+  { key: 'ref_offer_referrer_rex', val: '1000', description: 'مكافأة المحيل عند انضمام صديق (REX)' },
+  { key: 'ref_offer_referee_rex', val: '1000', description: 'مكافأة الصديق الجديد الترحيبية عند الانضمام عبر إحالة (REX)' },
+  { key: 'ref_offer_title', val: 'عرض الإحالة الملكي: 1000 REX لك ولصديقك!', description: 'عنوان الحملة الترويجية للإحالة' },
+  { key: 'ref_offer_expires_at', val: '0', description: 'تاريخ انتهاء عرض الإحالة (0: دائم بدون انتهاء)' },
   { key: 'force_sub_enabled', val: '1', description: 'تفعيل شرط الاشتراك الإجباري في القناة (1: مفعل, 0: معطل)' }
 ];
 
@@ -1332,6 +1338,98 @@ module.exports = {
       tier_title: u.tier_title,
       tier_color: u.tier_color
     }));
+  },
+
+
+  // ── Dual Referral Bonus Promotion Engine ──
+  atomicAwardReferralOffer: (newUserId, referrerId, newBonus, refBonus) => {
+    const tx = db.transaction(() => {
+      const newUser = db.prepare('SELECT telegram_id, first_name, username, balance, ref_bonus_awarded FROM users WHERE telegram_id = ?').get(newUserId);
+      if (!newUser || newUser.ref_bonus_awarded === 1) return null;
+
+      const referrer = db.prepare('SELECT telegram_id, first_name, username, balance FROM users WHERE telegram_id = ?').get(referrerId);
+      if (!referrer) return null;
+
+      const nBonus = parseFloat(newBonus) || 0;
+      const rBonus = parseFloat(refBonus) || 0;
+      const now = Date.now();
+
+      const newBalUser = (newUser.balance || 0) + nBonus;
+      const newBalRef = (referrer.balance || 0) + rBonus;
+
+      db.prepare('UPDATE users SET balance = balance + ?, ref_bonus_awarded = 1 WHERE telegram_id = ?').run(nBonus, newUserId);
+      db.prepare('UPDATE users SET balance = balance + ? WHERE telegram_id = ?').run(rBonus, referrerId);
+
+      recordLedgerEntry({
+        telegram_id: newUserId,
+        type: 'REFERRAL_WELCOME_BONUS',
+        amount: nBonus,
+        balance_after: newBalUser,
+        reference_id: `ref_welcome_${newUserId}_${referrerId}_${now}`,
+        details: `Referral Welcome Bonus via Knight ${referrer.first_name || referrerId} (+${nBonus} REX)`
+      });
+
+      recordLedgerEntry({
+        telegram_id: referrerId,
+        type: 'REFERRAL_INVITE_BONUS',
+        amount: rBonus,
+        balance_after: newBalRef,
+        reference_id: `ref_invite_${referrerId}_${newUserId}_${now}`,
+        details: `Referral Bonus for inviting Knight ${newUser.first_name || newUserId} (+${rBonus} REX)`
+      });
+
+      return {
+        success: true,
+        new_user: { id: newUserId, name: newUser.first_name, bonus: nBonus, balance: newBalUser },
+        referrer: { id: referrerId, name: referrer.first_name, bonus: rBonus, balance: newBalRef }
+      };
+    });
+
+    return tx();
+  },
+
+  getReferralOfferDetails: () => {
+    const enabled = module.exports.getSetting('ref_offer_enabled', '1') === '1';
+    const referrerRex = parseFloat(module.exports.getSetting('ref_offer_referrer_rex', '1000'));
+    const refereeRex = parseFloat(module.exports.getSetting('ref_offer_referee_rex', '1000'));
+    const title = module.exports.getSetting('ref_offer_title', 'عرض الإحالة الملكي: 1000 REX لك ولصديقك!');
+    const expiresAt = parseInt(module.exports.getSetting('ref_offer_expires_at', '0'), 10);
+    const now = Date.now();
+    const isExpired = expiresAt > 0 && now > expiresAt;
+
+    // Stats
+    const totalRewarded = db.prepare("SELECT COUNT(*) as c FROM users WHERE ref_bonus_awarded = 1").get().c;
+    const totalRexGiven = totalRewarded * (referrerRex + refereeRex);
+
+    return {
+      enabled: enabled && !isExpired,
+      is_raw_enabled: enabled,
+      is_expired: isExpired,
+      referrer_rex: referrerRex,
+      referee_rex: refereeRex,
+      title,
+      expires_at: expiresAt,
+      remaining_time_ms: expiresAt > 0 ? Math.max(0, expiresAt - now) : 0,
+      total_rewarded_referrals: totalRewarded,
+      total_distributed_rex: totalRexGiven
+    };
+  },
+
+  updateReferralOffer: ({ enabled, referrer_rex, referee_rex, title, duration_hours }) => {
+    const isEnabled = enabled ? '1' : '0';
+    const refAmt = String(Math.max(0, parseFloat(referrer_rex) || 0));
+    const newAmt = String(Math.max(0, parseFloat(referee_rex) || 0));
+    const offerTitle = String(title || 'عرض الإحالة الملكي').trim();
+    const hours = parseFloat(duration_hours) || 0;
+    const expiresAt = hours > 0 ? String(Date.now() + Math.round(hours * 3600 * 1000)) : '0';
+
+    module.exports.updateSetting('ref_offer_enabled', isEnabled);
+    module.exports.updateSetting('ref_offer_referrer_rex', refAmt);
+    module.exports.updateSetting('ref_offer_referee_rex', newAmt);
+    module.exports.updateSetting('ref_offer_title', offerTitle);
+    module.exports.updateSetting('ref_offer_expires_at', expiresAt);
+
+    return module.exports.getReferralOfferDetails();
   },
 
   getLeaderboard: () => {

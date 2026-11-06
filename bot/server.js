@@ -539,6 +539,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     contract_address: REX_MASTER_CONTRACT,
     tasks: tasksList,
     daily_checkin: db.getDailyCheckinStatus(telegram_id),
+    referral_offer: db.getReferralOfferDetails(),
     vaults: userVaults,
     guild: userGuild,
     referrals_count: db.getReferralsCount(telegram_id),
@@ -1219,6 +1220,29 @@ app.post('/api/user/redeem-code', telegramAuth, checkMaintenance, (req, res) => 
   }
 });
 
+
+// ================================================================
+// ADMIN DUAL REFERRAL BONUS OFFER ENGINE
+// ================================================================
+app.get('/api/admin/referral-offer', adminAuth, (req, res) => {
+  try {
+    const details = db.getReferralOfferDetails();
+    res.json({ success: true, offer: details });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/referral-offer/update', adminAuth, (req, res) => {
+  try {
+    const updated = db.updateReferralOffer(req.body);
+    db.logAdminAction('UPDATE_REFERRAL_OFFER', `Updated referral offer: enabled=${updated.enabled}, referrer=${updated.referrer_rex}, referee=${updated.referee_rex}`, ADMIN_TG_ID);
+    sendMsg(req, res, true, 'تم تحديث وحفظ إعدادات عرض الإحالة الملكي بنجاح!', 'Successfully updated and saved referral promotion settings!', { offer: updated });
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+});
+
 // 12. ADMIN COMMAND CENTER 2.0 (WITH 2FA OTP & AUDIT)
 // ================================================================
 
@@ -1674,7 +1698,48 @@ app.get('/api/admin/check-channel-status', adminAuth, async (req, res) => {
 // 13. TELEGRAM BOT COMMANDS & INTERACTIVE FLOWS (ENGLISH)
 // ================================================================
 
+
+async function checkAndAwardReferralOffer(newUserId, firstName) {
+  try {
+    const offer = db.getReferralOfferDetails();
+    if (!offer || !offer.enabled) return;
+
+    const user = db.getUser(newUserId);
+    if (!user || !user.referrer_id || user.ref_bonus_awarded === 1) return;
+
+    const refBonus = offer.referrer_rex;
+    const newBonus = offer.referee_rex;
+    if (refBonus <= 0 && newBonus <= 0) return;
+
+    const awardRes = db.atomicAwardReferralOffer(newUserId, user.referrer_id, newBonus, refBonus);
+    if (!awardRes || !awardRes.success) return;
+
+    // Send notification to Referrer in Telegram
+    bot.telegram.sendMessage(
+      user.referrer_id,
+      `🎉 *مكافأة ${offer.title}!* 👑\n\n` +
+      `انضم الفارس الجديد (*${firstName || 'Knight'}*) عبر رابط دعوتك!\n` +
+      `💰 تم إضافة مكافأتك الملكية: *+${refBonus.toLocaleString()} REX* إلى رصيدك فوراً!\n\n` +
+      `💳 رصيدك الإجمالي الآن: *+${Number(awardRes.referrer.balance).toLocaleString()} REX* 🚀`,
+      { parse_mode: 'Markdown' }
+    ).catch(() => {});
+
+    // Send notification to New User in Telegram
+    bot.telegram.sendMessage(
+      newUserId,
+      `🎁 *هدية ترحيبية ملكية من ${offer.title}!* 🎉\n\n` +
+      `لأنك انضممت عبر دعوة صديقك (*${awardRes.referrer.name || 'Royal Knight'}*)، حصلت على مكافأة ترحيبية خاصة:\n` +
+      `💰 *+${newBonus.toLocaleString()} REX* أضيفت إلى محفظتك في المنصة فوراً!\n\n` +
+      `💳 رصيدك الحالي: *+${Number(awardRes.new_user.balance).toLocaleString()} REX* 👑`,
+      { parse_mode: 'Markdown' }
+    ).catch(() => {});
+  } catch (err) {
+    console.error('[REFERRAL OFFER AWARD ERROR]:', err.message);
+  }
+}
+
 async function sendWelcomeMessage(ctx, firstName, payload) {
+  await checkAndAwardReferralOffer(ctx.from?.id, firstName);
   await ctx.reply(
     `👑 *Welcome to ROYAL ELITE X (REX) — Sovereign Platform*\n\n` +
     `🏰 Welcome, ${firstName}! The official Web3 Cloud Mining and Telegram Mini App for *REX* on *TON Blockchain* is now LIVE.\n\n` +

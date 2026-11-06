@@ -726,6 +726,81 @@
         </div>
       </div>
 
+            <!-- DUAL REFERRAL BONUS PROMOTION CARD -->
+      <div class="card" style="margin-bottom:20px; background:linear-gradient(135deg, rgba(245,158,11,0.08), rgba(168,85,247,0.08)); border:1px solid rgba(245,158,11,0.3); border-radius:16px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h4 style="margin:0; font-size:15px; color:#fff; display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">🔥</span> عرض مكافأة الإحالة المزدوجة (Dual Referral Bonus Offer)
+            </h4>
+            <div style="font-size:12px; color:var(--muted-lt); margin-top:3px;">
+              مكافأة فورية تضاف للمحيل وللصديق الجديد عند انضمامه عبر رابط الإحالة
+            </div>
+          </div>
+          <div id="refOfferStatusBadge">
+            <span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green);">🟢 مفعّل</span>
+          </div>
+        </div>
+
+        <form id="referralOfferForm" onsubmit="handleSaveReferralOffer(event)">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">حالة العرض (Offer Status)*</label>
+              <select id="refOfferEnabledSelect" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-weight:700;">
+                <option value="1">🟢 مفعّل وشغال (Enabled)</option>
+                <option value="0">⚪ معطّل حالياً (Disabled)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">مكافأة المحيل (Referrer Bonus REX)*</label>
+              <input type="number" id="refOfferReferrerRex" placeholder="1000" min="0" step="any" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--gold-lt); font-weight:800;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">مكافأة الإحالة/الصديق الجديد (Referee Bonus REX)*</label>
+              <input type="number" id="refOfferRefereeRex" placeholder="1000" min="0" step="any" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--cyan); font-weight:800;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">مدة العرض (Duration)*</label>
+              <select id="refOfferDurationSelect" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-weight:700;">
+                <option value="0" selected>♾️ دائم (مستمر بدون تاريخ انتهاء)</option>
+                <option value="24">24 ساعة (يوم كامل)</option>
+                <option value="48">48 ساعة (يومان)</option>
+                <option value="72">72 ساعة (3 أيام)</option>
+                <option value="168">7 أيام (أسبوع)</option>
+                <option value="720">30 يوماً (شهر)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:12px; color:var(--muted-lt); margin-bottom:6px; font-weight:700;">عنوان الحملة الترويجية (Campaign Banner Title)</label>
+            <input type="text" id="refOfferTitleInput" placeholder="عرض الإحالة الملكي: 1000 REX لك ولصديقك!" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-weight:700;">
+          </div>
+
+          <!-- Stats Ribbon -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:16px;">
+            <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:11px; color:var(--muted-lt);">إجمالي الإحالات المستفيدة:</div>
+              <div id="statRefRewardedCount" style="font-family:'Orbitron', monospace; font-size:16px; font-weight:900; color:#fff;">0</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:11px; color:var(--muted-lt);">إجمالي مكافآت REX الموزعة:</div>
+              <div id="statRefDistributedRex" style="font-family:'Orbitron', monospace; font-size:16px; font-weight:900; color:var(--gold-lt);">0 REX</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:11px; color:var(--muted-lt);">الوقت المتبقي للعرض:</div>
+              <div id="statRefTimeLeft" style="font-size:12px; font-weight:800; color:var(--cyan);">دائم بدون انتهاء</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end;">
+            <button type="submit" id="btnSaveRefOffer" class="btn btn-approve" style="padding:10px 24px; font-size:13px; font-weight:800;">
+              💾 حفظ وتطبيق عرض الإحالة فوراً
+            </button>
+          </div>
+        </form>
+      </div>
+
       <!-- Generator Card -->
       <div class="card" style="margin-bottom:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
@@ -984,7 +1059,7 @@
     else if (id === 'sybil') loadSybilRadar();
     else if (id === 'settings') loadSettings();
     else if (id === 'audit') loadAuditLogs();
-    else if (id === 'promo') loadAdminPromoCodes();
+    else if (id === 'promo') { loadAdminPromoCodes(); loadReferralOfferSettings(); }
   }
 
   // ── Overview & Tokenomics ──
@@ -1555,6 +1630,91 @@
     if (navigator.clipboard) {
       navigator.clipboard.writeText(code);
       alert('📋 تم نسخ الكود: ' + code);
+    }
+  }
+
+  
+  // ── Referral Offer Management ──
+  async function loadReferralOfferSettings() {
+    try {
+      const res = await api('/api/admin/referral-offer');
+      const offer = res?.offer;
+      if (!offer) return;
+
+      const enabledSel = document.getElementById('refOfferEnabledSelect');
+      const refRex = document.getElementById('refOfferReferrerRex');
+      const userRex = document.getElementById('refOfferRefereeRex');
+      const titleInput = document.getElementById('refOfferTitleInput');
+      const badge = document.getElementById('refOfferStatusBadge');
+      const statCount = document.getElementById('statRefRewardedCount');
+      const statDist = document.getElementById('statRefDistributedRex');
+      const statTime = document.getElementById('statRefTimeLeft');
+
+      if (enabledSel) enabledSel.value = offer.is_raw_enabled ? '1' : '0';
+      if (refRex) refRex.value = offer.referrer_rex;
+      if (userRex) userRex.value = offer.referee_rex;
+      if (titleInput) titleInput.value = offer.title;
+
+      if (badge) {
+        if (!offer.is_raw_enabled) {
+          badge.innerHTML = '<span class="badge" style="background:rgba(255,255,255,0.08); color:var(--muted);">⚪ معطّل حالياً</span>';
+        } else if (offer.is_expired) {
+          badge.innerHTML = '<span class="badge" style="background:rgba(239,68,68,0.15); color:var(--red);">⏳ منتهي الصلاحية</span>';
+        } else {
+          badge.innerHTML = '<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green);">🟢 مفعّل ونشط</span>';
+        }
+      }
+
+      if (statCount) statCount.textContent = offer.total_rewarded_referrals;
+      if (statDist) statDist.textContent = Number(offer.total_distributed_rex).toLocaleString() + ' REX';
+      if (statTime) {
+        if (offer.expires_at === 0) {
+          statTime.textContent = 'دائم بدون انتهاء';
+          statTime.style.color = 'var(--cyan)';
+        } else if (offer.is_expired) {
+          statTime.textContent = 'انتهى العرض';
+          statTime.style.color = 'var(--red)';
+        } else {
+          const h = Math.floor(offer.remaining_time_ms / 3600000);
+          statTime.textContent = `متبقي ${h} ساعة`;
+          statTime.style.color = 'var(--gold-lt)';
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load referral offer:', err);
+    }
+  }
+
+  async function handleSaveReferralOffer(e) {
+    e.preventDefault();
+    const enabled = document.getElementById('refOfferEnabledSelect')?.value === '1';
+    const referrer_rex = document.getElementById('refOfferReferrerRex')?.value;
+    const referee_rex = document.getElementById('refOfferRefereeRex')?.value;
+    const duration_hours = document.getElementById('refOfferDurationSelect')?.value;
+    const title = document.getElementById('refOfferTitleInput')?.value;
+
+    const btn = document.getElementById('btnSaveRefOffer');
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await api('/api/admin/referral-offer/update', {
+        enabled,
+        referrer_rex,
+        referee_rex,
+        duration_hours,
+        title
+      });
+
+      if (res.success) {
+        alert('✅ ' + (res.message_ar || res.message));
+        loadReferralOfferSettings();
+      } else {
+        alert('❌ ' + (res.message_ar || res.message));
+      }
+    } catch (err) {
+      alert('❌ فشل الحفظ: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
