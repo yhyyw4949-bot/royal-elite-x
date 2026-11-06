@@ -1540,6 +1540,15 @@ async function startBotWithRetry(retries = 15) {
     try {
       await bot.launch();
       console.log('🤖 Telegram Bot @Royalelitexbot is LIVE with Enterprise Security v4.0!');
+      try {
+        await bot.telegram.setChatMenuButton({
+          menu_button: {
+            type: 'web_app',
+            text: '👑 Royal App',
+            web_app: { url: WEBAPP_URL }
+          }
+        });
+      } catch (e) {}
       return;
     } catch (err) {
       console.error(`Bot launch attempt ${i + 1}/${retries} failed (${err.message}). Retrying in 4s...`);
