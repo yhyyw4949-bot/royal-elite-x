@@ -319,8 +319,10 @@ const todayStr = new Date().toISOString().slice(0, 10);
 db.prepare(`
   INSERT OR IGNORE INTO tokenomics_reserves 
   (id, total_supply, mining_reserve, mining_distributed, daily_emission_limit, today_distributed, last_reset_day) 
-  VALUES (1, 50000000.0, 20000000.0, 0.0, 50000.0, 0.0, ?)
+  VALUES (1, 1000000.0, 400000.0, 0.0, 10000.0, 0.0, ?)
 `).run(todayStr);
+try { db.prepare("UPDATE tokenomics_reserves SET total_supply = 1000000.0, mining_reserve = 400000.0, daily_emission_limit = 10000.0 WHERE id = 1 AND total_supply > 1000000.0").run(); } catch (err) {}
+
 
 // ── 5. Seed Official Achievements ──
 const defaultAchievements = [

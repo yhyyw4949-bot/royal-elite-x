@@ -26,7 +26,10 @@ const BOT_TOKEN = process.env.BOT_TOKEN || '9206918976:AAEiNUzrcB_RwhyYuMzCLZsym
 const ADMIN_WALLET = process.env.ADMIN_WALLET || 'UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz';
 const ADMIN_TG_ID = parseInt(process.env.ADMIN_TG_ID || '7082457308', 10);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'REX_ADMIN_2026';
-const REX_MASTER_CONTRACT = process.env.REX_MASTER_CONTRACT || 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
+let REX_MASTER_CONTRACT = process.env.REX_MASTER_CONTRACT;
+if (!REX_MASTER_CONTRACT || REX_MASTER_CONTRACT.includes('EQCSsfG6xm') || REX_MASTER_CONTRACT.length < 20) {
+  REX_MASTER_CONTRACT = 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
+}
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://royal-elite-x.onrender.com';
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const TONCENTER_ENDPOINT = process.env.TONCENTER_ENDPOINT || 'https://toncenter.com/api/v2/jsonRPC';

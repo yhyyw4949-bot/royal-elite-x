@@ -152,15 +152,48 @@ async function getBotWalletInfo() {
 
     let rexBalance = 0;
     let senderJwStr = null;
+    let masterStr = process.env.REX_MASTER_CONTRACT;
+    if (!masterStr || masterStr.includes('EQCSsfG6xm') || masterStr.length < 20) {
+      masterStr = 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
+    }
+
     try {
-      const masterStr = process.env.REX_MASTER_CONTRACT || 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
       const jw = await getSenderJettonWallet(client, masterStr, wallet.address.toString());
       senderJwStr = jw.toString({ bounceable: true });
       const res = await callWithRetry(() => client.runMethod(jw, 'get_wallet_data'));
       const rawBalance = res.stack.readBigNumber();
       rexBalance = Number(rawBalance / 1000000000n);
     } catch (e) {
-      console.error('Error fetching REX balance:', e.message);
+      console.error('Error fetching REX balance via Toncenter:', e.message);
+      // Fallback via TonAPI
+      try {
+        const https = require('https');
+        const apiRes = await new Promise((resolve) => {
+          https.get(`https://tonapi.io/v2/accounts/${wallet.address.toString()}/jettons`, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+              try { resolve(JSON.parse(data)); } catch (_) { resolve(null); }
+            });
+          }).on('error', () => resolve(null));
+        });
+        if (apiRes && apiRes.balances) {
+          const target = Address.parse(masterStr).toRawString();
+          const found = apiRes.balances.find(b => {
+            try {
+              return Address.parse(b.jetton.address).toRawString() === target;
+            } catch (_) { return false; }
+          });
+          if (found) {
+            rexBalance = Number(BigInt(found.balance) / 1000000000n);
+            if (found.wallet_address) {
+              senderJwStr = found.wallet_address.address;
+            }
+          }
+        }
+      } catch (err2) {
+        console.error('Error in TonAPI fallback:', err2.message);
+      }
     }
 
     return {
@@ -205,7 +238,10 @@ async function sendOnChainRexPayout({ recipientAddress, amountRex, memo = 'REX W
   }
 
   // 2. Resolve Master Contract & Sender Jetton Wallet
-  const masterContractStr = process.env.REX_MASTER_CONTRACT || 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
+  let masterContractStr = process.env.REX_MASTER_CONTRACT;
+  if (!masterContractStr || masterContractStr.includes('EQCSsfG6xm') || masterContractStr.length < 20) {
+    masterContractStr = 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
+  }
   const senderJettonWallet = await getSenderJettonWallet(client, masterContractStr, senderWallet.address.toString());
 
   // Check REX balance
