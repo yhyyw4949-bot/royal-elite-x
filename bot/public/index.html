@@ -524,38 +524,44 @@
 
     .hub-sheet {
       position: fixed; bottom: 78px; left: 12px; right: 12px;
-      max-width: 460px; margin: 0 auto;
-      background: linear-gradient(175deg, rgba(20, 30, 54, 0.98), rgba(8, 12, 26, 0.99));
-      border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 28px;
-      padding: 18px 16px 20px; z-index: 1020;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.8), 0 0 45px rgba(245,158,11,0.22);
+      max-width: 430px; margin: 0 auto;
+      max-height: 66vh;
+      display: flex; flex-direction: column;
+      background: linear-gradient(175deg, rgba(18, 26, 48, 0.98), rgba(7, 10, 22, 0.99));
+      border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 26px;
+      padding: 14px 14px 16px; z-index: 1020;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.85), 0 0 35px rgba(245,158,11,0.2);
       transform: translateY(115%); opacity: 0;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
       pointer-events: none;
+      box-sizing: border-box;
     }
     .hub-sheet.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
     .hub-handle-bar {
-      width: 40px; height: 4px; background: rgba(255, 255, 255, 0.18);
-      border-radius: 4px; margin: -4px auto 14px;
+      width: 38px; height: 4px; background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px; margin: -2px auto 10px; flex-shrink: 0;
     }
-    .hub-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .hub-title-box { display: flex; align-items: center; gap: 10px; }
+    .hub-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
+    .hub-title-box { display: flex; align-items: center; gap: 8px; }
     .hub-sparkle-sq {
-      width: 38px; height: 38px; border-radius: 12px;
+      width: 34px; height: 34px; border-radius: 10px;
       background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3);
-      display: flex; align-items: center; justify-content: center; font-size: 19px; color: var(--gold-lt);
+      display: flex; align-items: center; justify-content: center; font-size: 17px; color: var(--gold-lt);
     }
-    .hub-title-main { font-size: 15px; font-weight: 900; color: #fff; }
-    .hub-title-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .hub-title-main { font-size: 14px; font-weight: 900; color: #fff; }
+    .hub-title-sub  { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
     .hub-close-x {
-      width: 32px; height: 32px; border-radius: 50%;
+      width: 30px; height: 30px; border-radius: 50%;
       background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #94a3b8; font-size: 14px; font-weight: 800;
+      color: #94a3b8; font-size: 13px; font-weight: 800;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
 
     .hub-cards-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 9px;
+      overflow-y: auto; overscroll-behavior: contain;
+      padding-right: 2px;
+      max-height: 100%;
     }
     .hub-card-item {
       background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07);
@@ -951,6 +957,15 @@
         ⚡ <span id="mineBtnText">Start Royal Mining Cycle (24h)</span>
       </button>
 
+      <div style="margin-top: 10px; display: flex; gap: 8px;">
+        <button class="action-btn" style="flex:1; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); color:var(--gold-lt); font-size:12px; font-weight:800; padding:11px; border-radius:14px;" onclick="openModal('redeemPromoModal')">
+          🎟️ <span id="btnQuickRedeem">استرداد كود هدية</span>
+        </button>
+        <button class="action-btn" style="flex:1; background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.3); color:var(--cyan); font-size:12px; font-weight:800; padding:11px; border-radius:14px;" onclick="openChartModal()">
+          📊 <span id="btnQuickChart">شارت وسعر السوق</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -994,6 +1009,30 @@
           🎁 <span id="btnDailyText">Claim Today's Reward</span>
         </button>
       </div>
+    </div>
+
+    <!-- ════ REDEEM PROMO CODE CARD ════ -->
+    <div class="card" style="margin-top: 14px; border: 1px solid rgba(245, 158, 11, 0.28); background: linear-gradient(135deg, rgba(20, 28, 48, 0.95), rgba(10, 16, 32, 0.95)); border-radius: 20px;">
+      <div class="card-head">
+        <div class="card-title">
+          <span class="card-title-icon">🎟️</span>
+          <span id="redeemCardTitle">استرداد كود الهدية</span>
+        </div>
+        <span class="badge" style="background:rgba(234,179,8,0.15); color:var(--gold-lt); border:1px solid rgba(234,179,8,0.3); font-size:10px; font-weight:800; padding:3px 8px; border-radius:8px;">PROMO CODE</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;" id="redeemCardDesc">
+        هل لديك كود ترويجي ملكي؟ أدخله هنا للحصول على مكافأة REX فورية في رصيدك!
+      </p>
+
+      <div style="display:flex; gap:8px; margin-bottom:4px;">
+        <input type="text" id="promoCodeInput" placeholder="أدخل الكود (مثال: REX-VIP-1000)" 
+          style="flex:1; background:rgba(7,11,22,0.85); border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:12px 14px; color:#fff; font-family:'Orbitron', monospace; font-size:13px; text-transform:uppercase; outline:none;"
+          onkeyup="if(event.key==='Enter') redeemPromoCodeFromWeb('tab')">
+        <button class="action-btn btn-gold" style="padding:0 18px; font-size:13px; font-weight:900; white-space:nowrap; border-radius:12px;" onclick="redeemPromoCodeFromWeb('tab')" id="btnRedeemCode">
+          استرداد 🎁
+        </button>
+      </div>
+      <div id="promoCodeFeedback" style="display:none; font-size:12px; font-weight:700; padding:10px 12px; border-radius:10px; margin-top:8px;"></div>
     </div>
   </div>
 
@@ -1179,122 +1218,72 @@
     <div class="hub-title-box">
       <div class="hub-sparkle-sq">✨</div>
       <div>
-        <div class="hub-title-main" id="hubTitleMain">Ecosystem Services</div>
-        <div class="hub-title-sub" id="hubTitleSub">Blockchain & Platform Modules</div>
+        <div class="hub-title-main" id="hubTitleMain">الخدمات الملكية</div>
+        <div class="hub-title-sub" id="hubTitleSub">بوابة المنظومة والأدوات</div>
       </div>
     </div>
     <div class="hub-close-x" onclick="togglePlatformHub(false)">✕</div>
   </div>
 
   <div class="hub-cards-grid">
-    <!-- Card 1: REX Intelligence -->
-    <div class="hub-card-item" onclick="openModal('intelligenceModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap cyan"><span>🧠</span></div>
-        <span class="hub-card-badge cyan">AI INTEL</span>
-      </div>
-      <div class="hub-card-name" id="hubIntelName">REX Intelligence</div>
-      <div class="hub-card-desc" id="hubIntelDesc">Performance analytics & ranking</div>
-    </div>
-
-    <!-- Card 2: Proof of Rewards -->
-    <div class="hub-card-item" onclick="openModal('proofModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap gold"><span>⛓️</span></div>
-        <span class="hub-card-badge gold">EXPLORER</span>
-      </div>
-      <div class="hub-card-name" id="hubProofName">Proof of Rewards</div>
-      <div class="hub-card-desc" id="hubProofDesc">TON Blockchain Live Explorer</div>
-    </div>
-
-    <!-- Card 3: Royal Achievements -->
-    <div class="hub-card-item" onclick="openModal('achievementsModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap purple"><span>🎖️</span></div>
-        <span class="hub-card-badge purple">BADGES</span>
-      </div>
-      <div class="hub-card-name" id="hubAchName">Achievements</div>
-      <div class="hub-card-desc" id="hubAchDesc">Badges & Honor XP</div>
-    </div>
-
-    <!-- Card 4: Royal Vault -->
-    <div class="hub-card-item" onclick="openModal('vaultModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap gold"><span>🏛️</span></div>
-        <span class="hub-card-badge gold">VAULT</span>
-      </div>
-      <div class="hub-card-name" id="hubVaultName">Royal Vault</div>
-      <div class="hub-card-desc" id="hubVaultDesc">Self-Locking & boosts</div>
-    </div>
-
-    <!-- Card 5: Royal Guilds -->
-    <div class="hub-card-item" onclick="openModal('guildsModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap cyan"><span>🛡️</span></div>
-        <span class="hub-card-badge cyan">GUILDS</span>
-      </div>
-      <div class="hub-card-name" id="hubGuildName">Royal Guilds</div>
-      <div class="hub-card-desc" id="hubGuildDesc">Alliances & weekly battles</div>
-    </div>
-
-    <!-- Card 6: REX Academy -->
-    <div class="hub-card-item" onclick="openModal('academyModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap green"><span>🎓</span></div>
-        <span class="hub-card-badge green">LEARN</span>
-      </div>
-      <div class="hub-card-name" id="hubAcadName">REX Academy</div>
-      <div class="hub-card-desc" id="hubAcadDesc">Web3 lessons & rewarded quizzes</div>
-    </div>
-
-    <!-- Card 7: REX Portfolio -->
-    <div class="hub-card-item" onclick="openModal('portfolioModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap gold"><span>💼</span></div>
-        <span class="hub-card-badge gold">LEDGER</span>
-      </div>
-      <div class="hub-card-name" id="hubPortName">Portfolio & Ledger</div>
-      <div class="hub-card-desc" id="hubPortDesc">Double-entry audit for balances</div>
-    </div>
-
-    <!-- Card 8: Official Whitepaper 2026 -->
-    <div class="hub-card-item" onclick="openModal('whitepaperModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap gold"><span>📜</span></div>
-        <span class="hub-card-badge gold">WHITEPAPER</span>
-      </div>
-      <div class="hub-card-name" id="hubWpName">Official Whitepaper</div>
-      <div class="hub-card-desc" id="hubWpDesc">Tokenomics, rules & ecosystem</div>
-    </div>
-
-    <!-- Card 9: Sovereign Holding Tiers -->
-    <div class="hub-card-item" onclick="openModal('tiersModal')">
-      <div class="hub-card-head">
-        <div class="hub-card-icon-wrap gold"><span>👑</span></div>
-        <span class="hub-card-badge cyan">UP TO 25X</span>
-      </div>
-      <div class="hub-card-name" id="hubTiersName">HODL Mining Tiers</div>
-      <div class="hub-card-desc" id="hubTiersDesc">Boost mining rate up to 25X</div>
-    </div>
-
-    <!-- Card 10: Live Chart & Market Price -->
-    <div class="hub-card-item" onclick="openChartModal()">
+    <!-- Card 1: Live DEX Chart & Market -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); openChartModal();">
       <div class="hub-card-head">
         <div class="hub-card-icon-wrap cyan"><span>📊</span></div>
         <span class="hub-card-badge green" id="hubChartBadge">LIVE</span>
       </div>
-      <div class="hub-card-name" id="hubChartName">Live Market & Chart</div>
-      <div class="hub-card-desc" id="hubChartDesc">Real-time TradingView DexScreener chart & stats</div>
+      <div class="hub-card-name" id="hubChartName">شارت وسعر السوق</div>
+      <div class="hub-card-desc" id="hubChartDesc">أسعار وشارت لحظي مباشر</div>
     </div>
 
-    <!-- Card 11: Top 10 Currency Holders Leaderboard -->
-    <div class="hub-card-item" onclick="togglePlatformHub(false); switchTab('tab-friends', document.getElementById('btn-tab-friends')); loadLeaderboard();">
+    <!-- Card 2: Redeem Promo Code -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); openModal('redeemPromoModal');">
       <div class="hub-card-head">
-        <div class="hub-card-icon-wrap gold"><span>🏆</span></div>
-        <span class="hub-card-badge gold">TOP 10</span>
+        <div class="hub-card-icon-wrap gold"><span>🎟️</span></div>
+        <span class="hub-card-badge gold">REDEEM</span>
       </div>
-      <div class="hub-card-name" id="hubLbName">Top 10 Holders</div>
-      <div class="hub-card-desc" id="hubLbDesc">Elite REX holders leaderboard</div>
+      <div class="hub-card-name" id="hubRedeemName">استرداد كود هدية</div>
+      <div class="hub-card-desc" id="hubRedeemDesc">استرداد أكواد REX الترويجية</div>
+    </div>
+
+    <!-- Card 3: Royal Vault (Staking) -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); openModal('vaultModal');">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>🏛️</span></div>
+        <span class="hub-card-badge gold">VAULT</span>
+      </div>
+      <div class="hub-card-name" id="hubVaultName">الخزينة الملكية</div>
+      <div class="hub-card-desc" id="hubVaultDesc">قفل الحيازة ومضاعفات القوة</div>
+    </div>
+
+    <!-- Card 4: Royal Badges & Achievements -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); openModal('achievementsModal');">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap purple"><span>🎖️</span></div>
+        <span class="hub-card-badge purple">BADGES</span>
+      </div>
+      <div class="hub-card-name" id="hubAchName">الأوسمة والإنجازات</div>
+      <div class="hub-card-desc" id="hubAchDesc">شارات الشرف ونقاط XP</div>
+    </div>
+
+    <!-- Card 5: Royal Guilds & Clans -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); openModal('guildsModal');">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap cyan"><span>🛡️</span></div>
+        <span class="hub-card-badge cyan">GUILDS</span>
+      </div>
+      <div class="hub-card-name" id="hubGuildName">النقابات الملكية</div>
+      <div class="hub-card-desc" id="hubGuildDesc">التحالفات والتنافس الأسبوعي</div>
+    </div>
+
+    <!-- Card 6: Official Whitepaper -->
+    <div class="hub-card-item" onclick="togglePlatformHub(false); openModal('whitepaperModal');">
+      <div class="hub-card-head">
+        <div class="hub-card-icon-wrap gold"><span>📜</span></div>
+        <span class="hub-card-badge gold">WHITEPAPER</span>
+      </div>
+      <div class="hub-card-name" id="hubWpName">الورقة البيضاء</div>
+      <div class="hub-card-desc" id="hubWpDesc">التوكنوميكس والقواعد</div>
     </div>
   </div>
 </div>
@@ -1501,6 +1490,41 @@
 
     <div id="tiersBody" style="overflow-y:auto; padding-right:2px; flex:1;">
       <div style="text-align:center; padding:30px; color:var(--muted)">Loading sovereign holding tiers...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: REDEEM PROMO CODE ════ -->
+<div id="redeemPromoModal" class="modal-overlay" onclick="closeModalOnBackdrop(event, 'redeemPromoModal')">
+  <div class="modal-sheet" style="max-height: 85vh; display: flex; flex-direction: column;">
+    <div class="modal-header">
+      <div class="modal-title"><span>🎟️</span> <span id="mRedeemTitle">استرداد كود الهدية الملكي</span></div>
+      <div class="modal-close" onclick="closeModal('redeemPromoModal')">✕</div>
+    </div>
+
+    <div style="padding: 16px; overflow-y: auto; flex: 1;">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div style="width: 60px; height: 60px; margin: 0 auto 10px; border-radius: 50%; background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(168,85,247,0.2)); border: 1px solid rgba(245,158,11,0.4); display: flex; align-items: center; justify-content: center; font-size: 28px;">
+          🎁
+        </div>
+        <div style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 4px;" id="mRedeemSub">هل تملك كود هدية ترويجي؟</div>
+        <div style="font-size: 12px; color: var(--muted); line-height: 1.6;" id="mRedeemDesc">
+          أدخل الكود الحصري للحصول على عملات REX مجانية فوراً في رصيدك
+        </div>
+      </div>
+
+      <div style="background: rgba(13,20,38,0.8); border: 1px solid rgba(245,158,11,0.25); border-radius: 16px; padding: 14px; margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--gold-lt); margin-bottom: 8px;" id="mRedeemInputLabel">الكود الترويجي:</label>
+        <input type="text" id="promoCodeModalInput" placeholder="REX-VIP-XXXX"
+          style="width: 100%; box-sizing: border-box; background: rgba(7,11,22,0.9); border: 1px solid rgba(245,158,11,0.4); border-radius: 12px; padding: 14px; color: #fff; font-family: 'Orbitron', monospace; font-size: 15px; text-transform: uppercase; letter-spacing: 1.5px; text-align: center; outline: none;"
+          onkeyup="if(event.key==='Enter') redeemPromoCodeFromWeb('modal')">
+        
+        <div id="promoCodeModalFeedback" style="display:none; font-size:12px; font-weight:700; padding:10px 12px; border-radius:10px; margin-top:10px; text-align:center;"></div>
+      </div>
+
+      <button id="btnRedeemModalSubmit" class="action-btn btn-gold" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 900;" onclick="redeemPromoCodeFromWeb('modal')">
+        ✨ <span id="btnRedeemModalText">تفعيل الكود واستلام العملات</span>
+      </button>
     </div>
   </div>
 </div>
@@ -2120,6 +2144,97 @@
             ⏳ ${isAr ? `الحضور القادم متاح بعد: ${h}س ${m}د` : `Next Check-in in: ${h}h ${m}m`}
           </button>
         `;
+      }
+    }
+  }
+
+    async function redeemPromoCodeFromWeb(source = 'tab') {
+    const inputEl = source === 'modal' ? document.getElementById('promoCodeModalInput') : document.getElementById('promoCodeInput');
+    const btnEl = source === 'modal' ? document.getElementById('btnRedeemModalSubmit') : document.getElementById('btnRedeemCode');
+    const fbEl = source === 'modal' ? document.getElementById('promoCodeModalFeedback') : document.getElementById('promoCodeFeedback');
+    
+    const code = (inputEl ? inputEl.value : '').trim().toUpperCase();
+    const isAr = currentLang === 'ar';
+
+    if (!code) {
+      haptic('warning');
+      const emptyMsg = isAr ? '⚠️ يرجى إدخال الكود أولاً' : '⚠️ Please enter a promo code';
+      toast(emptyMsg);
+      if (fbEl) {
+        fbEl.style.display = 'block';
+        fbEl.style.background = 'rgba(239, 68, 68, 0.15)';
+        fbEl.style.color = '#ef4444';
+        fbEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        fbEl.textContent = emptyMsg;
+      }
+      return;
+    }
+
+    haptic('medium');
+    const originalBtnHtml = btnEl ? btnEl.innerHTML : '';
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.innerHTML = isAr ? '⏳ جاري التحقق...' : '⏳ Verifying...';
+    }
+
+    try {
+      const res = await api('/api/user/redeem-code', { telegram_id: user.id, code });
+      if (res && res.success) {
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        playWin();
+        haptic('success');
+
+        const reward = res.reward_rex || res.reward || 0;
+        const successMsg = isAr 
+          ? `🎉 مبروك! تم تفعيل الكود بنجاح وحصلت على +${reward} REX!` 
+          : `🎉 Congrats! Code redeemed successfully! +${reward} REX added!`;
+        
+        toast(successMsg);
+
+        if (fbEl) {
+          fbEl.style.display = 'block';
+          fbEl.style.background = 'rgba(16, 185, 129, 0.15)';
+          fbEl.style.color = '#10b981';
+          fbEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+          fbEl.textContent = successMsg;
+        }
+
+        if (inputEl) inputEl.value = '';
+        const otherInput = source === 'modal' ? document.getElementById('promoCodeInput') : document.getElementById('promoCodeModalInput');
+        if (otherInput) otherInput.value = '';
+
+        // Immediately refresh user balance & ledger
+        if (typeof fetchUserData === 'function') {
+          await fetchUserData();
+        }
+      } else {
+        haptic('error');
+        const errMsg = isAr ? (res.message_ar || res.message || 'الكود غير صحيح') : (res.message_en || res.message || 'Invalid code');
+        toast('❌ ' + errMsg);
+        if (fbEl) {
+          fbEl.style.display = 'block';
+          fbEl.style.background = 'rgba(239, 68, 68, 0.15)';
+          fbEl.style.color = '#ef4444';
+          fbEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+          fbEl.textContent = '❌ ' + errMsg;
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      haptic('error');
+      const connErr = isAr ? 'فشل الاتصال بالخادم، يرجى المحاولة لاحقاً' : 'Connection failed, please try again';
+      toast('❌ ' + connErr);
+      if (fbEl) {
+        fbEl.style.display = 'block';
+        fbEl.style.background = 'rgba(239, 68, 68, 0.15)';
+        fbEl.style.color = '#ef4444';
+        fbEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        fbEl.textContent = '❌ ' + connErr;
+      }
+    } finally {
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.innerHTML = originalBtnHtml;
       }
     }
   }
@@ -3487,6 +3602,22 @@
       setElText('mChartExplorerBtn', 'TON Explorer');
       setElText('hubChartName', 'Live Market & Chart');
       setElText('hubChartDesc', 'Real-time TradingView DexScreener chart & stats');
+      setElText('hubRedeemName', 'Redeem Promo Code');
+      setElText('hubRedeemDesc', 'Claim instant REX gift codes');
+      setElText('redeemCardTitle', 'Redeem Promo Code');
+      setElText('redeemCardDesc', 'Have a royal promo code? Enter it below to claim instant REX rewards!');
+      setElText('btnRedeemCode', 'Redeem 🎁');
+      setElText('btnQuickRedeem', 'Redeem Code');
+      setElText('btnQuickChart', 'Live Market Chart');
+      setElText('mRedeemTitle', 'Redeem Royal Promo Code');
+      setElText('mRedeemSub', 'Have a royal promo code?');
+      setElText('mRedeemDesc', 'Enter your exclusive promo code to receive instant REX rewards.');
+      setElText('mRedeemInputLabel', 'Promo Code:');
+      setElText('btnRedeemModalText', 'Redeem Code & Claim REX');
+      const pInp = document.getElementById('promoCodeInput');
+      if (pInp) pInp.placeholder = 'ENTER PROMO CODE (e.g. REX-VIP-1000)';
+      const pmInp = document.getElementById('promoCodeModalInput');
+      if (pmInp) pmInp.placeholder = 'ENTER CODE';
       setElText('hubLbName', 'Top 10 Holders');
       setElText('hubLbDesc', 'Elite REX holders leaderboard');
     } else {
@@ -3619,6 +3750,22 @@
       setElText('mChartExplorerBtn', 'مستكشف TON');
       setElText('hubChartName', 'شارت وسعر السوق');
       setElText('hubChartDesc', 'شارت التداول الحي والأسعار اللحظية');
+      setElText('hubRedeemName', 'استرداد كود هدية');
+      setElText('hubRedeemDesc', 'استرداد أكواد REX الترويجية');
+      setElText('redeemCardTitle', 'استرداد كود الهدية');
+      setElText('redeemCardDesc', 'هل لديك كود ترويجي ملكي؟ أدخله هنا للحصول على مكافأة REX فورية في رصيدك!');
+      setElText('btnRedeemCode', 'استرداد 🎁');
+      setElText('btnQuickRedeem', 'استرداد كود هدية');
+      setElText('btnQuickChart', 'شارت وسعر السوق');
+      setElText('mRedeemTitle', 'استرداد كود الهدية الملكي');
+      setElText('mRedeemSub', 'هل تملك كود هدية ترويجي؟');
+      setElText('mRedeemDesc', 'أدخل الكود الحصري للحصول على عملات REX مجانية فوراً في رصيدك.');
+      setElText('mRedeemInputLabel', 'الكود الترويجي:');
+      setElText('btnRedeemModalText', 'تفعيل الكود واستلام العملات');
+      const pInpAr = document.getElementById('promoCodeInput');
+      if (pInpAr) pInpAr.placeholder = 'أدخل الكود (مثال: REX-VIP-1000)';
+      const pmInpAr = document.getElementById('promoCodeModalInput');
+      if (pmInpAr) pmInpAr.placeholder = 'أدخل الكود هنا';
       setElText('hubLbName', 'أكبر 10 حاملين للعملة');
       setElText('hubLbDesc', 'لوحة صدارة كبار حاملي REX');
     }

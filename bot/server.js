@@ -1210,13 +1210,34 @@ app.post('/api/user/redeem-code', telegramAuth, checkMaintenance, (req, res) => 
     );
   } catch (err) {
     let msgAr = 'حدث خطأ أثناء استرداد الكود';
-    if (err.message === 'CODE_NOT_FOUND') msgAr = 'الكود غير صحيح أو غير موجود';
-    else if (err.message === 'CODE_EXPIRED') msgAr = 'عذراً، انتهت صلاحية هذا الكود';
-    else if (err.message === 'CODE_EXHAUSTED') msgAr = 'عذراً، وصل هذا الكود إلى الحد الأقصى للمستخدمين';
-    else if (err.message === 'ALREADY_REDEEMED') msgAr = 'لقد قمت باستخدام هذا الكود مسبقاً';
-    else if (err.message === 'CODE_INACTIVE') msgAr = 'هذا الكود متوقف حالياً';
-    else if (err.message === 'USER_BANNED') msgAr = 'حسابك محظور';
-    res.json({ success: false, message: msgAr, code: err.message });
+    let msgEn = 'Error redeeming code';
+    if (err.message === 'CODE_NOT_FOUND') {
+      msgAr = 'الكود غير صحيح أو غير موجود';
+      msgEn = 'Invalid or non-existent code';
+    } else if (err.message === 'CODE_EXPIRED') {
+      msgAr = 'عذراً، انتهت صلاحية هذا الكود';
+      msgEn = 'This promo code has expired';
+    } else if (err.message === 'CODE_EXHAUSTED') {
+      msgAr = 'عذراً، وصل هذا الكود إلى الحد الأقصى للمستخدمين';
+      msgEn = 'This code reached maximum redemptions';
+    } else if (err.message === 'ALREADY_REDEEMED') {
+      msgAr = 'لقد قمت باستخدام هذا الكود مسبقاً';
+      msgEn = 'You have already redeemed this code';
+    } else if (err.message === 'CODE_INACTIVE') {
+      msgAr = 'هذا الكود متوقف حالياً';
+      msgEn = 'This code is currently inactive';
+    } else if (err.message === 'USER_BANNED') {
+      msgAr = 'حسابك محظور';
+      msgEn = 'Your account is banned';
+    }
+    const isEn = req.body?.lang === 'en' || req.query?.lang === 'en';
+    res.json({
+      success: false,
+      message: isEn ? msgEn : msgAr,
+      message_ar: msgAr,
+      message_en: msgEn,
+      code: err.message
+    });
   }
 });
 

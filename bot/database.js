@@ -1211,17 +1211,7 @@ module.exports = {
       LIMIT ?
     `).all(limit);
 
-    if (real.length >= 5) return real;
-
-    const now = Date.now();
-    const seedPayouts = [
-      { id: 101, amount: 5000, wallet_address: 'UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz', status: 'confirmed', tx_hash: 'b1e4f9...8a12', explorer_url: 'https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH', created_at: now - 3600000 * 2, confirmed_at: now - 3600000 * 1.5, updated_at: now - 3600000 * 1.5, masked_user: 'Yah***' },
-      { id: 102, amount: 10000, wallet_address: 'UQCdiE9qmNnxDMZ9g5vbo-ivBRvNLZfSpgSGLNNRPl5rTodh', status: 'confirmed', tx_hash: 'c82a10...94ef', explorer_url: 'https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH', created_at: now - 3600000 * 5, confirmed_at: now - 3600000 * 4.2, updated_at: now - 3600000 * 4.2, masked_user: 'Kar***' },
-      { id: 103, amount: 7500, wallet_address: 'UQCSZ-HUccyA0JpyojaiIixheyq6qJVUI7UEv-UPaa3yJAKx', status: 'confirmed', tx_hash: '9f1a23...07cb', explorer_url: 'https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH', created_at: now - 3600000 * 9, confirmed_at: now - 3600000 * 8, updated_at: now - 3600000 * 8, masked_user: 'Ahm***' },
-      { id: 104, amount: 5000, wallet_address: 'UQAoMxzIWWuM1Wj_F-HkagEdSTrSaRo0SwVD3YwjQVIt8eZN', status: 'confirmed', tx_hash: '6e04bb...159a', explorer_url: 'https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH', created_at: now - 3600000 * 14, confirmed_at: now - 3600000 * 13, updated_at: now - 3600000 * 13, masked_user: 'Toh***' },
-      { id: 105, amount: 15000, wallet_address: 'UQAgXtyQlqVF2V3F4mKlbvYzUijlGjUmJbPWkWuiFNdpzWL_', status: 'confirmed', tx_hash: '4d87ac...33e2', explorer_url: 'https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH', created_at: now - 3600000 * 20, confirmed_at: now - 3600000 * 19, updated_at: now - 3600000 * 19, masked_user: 'Oma***' }
-    ];
-    return [...real, ...seedPayouts].slice(0, limit);
+    return real;
   },
 
   getPublicTokenomicsStats: () => {
@@ -1280,20 +1270,6 @@ module.exports = {
       u.username?.toLowerCase() !== 'yehiawael'
     );
 
-    // 2. Realistic seed community elite holders to populate the top 10 if community is growing
-    const seedCommunityHolders = [
-      { telegram_id: 881001, first_name: 'Alexander Rex', username: 'alex_rex', balance: 28450, total_held: 28450, rank_level: 6, tier_title: 'Crown Sovereign VIP', tier_badge: '👑', tier_color: '#f59e0b' },
-      { telegram_id: 881002, first_name: 'Darius Thorne', username: 'darius_ton', balance: 21300, total_held: 21300, rank_level: 5, tier_title: 'Diamond Duke VIP', tier_badge: '💎', tier_color: '#06b6d4' },
-      { telegram_id: 881003, first_name: 'Karim Al-Hashemi', username: 'karim_tonx', balance: 17800, total_held: 17800, rank_level: 5, tier_title: 'Diamond Duke VIP', tier_badge: '💎', tier_color: '#06b6d4' },
-      { telegram_id: 881004, first_name: 'Elena Rostova', username: 'elena_crypto', balance: 14250, total_held: 14250, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
-      { telegram_id: 881005, first_name: 'Tarek Mansour', username: 'tarek_m', balance: 11600, total_held: 11600, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
-      { telegram_id: 881006, first_name: 'Viktor Vance', username: 'vik_ton', balance: 9400, total_held: 9400, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
-      { telegram_id: 881007, first_name: 'Omar Farooq', username: 'omar_f', balance: 7850, total_held: 7850, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
-      { telegram_id: 881008, first_name: 'Zaid Al-Kuwaiti', username: 'zaid_kw', balance: 6200, total_held: 6200, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
-      { telegram_id: 881009, first_name: 'Alexandre Roy', username: 'alex_roy', balance: 5400, total_held: 5400, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' },
-      { telegram_id: 881010, first_name: 'Samir Knight', username: 'samir_k', balance: 5100, total_held: 5100, rank_level: 4, tier_title: 'Platinum Baron', tier_badge: '💠', tier_color: '#a855f7' }
-    ];
-
     const enrichHolder = (h) => {
       const amt = Number(h.total_held || h.balance || 0);
       let tier_badge = '🥉';
@@ -1314,23 +1290,10 @@ module.exports = {
       };
     };
 
-    const enrichedReal = filteredReal.map(enrichHolder);
-    const combined = [...enrichedReal];
-    const realIds = new Set(enrichedReal.map(u => u.telegram_id));
-
-    for (const seed of seedCommunityHolders) {
-      if (combined.length >= limit) break;
-      if (!realIds.has(seed.telegram_id)) {
-        combined.push(seed);
-      }
-    }
-
-    combined.sort((a, b) => b.total_held - a.total_held);
-
-    return combined.slice(0, limit).map((u, idx) => ({
+    return filteredReal.map(enrichHolder).slice(0, limit).map((u, idx) => ({
       rank: idx + 1,
       telegram_id: u.telegram_id,
-      first_name: u.first_name,
+      first_name: u.first_name || 'REX Holder',
       username: u.username ? (u.username.startsWith('@') ? u.username : `@${u.username}`) : '',
       balance: u.total_held,
       total_held: u.total_held,
