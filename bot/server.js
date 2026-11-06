@@ -466,6 +466,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
   const minHoldDays = parseFloat(db.getSetting('min_hold_days', '3'));
   const minHoldDurationMs = minHoldDays * 24 * 3600 * 1000;
 
+  const isHoldExempt = Boolean(user.is_hold_exempt);
   let onchainHoldStart = user.onchain_hold_start || 0;
   if (onChainRex >= minHoldRex) {
     if (!onchainHoldStart) {
@@ -474,7 +475,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
       user.onchain_hold_start = onchainHoldStart;
     }
   } else {
-    if (onchainHoldStart > 0) {
+    if (onchainHoldStart > 0 && !isHoldExempt) {
       onchainHoldStart = 0;
       db.updateHoldStart(telegram_id, 0);
       user.onchain_hold_start = 0;
@@ -482,8 +483,8 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
   }
 
   const holdingElapsed = onchainHoldStart > 0 ? (Date.now() - onchainHoldStart) : 0;
-  const isHoldPassed = (onchainHoldStart > 0) && (holdingElapsed >= minHoldDurationMs);
-  const holdRemainingMs = Math.max(0, minHoldDurationMs - holdingElapsed);
+  const isHoldPassed = isHoldExempt || ((onchainHoldStart > 0) && (holdingElapsed >= minHoldDurationMs));
+  const holdRemainingMs = isHoldExempt ? 0 : Math.max(0, minHoldDurationMs - holdingElapsed);
 
   // Evaluate & Unlock Achievements
   db.checkAndUnlockAchievements(telegram_id);
@@ -564,6 +565,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     min_hold_days: minHoldDays,
     onchain_hold_start: onchainHoldStart,
     is_hold_passed: isHoldPassed,
+    is_hold_exempt: isHoldExempt,
     anti_dump_active: Boolean(user.post_wd_monitored_until && Date.now() < user.post_wd_monitored_until),
     anti_dump_remaining_ms: Math.max(0, (user.post_wd_monitored_until || 0) - Date.now()),
     anti_dump_baseline: user.post_wd_baseline_rex || 0,
@@ -808,36 +810,39 @@ app.post('/api/user/withdraw', telegramAuth, checkMaintenance, requireChannelSub
   }
 
   // 3-Day 5,000 REX Mandatory Holding Condition Enforcement
+  const isHoldExempt = Boolean(user.is_hold_exempt);
   const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
   const minHoldDays = parseFloat(db.getSetting('min_hold_days', '3'));
   const minHoldDurationMs = minHoldDays * 24 * 3600 * 1000;
 
-  if (onChainBalance < minHoldRex) {
-    if (user.onchain_hold_start > 0) {
-      db.updateHoldStart(telegram_id, 0);
-      user.onchain_hold_start = 0;
+  if (!isHoldExempt) {
+    if (onChainBalance < minHoldRex) {
+      if (user.onchain_hold_start > 0) {
+        db.updateHoldStart(telegram_id, 0);
+        user.onchain_hold_start = 0;
+      }
+      const arMsg = `❌ شرط الأمان الملكي: يجب شراء والاحتفاظ بـ ${minHoldRex.toLocaleString()} REX كحد أدنى في محفظتك On-Chain لمدة ${minHoldDays} أيام متتالية قبل السحب!\n• رصيدك الفعلي في المحفظة: ${onChainBalance.toLocaleString()} REX.\n⚠️ تم تصفير عداد الأيام لعدم استيفاء الحد الأدنى.`;
+      const enMsg = `❌ Royal Security Rule: You must hold at least ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days before withdrawing!\n• Current Wallet Balance: ${onChainBalance.toLocaleString()} REX.\n⚠️ Timer reset to 0 due to balance shortfall.`;
+      return sendMsg(req, res, false, arMsg, enMsg, { code: 'INSUFFICIENT_HOLD_BALANCE' });
     }
-    const arMsg = `❌ شرط الأمان الملكي: يجب شراء والاحتفاظ بـ ${minHoldRex.toLocaleString()} REX كحد أدنى في محفظتك On-Chain لمدة ${minHoldDays} أيام متتالية قبل السحب!\n• رصيدك الفعلي في المحفظة: ${onChainBalance.toLocaleString()} REX.\n⚠️ تم تصفير عداد الأيام لعدم استيفاء الحد الأدنى.`;
-    const enMsg = `❌ Royal Security Rule: You must hold at least ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days before withdrawing!\n• Current Wallet Balance: ${onChainBalance.toLocaleString()} REX.\n⚠️ Timer reset to 0 due to balance shortfall.`;
-    return sendMsg(req, res, false, arMsg, enMsg, { code: 'INSUFFICIENT_HOLD_BALANCE' });
-  }
 
-  let onchainHoldStart = user.onchain_hold_start || 0;
-  if (!onchainHoldStart) {
-    onchainHoldStart = Date.now();
-    db.updateHoldStart(telegram_id, onchainHoldStart);
-    user.onchain_hold_start = onchainHoldStart;
-  }
+    let onchainHoldStart = user.onchain_hold_start || 0;
+    if (!onchainHoldStart) {
+      onchainHoldStart = Date.now();
+      db.updateHoldStart(telegram_id, onchainHoldStart);
+      user.onchain_hold_start = onchainHoldStart;
+    }
 
-  const holdingElapsed = Date.now() - onchainHoldStart;
-  if (holdingElapsed < minHoldDurationMs) {
-    const remMs = minHoldDurationMs - holdingElapsed;
-    const remDays = Math.floor(remMs / (24 * 3600 * 1000));
-    const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
-    const remMins = Math.ceil((remMs % 3600000) / 60000);
-    const arMsg = `⏳ شرط الأمان الملكي: يجب الاحتفاظ بـ ${minHoldRex.toLocaleString()} REX في محفظتك لمدة ${minHoldDays} أيام متتالية!\n\n• الوقت المتبقي لإتمام فترة الحيازة: ${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة.\n\nاستمر بالاحتفاظ بها في محفظتك وسيتم فتح السحب تلقائياً بمجرد اكتمال الـ 3 أيام.`;
-    const enMsg = `⏳ Royal Security Rule: You must hold ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days!\n\n• Remaining Holding Time: ${remDays > 0 ? remDays + 'd ' : ''}${remHours}h ${remMins}m.\n\nKeep holding in your wallet; withdrawal will unlock automatically once 3 days complete.`;
-    return sendMsg(req, res, false, arMsg, enMsg, { code: 'HOLD_PERIOD_NOT_ELAPSED' });
+    const holdingElapsed = Date.now() - onchainHoldStart;
+    if (holdingElapsed < minHoldDurationMs) {
+      const remMs = minHoldDurationMs - holdingElapsed;
+      const remDays = Math.floor(remMs / (24 * 3600 * 1000));
+      const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
+      const remMins = Math.ceil((remMs % 3600000) / 60000);
+      const arMsg = `⏳ شرط الأمان الملكي: يجب الاحتفاظ بـ ${minHoldRex.toLocaleString()} REX في محفظتك لمدة ${minHoldDays} أيام متتالية!\n\n• الوقت المتبقي لإتمام فترة الحيازة: ${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة.\n\nاستمر بالاحتفاظ بها في محفظتك وسيتم فتح السحب تلقائياً بمجرد اكتمال الـ 3 أيام.`;
+      const enMsg = `⏳ Royal Security Rule: You must hold ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days!\n\n• Remaining Holding Time: ${remDays > 0 ? remDays + 'd ' : ''}${remHours}h ${remMins}m.\n\nKeep holding in your wallet; withdrawal will unlock automatically once 3 days complete.`;
+      return sendMsg(req, res, false, arMsg, enMsg, { code: 'HOLD_PERIOD_NOT_ELAPSED' });
+    }
   }
 
   const withdrawalFee = parseFloat(db.getSetting('withdrawal_fee', '500'));
@@ -1474,10 +1479,11 @@ app.get('/api/admin/user/:id', adminAuth, async (req, res) => {
   const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
   const minHoldDays = parseFloat(db.getSetting('min_hold_days', '3'));
   const minHoldDurationMs = minHoldDays * 24 * 3600 * 1000;
+  const isHoldExempt = Boolean(profile.user.is_hold_exempt);
   const holdStart = profile.user.onchain_hold_start || 0;
   const holdingElapsed = holdStart ? (Date.now() - holdStart) : 0;
-  const isHoldPassed = (onChainRex >= minHoldRex) && (holdingElapsed >= minHoldDurationMs);
-  const holdRemainingMs = Math.max(0, minHoldDurationMs - holdingElapsed);
+  const isHoldPassed = isHoldExempt || ((onChainRex >= minHoldRex) && (holdingElapsed >= minHoldDurationMs));
+  const holdRemainingMs = isHoldExempt ? 0 : Math.max(0, minHoldDurationMs - holdingElapsed);
 
   res.json({
     ...profile,
@@ -1488,8 +1494,40 @@ app.get('/api/admin/user/:id', adminAuth, async (req, res) => {
       holdStart,
       holdingElapsed,
       isHoldPassed,
-      holdRemainingMs
+      holdRemainingMs,
+      isHoldExempt
     }
+  });
+});
+
+// Admin Toggle 3-Day Holding Exemption
+app.post('/api/admin/toggle-hold-exemption', adminAuth, (req, res) => {
+  const { telegram_id } = req.body;
+  if (!telegram_id) return res.status(400).json({ success: false, message: 'معرف المستخدم مطلوب' });
+  const tid = parseInt(telegram_id, 10);
+  const user = db.getUser(tid);
+  if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+
+  db.toggleHoldExemption(tid);
+  const updated = db.getUser(tid);
+  const isExempt = Boolean(updated.is_hold_exempt);
+
+  db.logAdminAction('TOGGLE_HOLD_EXEMPTION', `Toggle 3-day hold exemption for user ${tid} to ${isExempt ? 'EXEMPT' : 'ENFORCED'}`, ADMIN_TG_ID);
+
+  if (isExempt) {
+    bot.telegram.sendMessage(
+      tid,
+      `👑 *Royal Holding Exemption Granted!* 🎉\n\n` +
+      `Your account has been granted VIP exemption from the 3-day holding requirement by Royal Administration!\n` +
+      `You can now request withdrawals without the 72h holding period. 🚀`,
+      { parse_mode: 'Markdown' }
+    ).catch(() => {});
+  }
+
+  res.json({
+    success: true,
+    is_hold_exempt: isExempt,
+    message: isExempt ? 'تم إعفاء المستخدم من شرط الاحتفاظ 3 أيام بنجاح!' : 'تم إعادة تفعيل شرط الاحتفاظ 3 أيام للمستخدم.'
   });
 });
 

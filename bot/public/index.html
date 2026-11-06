@@ -2397,6 +2397,21 @@
     const isPassed = userData?.is_hold_passed;
     const holdStart = userData?.onchain_hold_start || 0;
 
+    if (userData?.is_hold_exempt) {
+      if (badge) {
+        badge.className = 'badge badge-green';
+        badge.textContent = currentLang === 'ar' ? '👑 معفى ملكياً (VIP)' : '👑 VIP Exempt';
+      }
+      if (timerVal) timerVal.textContent = '72:00:00 (EXEMPT)';
+      if (fill) fill.style.width = '100%';
+      if (detail) {
+        detail.innerHTML = currentLang === 'ar'
+          ? '👑 <strong>إعفاء سيادي ملكي:</strong> تم إعفاء حسابك رسمياً من شرط الـ 3 أيام! السحب متاح لك مباشرة.'
+          : '👑 <strong>Sovereign VIP Exemption:</strong> 3-day holding requirement is waived for your account!';
+      }
+      return;
+    }
+
     if (isPassed) {
       if (badge) {
         badge.className = 'badge badge-green';

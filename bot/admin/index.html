@@ -1025,6 +1025,7 @@
 
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
       <button class="btn btn-ban" id="insp-ban-btn" onclick="toggleUserBan()">⛔ حظر الحساب</button>
+      <button class="btn btn-secondary" id="insp-hold-btn" onclick="toggleUserHoldExemption()">⚡ إعفاء من شرط الـ 3 أيام</button>
       <button class="btn btn-ghost" onclick="resetUserMining()">⚡ إعادة تعيين التعدين</button>
     </div>
 
@@ -1497,7 +1498,11 @@
 
     const hold = data.holdInfo;
     let holdHtml = '<span style="color:var(--muted)">لا تتوفر محفظة مربوطة</span>';
-    if (u.wallet_address) {
+    const isExempt = Boolean(hold?.isHoldExempt || u.is_hold_exempt);
+
+    if (isExempt) {
+      holdHtml = '<span style="color:var(--green); font-weight:800;">👑 معفى من شرط الحيازة (VIP Holding Exemption) ✅</span>';
+    } else if (u.wallet_address) {
       if (!hold || (data.onChainRex || 0) < (hold.minHoldRex || 5000)) {
         holdHtml = `<span style="color:var(--red)">❌ غير مستوفى (الرصيد أقل من ${(hold?.minHoldRex || 5000).toLocaleString()} REX)</span>`;
       } else if (hold.isHoldPassed) {
@@ -1509,6 +1514,17 @@
     }
     document.getElementById('insp-hold-info').innerHTML = holdHtml;
 
+    const holdBtn = document.getElementById('insp-hold-btn');
+    if (holdBtn) {
+      if (isExempt) {
+        holdBtn.textContent = '🔒 إلغاء إعفاء الـ 3 أيام';
+        holdBtn.className = 'btn btn-gold';
+      } else {
+        holdBtn.textContent = '⚡ إعفاء من شرط الـ 3 أيام';
+        holdBtn.className = 'btn btn-secondary';
+      }
+    }
+
     const banBtn = document.getElementById('insp-ban-btn');
     if (u.is_banned) {
       banBtn.className = 'btn btn-unban';
@@ -1519,6 +1535,22 @@
     }
 
     document.getElementById('inspectorModal').classList.add('open');
+  }
+
+  async function toggleUserHoldExemption() {
+    if (!curInspectTid) return;
+    try {
+      const res = await api('/api/admin/toggle-hold-exemption', 'POST', { telegram_id: curInspectTid });
+      if (res && res.success) {
+        toast('👑 ' + (res.message || 'تم تحديث حالة الإعفاء'));
+        inspectUser(curInspectTid);
+        loadUsers(usersPage);
+      } else {
+        toast('❌ فشل تحديث الإعفاء: ' + (res?.message || 'خطأ غير معروف'));
+      }
+    } catch (err) {
+      toast('❌ خطأ في الاتصال: ' + err.message);
+    }
   }
 
   async function toggleUserBan() {

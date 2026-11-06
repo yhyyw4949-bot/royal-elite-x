@@ -275,7 +275,8 @@ const safeAlterCols = [
   { table: 'withdrawals', col: 'net_amount', def: 'REAL DEFAULT NULL' },
   { table: 'users', col: 'is_sybil_exempt', def: 'INTEGER DEFAULT 0' },
   { table: 'users', col: 'activated_via', def: "TEXT DEFAULT 'none'" },
-  { table: 'users', col: 'activation_code', def: "TEXT DEFAULT NULL" }
+  { table: 'users', col: 'activation_code', def: "TEXT DEFAULT NULL" },
+  { table: 'users', col: 'is_hold_exempt', def: 'INTEGER DEFAULT 0' }
 ];
 
 for (const m of safeAlterCols) {
@@ -615,6 +616,10 @@ module.exports = {
   banUser: (telegram_id, reason) => {
     return db.prepare('UPDATE users SET is_banned = 1, ban_reason = ? WHERE telegram_id = ?').run(reason, telegram_id);
   },
+  toggleHoldExemption: (telegram_id) => {
+    return db.prepare('UPDATE users SET is_hold_exempt = CASE WHEN is_hold_exempt = 1 THEN 0 ELSE 1 END WHERE telegram_id = ?').run(telegram_id);
+  },
+
   unbanUser: (telegram_id) => {
     try {
       const u = db.prepare('SELECT device_fingerprint FROM users WHERE telegram_id = ?').get(telegram_id);
