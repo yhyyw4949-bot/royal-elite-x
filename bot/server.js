@@ -618,9 +618,9 @@ app.post('/api/user/claim-mining', telegramAuth, checkMaintenance, async (req, r
       db.atomicAddReferralCommission(user.referrer_id, refCommission, telegram_id, user.first_name);
 
       bot.telegram.sendMessage(user.referrer_id,
-        `👑 *أرباح ملكية جديدة من الإحالة!* 🎉\n\n` +
-        `قام الفارس (${user.first_name}) بجمع أرباح تعدينه، وحصلت على عمولتك الملكية المستمرة (${(refPercent*100).toFixed(0)}%):\n` +
-        `💰 *+${refCommission.toFixed(2)} REX* أُضيفت فوراً إلى رصيدك!`,
+        `👑 *Royal Referral Commission Earned!* 🎉\n\n` +
+        `Your invited knight (${user.first_name}) claimed their mining yield! You earned your 5% royal commission:\n` +
+        `💰 *+${refCommission.toFixed(2)} REX* has been added to your balance!`,
         { parse_mode: 'Markdown' }
       ).catch(() => {});
     }
