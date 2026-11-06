@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🔥 حرق 49,000,000 REX | ROYAL ELITE X</title>
+  <title>🔥 إتلاف وحرق العقد القديم بالكامل | ROYAL ELITE X</title>
   <link rel="icon" href="https://iili.io/nsECVNn.jpg">
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -49,9 +49,9 @@
     }
     @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
     h1 {
-      font-size: 22px;
+      font-size: 21px;
       font-weight: 900;
-      color: var(--gold-lt);
+      color: var(--red);
       margin-bottom: 8px;
     }
     .subtitle {
@@ -79,8 +79,8 @@
     .stat-row:last-child { border-bottom: none; }
     .stat-label { color: #94a3b8; }
     .stat-val { font-family: 'Orbitron', monospace; font-weight: 700; color: #fff; }
-    .stat-val.burn { color: var(--red); font-size: 15px; }
-    .stat-val.gold { color: var(--gold-lt); font-size: 15px; }
+    .stat-val.burn { color: var(--red); font-size: 14px; }
+    .stat-val.gold { color: var(--gold-lt); font-size: 14px; }
 
     .burn-btn {
       width: 100%;
@@ -133,27 +133,31 @@
 
   <div class="burn-card">
     <div class="flame-icon">🔥</div>
-    <h1>أداة حرق REX الرسمية</h1>
-    <p class="subtitle">تخفيض إجمالي المعروض (Total Supply) من 50,000,000 إلى 1,000,000 REX نهائياً على بلوكتشين TON.</p>
+    <h1>إتلاف وحرق العقد القديم نهائياً</h1>
+    <p class="subtitle">حرق كامل الرصيد المتبقي (1,000,002 REX) في العقد القديم وإغلاق خاصية السك (Mint Revoke) للأبد ليصبح العقد ميتاً وملغياً 100%.</p>
 
     <div id="connectBtnContainer"></div>
 
     <div class="stats-box">
       <div class="stat-row">
-        <span class="stat-label">المعروض الحالي:</span>
-        <span class="stat-val">50,000,000 REX</span>
+        <span class="stat-label">عقد الماستر القديم:</span>
+        <span class="stat-val" style="font-size:10px; word-break:break-all;">EQCSsfG6...r6GH</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">الكمية المراد حرقها:</span>
-        <span class="stat-val burn">🔥 49,000,000 REX</span>
+        <span class="stat-label">الكمية التي سيتم إتلافها:</span>
+        <span class="stat-val burn">🔥 1,000,002.37 REX (الكل)</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">المعروض الجديد النهائي:</span>
-        <span class="stat-val gold">👑 1,000,000 REX</span>
+        <span class="stat-label">خاصية السك (Minting):</span>
+        <span class="stat-val burn">🚫 إغلاق نهائي (Revoke)</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">المعروض المتداول بعد الحرق:</span>
+        <span class="stat-val gold">0 REX</span>
       </div>
       <div class="stat-row">
         <span class="stat-label">رسوم الشبكة المقدرة:</span>
-        <span class="stat-val">~0.05 TON</span>
+        <span class="stat-val">~0.08 TON</span>
       </div>
     </div>
 
@@ -163,18 +167,21 @@
     </button>
 
     <div id="alertSuccess" class="alert-box alert-success">
-      ✅ <strong>تم إرسال معاملة الحرق بنجاح!</strong><br>
-      يجري الآن تأكيد البلوكشين وتخفيض السبلاي إلى 1,000,000 REX.
+      ✅ <strong>تم إتلاف العقد القديم بنجاح كامل!</strong><br>
+      تم حرق كافة العملات المتبقية وإلغاء صلاحية السك نهائياً. العقد القديم الآن ميت وخارج الخدمة.
     </div>
 
     <div id="alertError" class="alert-box alert-error"></div>
   </div>
 
   <script>
-    // Config
-    const USER_JETTON_WALLET = 'EQCXg7AHCnD_H583YOXCpyKtEBmBzI0qxjs1owABt7itRYzg';
-    // BOC for JettonBurn of 49,000,000 REX (decimals: 9) responding to UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz
-    const BURN_PAYLOAD_BASE64 = 'te6cckEBAQEANwAAallfB7wAAAAAAAAAAHrhU9if6AAIAbl5twqSJ0XCoqOsmbjXx2vefNkKiuTnK/T1PFJ4wB8sdWa2jw==';
+    const OLD_MASTER = 'EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH';
+    const OLD_USER_JETTON_WALLET = 'EQCXg7AHCnD_H583YOXCpyKtEBmBzI0qxjs1owABt7itRYzg';
+    
+    // BOC for burning 1000002376862219 nanotokens
+    const BURN_ALL_OLD_BOC = 'te6cckEBAQEANwAAallfB7wAAAAAAAAAAHA41/MnKKC4Abl5twqSJ0XCoqOsmbjXx2vefNkKiuTnK/T1PFJ4wB8s3NcGmg==';
+    // BOC for Disable minting text comment
+    const DISABLE_MINTING_BOC = 'te6cckEBAQEAFQAAJgAAAABEaXNhYmxlIG1pbnRpbmdWvFAL';
 
     const tonUI = new TON_CONNECT_UI.TonConnectUI({
       manifestUrl: window.location.origin + '/tonconnect-manifest.json',
@@ -188,7 +195,7 @@
     tonUI.onStatusChange(wallet => {
       if (wallet) {
         btnBurn.disabled = false;
-        btnBurn.innerHTML = '<span>🔥</span><span>تأكيد حرق 49,000,000 REX الآن</span>';
+        btnBurn.innerHTML = '<span>🔥</span><span>تأكيد إتلاف العقد القديم بالكامل</span>';
       } else {
         btnBurn.disabled = true;
         btnBurn.innerHTML = '<span>🔥</span><span>اربط المحفظة أولاً للتنفيذ</span>';
@@ -210,10 +217,17 @@
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 360,
         messages: [
+          // 1. Burn all remaining tokens in the user's old Jetton wallet
           {
-            address: USER_JETTON_WALLET,
-            amount: '50000000', // 0.05 TON for gas
-            payload: BURN_PAYLOAD_BASE64
+            address: OLD_USER_JETTON_WALLET,
+            amount: '50000000', // 0.05 TON
+            payload: BURN_ALL_OLD_BOC
+          },
+          // 2. Disable minting on the old Master contract forever
+          {
+            address: OLD_MASTER,
+            amount: '30000000', // 0.03 TON
+            payload: DISABLE_MINTING_BOC
           }
         ]
       };
@@ -222,14 +236,14 @@
         const result = await tonUI.sendTransaction(transaction);
         if (result) {
           alertSuccess.style.display = 'block';
-          btnBurn.innerHTML = '<span>✅</span><span>تم تأكيد الحرق على البلوكشين!</span>';
+          btnBurn.innerHTML = '<span>✅</span><span>تم حرق وإلغاء العقد القديم نهائياً!</span>';
         }
       } catch (err) {
-        console.error('Burn error:', err);
+        console.error('Kill error:', err);
         alertError.textContent = '❌ تم إلغاء المعاملة أو حدث خطأ: ' + (err.message || 'فشل الاتصال');
         alertError.style.display = 'block';
         btnBurn.disabled = false;
-        btnBurn.innerHTML = '<span>🔥</span><span>إعادة المحاولة: حرق 49,000,000 REX</span>';
+        btnBurn.innerHTML = '<span>🔥</span><span>إعادة المحاولة: إتلاف العقد القديم</span>';
       }
     });
   </script>
