@@ -631,6 +631,69 @@ app.post('/api/user/confirm-activation', telegramAuth, checkMaintenance, (req, r
   sendMsg(req, res, true, 'تم تفعيل الحساب بنجاح!', 'Account activated successfully!');
 });
 
+// Redeem Activation / Fee-Waiver Code
+app.post('/api/user/redeem-activation-code', telegramAuth, checkMaintenance, async (req, res) => {
+  const { telegram_id, code } = req.body;
+  if (!telegram_id || !code) {
+    return sendMsg(req, res, false, 'يرجى إدخال كود التفعيل', 'Please enter activation code');
+  }
+
+  const user = db.getUser(telegram_id);
+  if (!user || user.is_banned) {
+    return sendMsg(req, res, false, 'حساب غير مؤهل أو محظور', 'Account ineligible or suspended');
+  }
+
+  if (user.is_activated === 1) {
+    return sendMsg(req, res, false, 'حسابك مفعّل بالفعل!', 'Your account is already activated!');
+  }
+
+  try {
+    const actRes = db.redeemActivationCode(telegram_id, code);
+
+    // Notify on Telegram
+    bot.telegram.sendMessage(
+      telegram_id,
+      `👑 *Royal Activation Successful!* 🎉\n\n` +
+      `Your account has been verified and the 0.1 TON fee has been waived!\n` +
+      `🔑 Activation Code: \`${actRes.code}\`\n` +
+      (actRes.bonus_rex > 0 ? `💰 Bonus Credited: *+${actRes.bonus_rex.toLocaleString()} REX*\n` : '') +
+      `\nMake sure your wallet is connected and you have joined our channel to begin mining! 🚀`,
+      { parse_mode: 'Markdown' }
+    ).catch(() => {});
+
+    return sendMsg(req, res, true,
+      '🎉 تم تفعيل حسابك وإعفاء رسوم الـ 0.1 TON بنجاح!',
+      '🎉 Account activated and 0.1 TON fee waived successfully!',
+      { is_activated: true, bonus_rex: actRes.bonus_rex, code: actRes.code }
+    );
+  } catch (err) {
+    let arErr = '⚠️ حدث خطأ أثناء تفعيل الكود';
+    let enErr = '⚠️ Failed to redeem activation code';
+
+    if (err.message === 'CODE_NOT_FOUND') {
+      arErr = '❌ كود التفعيل غير صالح أو غير موجود';
+      enErr = '❌ Invalid or non-existent activation code';
+    } else if (err.message === 'CODE_EXPIRED') {
+      arErr = '⏳ انتهت صلاحية هذا الكود الزمنيّة';
+      enErr = '⏳ This activation code has expired';
+    } else if (err.message === 'CODE_EXHAUSTED') {
+      arErr = '🚫 اكتمل الحد الأقصى لعدد مستخدمي هذا الكود';
+      enErr = '🚫 Activation code claim limit reached';
+    } else if (err.message === 'ALREADY_REDEEMED') {
+      arErr = '⚠️ لقد قمت باستخدام هذا الكود مسبقاً';
+      enErr = '⚠️ You have already used this activation code';
+    } else if (err.message === 'CODE_INACTIVE') {
+      arErr = '🔒 هذا الكود متوقف حالياً من قِبل الإدارة';
+      enErr = '🔒 This activation code is currently disabled';
+    } else if (err.message === 'ALREADY_ACTIVATED') {
+      arErr = '✅ حسابك مفعّل بالفعل، لا حاجة لاستخدام الكود';
+      enErr = '✅ Your account is already activated';
+    }
+
+    return sendMsg(req, res, false, arErr, enErr, { error: err.message });
+  }
+});
+
 // ================================================================
 // 3. ATOMIC MINING ENGINE
 // ================================================================
@@ -1211,6 +1274,61 @@ app.post('/api/admin/promo-codes/toggle', adminAuth, (req, res) => {
     db.togglePromoCode(id);
     db.logAdminAction('TOGGLE_PROMO_CODE', `Toggled active status for promo code ID ${id}`, ADMIN_TG_ID);
     sendMsg(req, res, true, 'تم تحديث حالة الكود بنجاح!', 'Promo code status updated successfully!');
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+});
+
+// ================================================================
+// 12.C ADMIN ACTIVATION & FEE-WAIVER CODES ENGINE
+// ================================================================
+app.get('/api/admin/activation-codes', adminAuth, (req, res) => {
+  try {
+    const list = db.getAllActivationCodes();
+    res.json({ success: true, activation_codes: list });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/activation-codes/create', adminAuth, (req, res) => {
+  try {
+    const { code, max_uses, duration_hours, bonus_rex } = req.body;
+    const created = db.createActivationCode({
+      code,
+      max_uses,
+      duration_hours,
+      bonus_rex,
+      created_by: ADMIN_TG_ID
+    });
+    db.logAdminAction('CREATE_ACTIVATION_CODE', `إنشاء كود تفعيل: ${created.code} (مستخدمين: ${created.max_uses})`, ADMIN_TG_ID);
+    sendMsg(req, res, true, `تم إنشاء كود التفعيل ${created.code} بنجاح!`, `Activation code ${created.code} created successfully!`, { activation_code: created });
+  } catch (err) {
+    let msgAr = err.message;
+    if (err.message === 'CODE_ALREADY_EXISTS') msgAr = 'هذا الكود موجود مسبقاً، يرجى اختيار كود آخر';
+    else if (err.message === 'INVALID_MAX_USES') msgAr = 'يرجى إدخال عدد مستخدمين أقصى صالح';
+    else if (err.message === 'INVALID_DURATION') msgAr = 'يرجى إدخال مدة صلاحية صالحة';
+    res.json({ success: false, message: msgAr, code: err.message });
+  }
+});
+
+app.post('/api/admin/activation-codes/delete', adminAuth, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.deleteActivationCode(id);
+    db.logAdminAction('DELETE_ACTIVATION_CODE', `Deleted activation code ID ${id}`, ADMIN_TG_ID);
+    sendMsg(req, res, true, 'تم حذف كود التفعيل بنجاح!', 'Activation code deleted successfully!');
+  } catch (err) {
+    res.json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/activation-codes/toggle', adminAuth, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.toggleActivationCode(id);
+    db.logAdminAction('TOGGLE_ACTIVATION_CODE', `Toggled active status for activation code ID ${id}`, ADMIN_TG_ID);
+    sendMsg(req, res, true, 'تم تحديث حالة كود التفعيل بنجاح!', 'Activation code status updated successfully!');
   } catch (err) {
     res.json({ success: false, message: err.message });
   }
@@ -1967,6 +2085,60 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
 });
 
 
+
+// Bot Command: Activate Account via Fee-Waiver Code
+bot.command(['activate', 'vip', 'pass', 'free'], async (ctx) => {
+  if (isMaintenanceActive() && ctx.from.id !== ADMIN_TG_ID) {
+    return ctx.reply('🛠 *System Under Maintenance*\n\nPlease check back shortly! 👑', { parse_mode: 'Markdown' });
+  }
+
+  const tid = ctx.from.id;
+  const parts = ctx.message.text.trim().split(/\s+/);
+
+  if (parts.length < 2) {
+    return ctx.reply(
+      '🔑 *Activate Account — Fee Waiver Code*\n\n' +
+      'Please enter your activation code next to the command:\n' +
+      '`/activate <CODE>`\n\n' +
+      '📌 *Example:* `/activate VIP-FREE-2026`\n\n' +
+      '💡 This code unlocks your account and waives the 0.1 TON verification fee!',
+      { parse_mode: 'Markdown' }
+    );
+  }
+
+  const code = parts[1].trim();
+  const user = db.getUser(tid);
+  if (user && user.is_activated === 1) {
+    return ctx.reply('✅ *Your account is already verified & activated!* 👑\n\nYou do not need an activation code.', { parse_mode: 'Markdown' });
+  }
+
+  try {
+    const actRes = db.redeemActivationCode(tid, code);
+    return ctx.reply(
+      `👑 *Royal Activation Successful, ${ctx.from.first_name || 'Knight'}!* 🎉\n\n` +
+      `• Code: \`${actRes.code}\`\n` +
+      `• Status: *0.1 TON Verification Fee Waived* ✅\n` +
+      (actRes.bonus_rex > 0 ? `• Bonus: *+${actRes.bonus_rex.toLocaleString()} REX*\n` : '') +
+      `\nYour royal gate fee requirement is fulfilled! Make sure to connect your wallet and join @REXCEO1A to access the platform! 🚀`,
+      {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+          [Markup.button.webApp('👑 Launch ROYAL ELITE X', WEBAPP_URL)]
+        ])
+      }
+    );
+  } catch (err) {
+    let msg = '⚠️ Failed to redeem activation code.';
+    if (err.message === 'CODE_NOT_FOUND') msg = '❌ *Invalid or Non-Existent Activation Code.*\nPlease check the code and try again.';
+    else if (err.message === 'CODE_EXPIRED') msg = '⏳ *Expired Code.*\nThis activation code has expired.';
+    else if (err.message === 'CODE_EXHAUSTED') msg = '🚫 *Claim Limit Reached.*\nThis activation code has reached its maximum user limit.';
+    else if (err.message === 'ALREADY_REDEEMED') msg = '⚠️ *Already Claimed!*\nYou have already used this activation code.';
+    else if (err.message === 'CODE_INACTIVE') msg = '🔒 *This activation code is currently disabled by administration.*';
+    else if (err.message === 'ALREADY_ACTIVATED') msg = '✅ *Your account is already activated!*';
+
+    return ctx.reply(msg, { parse_mode: 'Markdown' });
+  }
+});
 
 // Bot Command: Redeem Promo / Gift Code
 bot.command(['redeem', 'code', 'promo', 'gift'], async (ctx) => {

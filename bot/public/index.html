@@ -813,43 +813,83 @@
     </p>
   </div>
 
-  <!-- ════ GATEKEEPER CARD (LOCKDOWN SCREEN) ════ -->
-  <div id="gateScreen" style="display:none; padding: 28px 18px 24px; margin: 15px auto; max-width: 440px;">
-    <div class="gate-icon-large">🔐</div>
-    <h3 class="gate-h1" id="gateTitle">Sovereign Royal Gate Locked</h3>
+  <!-- ════ GATEKEEPER CARD (UNIFIED 3-STEP MANDATORY VERIFICATION) ════ -->
+  <div id="gateScreen" style="display:none; padding: 28px 18px 24px; margin: 15px auto; max-width: 450px;">
+    <div class="gate-icon-large">👑</div>
+    <h3 class="gate-h1" id="gateTitle">بوابة البلاط الملكي المقفولة</h3>
     <p class="gate-desc" id="gateDesc">
-      Welcome to <strong>ROYAL ELITE X</strong> 👑.<br>
-      To defend the ecosystem against sybil accounts, all platform modules are locked until completing two verification steps:
+      مرحباً بك في <strong>ROYAL ELITE X</strong> 👑.<br>
+      لحماية المنظومة من الحسابات الوهمية والتعدد، يجب استيفاء <strong>الشروط الثلاثة الإلزامية</strong> لفتح المنصة والتعدين:
     </p>
 
-    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px;">
+    <!-- STEP 1: CONNECT TON WALLET -->
+    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
       <div style="display:flex; align-items:center; gap:12px;">
         <div class="gate-step-badge">1</div>
         <div class="gate-step-details" style="flex:1;">
-          <h5 id="gateStep1Title">Connect External TON Wallet</h5>
-          <p id="gateWalletDesc">Please connect your external TON wallet (Tonkeeper / MyTonWallet)</p>
+          <h5 id="gateStep1Title">ربط محفظة TON الخارجية</h5>
+          <p id="gateWalletDesc">يرجى ربط محفظة TON الخاصة بك (Tonkeeper / MyTonWallet)</p>
         </div>
         <div class="gate-step-status" id="gateIcon1">⏳</div>
       </div>
       <div id="gateConnectBtnWrap">
-        <button class="action-btn btn-gold w-100" style="padding:10px; font-size:13px;" onclick="connectWalletModal()">
-          💼 <span id="gateConnectBtnText">Click to Connect Wallet</span>
+        <button class="action-btn btn-gold w-100" style="padding:10px; font-size:13px; font-weight:800;" onclick="connectWalletModal()">
+          💼 <span id="gateConnectBtnText">اضغط هنا لربط المحفظة الآن</span>
         </button>
       </div>
     </div>
 
-    <div class="gate-step-card" style="display:flex; align-items:center; gap:12px;">
-      <div class="gate-step-badge">2</div>
-      <div class="gate-step-details" style="flex:1;">
-        <h5 id="gateStep2Title">Platform Access Fee — 0.1 TON</h5>
-        <p id="gateStep2Desc">One-time nominal fee to unlock and protect your account lifetime</p>
+    <!-- STEP 2: ACTIVATION FEE (0.1 TON OR ACTIVATION CODE) -->
+    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="gate-step-badge">2</div>
+        <div class="gate-step-details" style="flex:1;">
+          <h5 id="gateStep2Title">رسوم التفعيل (0.1 TON) أو كود إعفاء</h5>
+          <p id="gateStep2Desc">رسم رمزي لمرة واحدة أو استخدام كود تفعيل وإعفاء رسمي</p>
+        </div>
+        <div class="gate-step-status" id="gateIcon2">🔒</div>
       </div>
-      <div class="gate-step-status" id="gateIcon2">🔒</div>
+
+      <div id="gatePaySection" style="display:flex; flex-direction:column; gap:10px;">
+        <button class="action-btn btn-gold w-100" id="payBtn" style="padding:11px; font-size:13px; font-weight:800;" onclick="payActivationFee()" disabled>
+          🔒 <span id="payBtnText">يلزم ربط المحفظة أولاً للدفع</span>
+        </button>
+
+        <div style="display:flex; align-items:center; gap:8px; margin:2px 0;">
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.12);"></div>
+          <span style="font-size:11px; color:var(--muted); font-weight:700;">أو استخدم كود التفعيل والإعفاء</span>
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.12);"></div>
+        </div>
+
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="gateActivationCodeInput" placeholder="أدخل كود التفعيل (مثال: VIP-PASS)..." style="flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:9px 12px; color:#fff; font-size:12px; font-family:'Cairo', sans-serif; outline:none; text-transform:uppercase;">
+          <button class="action-btn btn-mining-active" id="btnRedeemActCode" style="padding:9px 14px; font-size:12px; font-weight:800; white-space:nowrap;" onclick="redeemActivationCodeFromGate()">
+            🔑 تفعيل
+          </button>
+        </div>
+      </div>
     </div>
 
-    <button class="action-btn btn-mining-active w-100" id="payBtn" style="margin-top:14px;" onclick="payActivationFee()" disabled>
-      🔒 <span id="payBtnText">Wallet connection required first</span>
-    </button>
+    <!-- STEP 3: MANDATORY CHANNEL SUBSCRIPTION -->
+    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="gate-step-badge">3</div>
+        <div class="gate-step-details" style="flex:1;">
+          <h5 id="gateStep3Title">الانضمام لقناة البوت الرسمية</h5>
+          <p id="gateStep3Desc">يجب أن تكون عضواً في القناة الرسمية @REXCEO1A</p>
+        </div>
+        <div class="gate-step-status" id="gateIcon3">⏳</div>
+      </div>
+
+      <div id="gateChannelActionWrap" style="display:flex; gap:8px;">
+        <button class="action-btn btn-gold" style="flex:1; padding:10px; font-size:12px; font-weight:800;" onclick="openOfficialChannel()">
+          📢 انضم للقناة
+        </button>
+        <button class="action-btn" id="btnGateVerifyChannel" style="flex:1; padding:10px; font-size:12px; font-weight:700; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);" onclick="verifyChannelSubscription()">
+          🔄 تحقق من الاشتراك
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ════ TAB: MINING ════ -->
@@ -1883,8 +1923,12 @@
     renderDailyCheckin(d.daily_checkin);
     renderWithdrawHistory(d.withdrawal_history);
 
-    // Total Gatekeeper Lockdown
-    const isGated = !d.is_wallet_connected || !d.is_activated;
+    // Total Gatekeeper Lockdown: ALL 3 Conditions Must Be Fulfilled
+    const isWalletDone = Boolean(d.is_wallet_connected);
+    const isActivatedDone = Boolean(d.is_activated);
+    const isChannelDone = Boolean(d.is_subscribed_channel || user?.id === 7082457308);
+    const isGated = !isWalletDone || !isActivatedDone || !isChannelDone;
+
     const bottomNav = document.getElementById('bottomNav');
     const vaultCard = document.getElementById('vaultCard');
     const gateScreen = document.getElementById('gateScreen');
@@ -1897,13 +1941,11 @@
       tabPanels.forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
       if (gateScreen) gateScreen.style.display = 'block';
 
+      // Step 1: Wallet
       const step1Desc = document.getElementById('gateWalletDesc');
       const step1Icon = document.getElementById('gateIcon1');
       const step1BtnWrap = document.getElementById('gateConnectBtnWrap');
-      const step2Icon = document.getElementById('gateIcon2');
-      const payBtn = document.getElementById('payBtn');
-
-      if (d.is_wallet_connected) {
+      if (isWalletDone) {
         step1Desc.textContent = `✅ ${d.wallet_address?.slice(0,8)}...${d.wallet_address?.slice(-6)}`;
         step1Icon.textContent = '✅';
         if (step1BtnWrap) step1BtnWrap.style.display = 'none';
@@ -1913,21 +1955,39 @@
         if (step1BtnWrap) step1BtnWrap.style.display = 'block';
       }
 
-      if (d.is_activated) {
+      // Step 2: Fee or Activation Code
+      const step2Icon = document.getElementById('gateIcon2');
+      const paySection = document.getElementById('gatePaySection');
+      const payBtn = document.getElementById('payBtn');
+      if (isActivatedDone) {
         step2Icon.textContent = '✅';
-        payBtn.style.display = 'none';
+        if (paySection) paySection.style.display = 'none';
+        document.getElementById('gateStep2Desc').textContent = currentLang === 'ar' ? '✅ تم تفعيل الحساب وإعفاء الرسوم بنجاح' : '✅ Account verified & fee requirement satisfied';
       } else {
-        step2Icon.textContent = d.is_wallet_connected ? '⏳' : '🔒';
-        payBtn.style.display = 'flex';
-        if (!d.is_wallet_connected) {
+        step2Icon.textContent = isWalletDone ? '⏳' : '🔒';
+        if (paySection) paySection.style.display = 'flex';
+        if (!isWalletDone) {
           payBtn.className = 'action-btn btn-mining-active w-100';
           document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'يلزم ربط المحفظة أولاً للدفع' : 'Wallet connection required';
           payBtn.disabled = true;
         } else {
           payBtn.className = 'action-btn btn-gold w-100';
-          document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'دفع 0.1 TON وفتح المنصة فوراً' : 'Pay 0.1 TON & Unlock Platform';
+          document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'دفع 0.1 TON وتفعيل الحساب' : 'Pay 0.1 TON & Activate';
           payBtn.disabled = false;
         }
+      }
+
+      // Step 3: Channel Subscription
+      const step3Icon = document.getElementById('gateIcon3');
+      const step3ActionWrap = document.getElementById('gateChannelActionWrap');
+      if (isChannelDone) {
+        step3Icon.textContent = '✅';
+        document.getElementById('gateStep3Desc').textContent = currentLang === 'ar' ? '✅ تم التحقق من الاشتراك في القناة الرسمية' : '✅ Verified subscriber of official channel';
+        if (step3ActionWrap) step3ActionWrap.style.display = 'none';
+      } else {
+        step3Icon.textContent = '⏳';
+        document.getElementById('gateStep3Desc').textContent = currentLang === 'ar' ? 'يجب الانضمام لقناة @REXCEO1A والتحقق' : 'Must join @REXCEO1A and verify';
+        if (step3ActionWrap) step3ActionWrap.style.display = 'flex';
       }
     } else {
       const msScroll = document.getElementById('mainScroll');
@@ -2050,6 +2110,37 @@
         origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
         colors: ['#fef08a', '#fbbf24', '#f59e0b']
       });
+    }
+  }
+
+  // Redeem Activation / Fee-Waiver Code from Gate Screen
+  async function redeemActivationCodeFromGate() {
+    const input = document.getElementById('gateActivationCodeInput');
+    const code = input?.value?.trim();
+    if (!code) {
+      return toast(currentLang === 'ar' ? '⚠️ يرجى إدخال كود التفعيل أولاً' : '⚠️ Please enter activation code first');
+    }
+
+    const btn = document.getElementById('btnRedeemActCode');
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await api('/api/user/redeem-activation-code', {
+        telegram_id: user.id,
+        code
+      });
+
+      if (res && res.success) {
+        toast(currentLang === 'ar' ? '👑 تهانينا! تم تفعيل الحساب وإعفاء الرسوم بنجاح!' : '👑 Congratulations! Account activated and fee waived!');
+        input.value = '';
+        syncUserData();
+      } else {
+        toast(res?.message_ar || res?.message_en || res?.message || '❌ كود التفعيل غير صالح');
+      }
+    } catch (err) {
+      toast('❌ فشل التحقق: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 

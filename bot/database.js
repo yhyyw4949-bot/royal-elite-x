@@ -221,6 +221,29 @@ db.exec(`
     redeemed_at INTEGER,
     UNIQUE(code_id, telegram_id)
   );
+
+  CREATE TABLE IF NOT EXISTS activation_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE COLLATE NOCASE,
+    max_uses INTEGER NOT NULL,
+    used_count INTEGER DEFAULT 0,
+    duration_hours REAL NOT NULL,
+    expires_at INTEGER NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    bonus_rex REAL DEFAULT 0,
+    created_by INTEGER DEFAULT 7082457308,
+    created_at INTEGER
+  );
+
+  CREATE TABLE IF NOT EXISTS activation_code_redemptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code_id INTEGER,
+    code TEXT COLLATE NOCASE,
+    telegram_id INTEGER,
+    bonus_rex REAL DEFAULT 0,
+    redeemed_at INTEGER,
+    UNIQUE(code_id, telegram_id)
+  );
 `);
 
 // ── 2. Safe Column Additions for Existing Databases ──
@@ -1564,6 +1587,131 @@ module.exports = {
 
   togglePromoCode: (id) => {
     return db.prepare('UPDATE promo_codes SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?').run(id);
+  },
+
+  // ── Activation / Fee Waiver Codes Engine ──
+  createActivationCode: ({ code, max_uses, duration_hours, bonus_rex = 0, created_by = 7082457308 }) => {
+    const sanitizedCode = String(code || '').trim().toUpperCase();
+    if (!sanitizedCode) throw new Error('EMPTY_CODE');
+
+    const uses = parseInt(max_uses, 10);
+    if (isNaN(uses) || uses <= 0) throw new Error('INVALID_MAX_USES');
+
+    const hours = parseFloat(duration_hours);
+    if (isNaN(hours) || hours <= 0) throw new Error('INVALID_DURATION');
+
+    const bonus = Math.max(0, parseFloat(bonus_rex) || 0);
+    const now = Date.now();
+    const expiresAt = now + Math.round(hours * 3600 * 1000);
+
+    const existing = db.prepare('SELECT id FROM activation_codes WHERE code = ? COLLATE NOCASE').get(sanitizedCode);
+    if (existing) throw new Error('CODE_ALREADY_EXISTS');
+
+    const res = db.prepare(`
+      INSERT INTO activation_codes 
+      (code, max_uses, used_count, duration_hours, expires_at, is_active, bonus_rex, created_by, created_at)
+      VALUES (?, ?, 0, ?, ?, 1, ?, ?, ?)
+    `).run(sanitizedCode, uses, hours, expiresAt, bonus, created_by, now);
+
+    return db.prepare('SELECT * FROM activation_codes WHERE id = ?').get(res.lastInsertRowid);
+  },
+
+  getAllActivationCodes: () => {
+    const codes = db.prepare('SELECT * FROM activation_codes ORDER BY created_at DESC').all();
+    const now = Date.now();
+    return codes.map(c => {
+      const isExpired = now > c.expires_at;
+      const isExhausted = c.used_count >= c.max_uses;
+      let status = 'active';
+      if (!c.is_active) status = 'disabled';
+      else if (isExpired) status = 'expired';
+      else if (isExhausted) status = 'exhausted';
+
+      return {
+        ...c,
+        is_expired: isExpired,
+        is_exhausted: isExhausted,
+        status,
+        remaining_uses: Math.max(0, c.max_uses - c.used_count),
+        remaining_time_ms: Math.max(0, c.expires_at - now)
+      };
+    });
+  },
+
+  deleteActivationCode: (id) => {
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM activation_code_redemptions WHERE code_id = ?').run(id);
+      return db.prepare('DELETE FROM activation_codes WHERE id = ?').run(id);
+    });
+    return tx();
+  },
+
+  toggleActivationCode: (id) => {
+    return db.prepare('UPDATE activation_codes SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?').run(id);
+  },
+
+  redeemActivationCode: (telegram_id, codeStr) => {
+    const cleanCode = String(codeStr || '').trim().toUpperCase();
+    if (!cleanCode) throw new Error('EMPTY_CODE');
+
+    const tx = db.transaction(() => {
+      const user = db.prepare('SELECT telegram_id, is_activated, balance, is_banned FROM users WHERE telegram_id = ?').get(telegram_id);
+      if (!user) throw new Error('USER_NOT_FOUND');
+      if (user.is_banned) throw new Error('USER_BANNED');
+      if (user.is_activated === 1) throw new Error('ALREADY_ACTIVATED');
+
+      const codeObj = db.prepare('SELECT * FROM activation_codes WHERE code = ? COLLATE NOCASE').get(cleanCode);
+      if (!codeObj) throw new Error('CODE_NOT_FOUND');
+      if (!codeObj.is_active) throw new Error('CODE_INACTIVE');
+
+      const now = Date.now();
+      if (now > codeObj.expires_at) throw new Error('CODE_EXPIRED');
+      if (codeObj.used_count >= codeObj.max_uses) throw new Error('CODE_EXHAUSTED');
+
+      const already = db.prepare('SELECT 1 FROM activation_code_redemptions WHERE code_id = ? AND telegram_id = ?').get(codeObj.id, telegram_id);
+      if (already) throw new Error('ALREADY_REDEEMED');
+
+      const bonus = codeObj.bonus_rex || 0;
+      const newBalance = (user.balance || 0) + bonus;
+
+      // Activate user and grant fee waiver
+      db.prepare(`
+        UPDATE users 
+        SET is_activated = 1, 
+            activated_via = 'activation_code', 
+            activation_code = ?,
+            balance = balance + ?
+        WHERE telegram_id = ?
+      `).run(codeObj.code, bonus, telegram_id);
+
+      // Increment usage count
+      db.prepare('UPDATE activation_codes SET used_count = used_count + 1 WHERE id = ?').run(codeObj.id);
+
+      // Record redemption
+      db.prepare('INSERT INTO activation_code_redemptions (code_id, code, telegram_id, bonus_rex, redeemed_at) VALUES (?, ?, ?, ?, ?)')
+        .run(codeObj.id, codeObj.code, telegram_id, bonus, now);
+
+      if (bonus > 0) {
+        recordLedgerEntry({
+          telegram_id,
+          type: 'ACTIVATION_BONUS',
+          amount: bonus,
+          balance_after: newBalance,
+          reference_id: `act_${codeObj.id}_${telegram_id}_${now}`,
+          details: `Activation Code Bonus: ${codeObj.code} (+${bonus} REX)`
+        });
+      }
+
+      return {
+        success: true,
+        code: codeObj.code,
+        bonus_rex: bonus,
+        new_balance: newBalance,
+        is_activated: 1
+      };
+    });
+
+    return tx();
   },
 
   redeemPromoCode: (telegram_id, codeStr) => {

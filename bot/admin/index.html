@@ -655,6 +655,10 @@
           <input type="number" class="form-item-input" id="cfg-min_withdrawal">
         </div>
         <div class="form-item-row">
+          <label>رسوم معالجة وشبكة السحب (REX Fee):</label>
+          <input type="number" class="form-item-input" id="cfg-withdrawal_fee" placeholder="500">
+        </div>
+        <div class="form-item-row">
           <label>نسبة الاحتفاظ المطلوبة في المحفظة On-Chain (%):</label>
           <input type="number" class="form-item-input" id="cfg-hold_percent">
         </div>
@@ -859,7 +863,7 @@
       <div class="table-container">
         <div class="table-top-bar">
           <div class="table-headline">
-            <span>📋</span> الأكواد المنشأة وحالة استخدامها
+            <span>📋</span> أكواد الهدايا المنشأة وحالة استخدامها
             <span id="promoCodesCountBadge" class="nav-counter-badge" style="display:inline-block; margin-right:8px;">0</span>
           </div>
         </div>
@@ -879,6 +883,91 @@
             <tbody id="promoCodesTableBody">
               <tr>
                 <td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">جاري تحميل الأكواد...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ 3. ACTIVATION & FEE-WAIVER CODES (أكواد التفعيل والإعفاء) ════ -->
+      <div class="section-header" style="margin-top:24px;">
+        <div class="section-heading"><span>🔑</span> محرك أكواد التفعيل الملكية (0.1 TON Fee-Waiver Codes)</div>
+        <div class="header-actions">
+          <button class="btn-action-header" onclick="loadAdminActivationCodes()">🔄 تحديث أكواد التفعيل</button>
+        </div>
+      </div>
+      <p style="font-size:12.5px; color:var(--muted-lt); margin:-8px 0 16px 0;">
+        أنشئ أكواد تفعيل خاصة لإعفاء مستخدمين محددين من دفع رسوم التحقق الـ 0.1 TON وفتح المنصة لهم فوراً، مع إمكانية منح بونص REX ترحيبي اختياري.
+      </p>
+
+      <!-- Create Activation Code Card -->
+      <div class="settings-panel-box" style="margin-bottom:20px; border:1px solid rgba(56,189,248,0.25);">
+        <h4 style="display:flex; align-items:center; gap:8px; margin-bottom:14px; color:var(--cyan);">
+          <span>⚡</span> إنشاء كود تفعيل وإعفاء جديد (New Activation Pass)
+        </h4>
+
+        <form id="createActivationForm" onsubmit="handleCreateActivationCode(event)">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:14px;">
+            <div>
+              <label style="display:block; font-size:11.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">رمز كود التفعيل (Code)*</label>
+              <div style="display:flex; gap:6px;">
+                <input type="text" id="actCodeInput" placeholder="مثال: VIP-PASS-2026" required style="width:100%; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); color:#fff; font-size:13px; font-family:'Orbitron', monospace; text-transform:uppercase;">
+                <button type="button" class="btn btn-secondary" style="padding:0 12px; font-size:11px; white-space:nowrap;" onclick="generateRandomActivationCode()">🎲 عشوائي</button>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block; font-size:11.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">أقصى عدد مستخدمين (Max Users)*</label>
+              <input type="number" id="actMaxUses" placeholder="مثال: 10" min="1" required style="width:100%; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); color:#fff; font-size:13px;">
+            </div>
+
+            <div>
+              <label style="display:block; font-size:11.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">مدة الصلاحية*</label>
+              <select id="actDurationSelect" style="width:100%; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); color:#fff; font-size:13px;">
+                <option value="24">24 ساعة (يوم كامل)</option>
+                <option value="72">3 أيام (72 ساعة)</option>
+                <option value="168">7 أيام (أسبوع)</option>
+                <option value="720">30 يوم (شهر)</option>
+                <option value="87600">دائم بدون تاريخ انتهاء</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block; font-size:11.5px; color:var(--muted); font-weight:700; margin-bottom:6px;">مكافأة REX إضافية اختيارية</label>
+              <input type="number" id="actBonusRex" placeholder="0" min="0" value="0" style="width:100%; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); color:#fff; font-size:13px;">
+            </div>
+          </div>
+
+          <button type="submit" id="btnCreateActCode" class="btn btn-gold" style="padding:10px 22px; font-weight:800;">
+            🔑 إنشاء وتفعيل كود الإعفاء فوراً
+          </button>
+        </form>
+      </div>
+
+      <!-- Activation Codes Table Card -->
+      <div class="table-container">
+        <div class="table-top-bar">
+          <div class="table-headline">
+            <span>📋</span> أكواد التفعيل المنشأة وحالة استخدامها
+            <span id="actCodesCountBadge" class="nav-counter-badge" style="display:inline-block; margin-right:8px; background:rgba(56,189,248,0.2); color:var(--cyan);">0</span>
+          </div>
+        </div>
+        <div class="table-scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>رمز كود التفعيل (Code)</th>
+                <th>المكافأة المرفقة</th>
+                <th>مرات الاستخدام</th>
+                <th>نسبة الاستهلاك</th>
+                <th>الوقت المتبقي</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="actCodesTableBody">
+              <tr>
+                <td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">جاري تحميل أكواد التفعيل...</td>
               </tr>
             </tbody>
           </table>
@@ -907,10 +996,35 @@
       <div class="inspector-cell" style="grid-column: span 2;"><div class="inspector-cell-label">شرط الاحتفاظ الإلزامي (3 أيام - 5,000 REX)</div><div class="inspector-cell-val" id="insp-hold-info"></div></div>
     </div>
 
+    <!-- Inline Fast Balance Management Box -->
+    <div style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25); border-radius:14px; padding:14px; margin-bottom:16px;">
+      <div style="font-size:12.5px; font-weight:800; color:var(--gold-lt); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+        <span>💰</span> إدارة وحفظ رصيد المستخدم في المنصة:
+      </div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <!-- Set Exact Balance -->
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:10px;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:5px; font-weight:700;">تعيين الرصيد الكلي المباشر (Set Balance):</div>
+          <div style="display:flex; gap:6px;">
+            <input type="number" id="inspSetBalInput" placeholder="الرصيد الجديد" step="any" min="0" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); border-radius:8px; padding:6px 10px; color:#fff; font-size:12px; font-family:'Orbitron', monospace;">
+            <button class="btn btn-gold" style="padding:6px 12px; font-size:11.5px; white-space:nowrap;" onclick="executeSetBalance()">💾 حفظ</button>
+          </div>
+        </div>
+
+        <!-- Add Amount to Balance -->
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:10px;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:5px; font-weight:700;">إضافة رصيد إضافي (Credit REX):</div>
+          <div style="display:flex; gap:6px;">
+            <input type="number" id="inspAddBalInput" placeholder="+المبلغ" step="any" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); border-radius:8px; padding:6px 10px; color:#fff; font-size:12px; font-family:'Orbitron', monospace;">
+            <button class="btn btn-approve" style="padding:6px 12px; font-size:11.5px; white-space:nowrap;" onclick="executeAddBalance()">➕ إضافة</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
       <button class="btn btn-ban" id="insp-ban-btn" onclick="toggleUserBan()">⛔ حظر الحساب</button>
-      <button class="btn btn-gold" onclick="promptSetBalance()">💰 تعيين الرصيد</button>
-      <button class="btn btn-approve" onclick="promptAddBalance()">➕ إضافة رصيد</button>
       <button class="btn btn-ghost" onclick="resetUserMining()">⚡ إعادة تعيين التعدين</button>
     </div>
 
@@ -1070,7 +1184,7 @@
     else if (id === 'sybil') loadSybilRadar();
     else if (id === 'settings') loadSettings();
     else if (id === 'audit') loadAuditLogs();
-    else if (id === 'promo') { loadAdminPromoCodes(); loadReferralOfferSettings(); }
+    else if (id === 'promo') { loadAdminPromoCodes(); loadReferralOfferSettings(); loadAdminActivationCodes(); }
   }
 
   // ── Overview & Tokenomics ──
@@ -1368,6 +1482,8 @@
     document.getElementById('insp-tid').textContent = u.telegram_id;
     document.getElementById('insp-username').textContent = u.username ? '@' + u.username : 'بلا يوزرنيم';
     document.getElementById('insp-balance').textContent = Number(u.balance).toFixed(2) + ' REX';
+    if (document.getElementById('inspSetBalInput')) document.getElementById('inspSetBalInput').value = u.balance || 0;
+    if (document.getElementById('inspAddBalInput')) document.getElementById('inspAddBalInput').value = '';
     document.getElementById('insp-reserved').textContent = Number(u.reserved_balance || 0).toFixed(2) + ' REX';
     document.getElementById('insp-onchain').textContent = Number(data.onChainRex || 0).toLocaleString() + ' REX';
     document.getElementById('insp-multiplier').textContent = u.mining_multiplier + 'x أضعاف';
@@ -1420,26 +1536,208 @@
     loadUsers(usersPage);
   }
 
-  async function promptSetBalance() {
-    const val = prompt('أدخل الرصيد الجديد (REX):', curInspectUser?.balance || 0);
-    if (val === null) return;
+  // ── Robust Balance Updating Engine ──
+  async function executeSetBalance() {
+    if (!curInspectTid) return toast('⚠️ لم يتم اختيار مستخدم');
+    const input = document.getElementById('inspSetBalInput');
+    const val = input?.value;
+    if (val === '' || val === null || val === undefined) return toast('⚠️ أدخل الرصيد الجديد');
     const amt = parseFloat(val);
-    if (isNaN(amt)) return toast('⚠️ قيمة غير صالحة');
-    await api('/api/admin/set-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
-    toast('✅ تم تحديث الرصيد بنجاح');
-    inspectUser(curInspectTid);
-    loadUsers(usersPage);
+    if (isNaN(amt) || amt < 0) return toast('⚠️ قيمة غير صالحة للرصيد');
+
+    try {
+      const res = await api('/api/admin/set-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
+      if (res && res.success) {
+        toast('✅ تم حفظ وتعيين الرصيد بنجاح: ' + amt.toLocaleString() + ' REX');
+        inspectUser(curInspectTid);
+        loadUsers(usersPage);
+      } else {
+        toast('❌ فشل تعيين الرصيد: ' + (res?.message || 'خطأ غير معروف'));
+      }
+    } catch (err) {
+      toast('❌ خطأ في الاتصال: ' + err.message);
+    }
   }
 
-  async function promptAddBalance() {
-    const val = prompt('أدخل المبلغ المراد إضافته (REX):', 100);
-    if (!val) return;
+  async function executeAddBalance() {
+    if (!curInspectTid) return toast('⚠️ لم يتم اختيار مستخدم');
+    const input = document.getElementById('inspAddBalInput');
+    const val = input?.value;
+    if (!val) return toast('⚠️ أدخل المبلغ المراد إضافته');
     const amt = parseFloat(val);
-    if (isNaN(amt)) return toast('⚠️ قيمة غير صالحة');
-    await api('/api/admin/add-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
-    toast('✅ تمت إضافة المبلغ للرصيد');
-    inspectUser(curInspectTid);
-    loadUsers(usersPage);
+    if (isNaN(amt) || amt === 0) return toast('⚠️ قيمة غير صالحة');
+
+    try {
+      const res = await api('/api/admin/add-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
+      if (res && res.success) {
+        toast('✅ تمت إضافة ' + amt.toLocaleString() + ' REX للرصيد بنجاح!');
+        input.value = '';
+        inspectUser(curInspectTid);
+        loadUsers(usersPage);
+      } else {
+        toast('❌ فشل إضافة الرصيد: ' + (res?.message || 'خطأ غير معروف'));
+      }
+    } catch (err) {
+      toast('❌ خطأ في الاتصال: ' + err.message);
+    }
+  }
+
+  // Legacy fallback aliases
+  async function promptSetBalance() { executeSetBalance(); }
+  async function promptAddBalance() { executeAddBalance(); }
+
+  // ── Admin Activation Codes Management Engine ──
+  function generateRandomActivationCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'REX-VIP-';
+    for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    const input = document.getElementById('actCodeInput');
+    if (input) input.value = code;
+  }
+
+  async function loadAdminActivationCodes() {
+    const tbody = document.getElementById('actCodesTableBody');
+    const badge = document.getElementById('actCodesCountBadge');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--muted);">جاري التحميل...</td></tr>';
+
+    try {
+      const res = await api('/api/admin/activation-codes');
+      const list = res?.activation_codes || [];
+      if (badge) badge.textContent = list.length;
+
+      if (!list.length) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">لا توجد أكواد تفعيل منشأة حتى الآن.</td></tr>';
+        return;
+      }
+
+      if (tbody) {
+        tbody.innerHTML = list.map(c => {
+          const pct = Math.min(100, Math.round((c.used_count / c.max_uses) * 100));
+          let statusBadge = '';
+          if (!c.is_active) {
+            statusBadge = '<span class="badge" style="background:rgba(255,255,255,0.08); color:var(--muted);">⏸️ متوقف</span>';
+          } else if (c.is_expired) {
+            statusBadge = '<span class="badge" style="background:rgba(239,68,68,0.15); color:var(--red);">⏳ منتهي الصلاحية</span>';
+          } else if (c.is_exhausted) {
+            statusBadge = '<span class="badge" style="background:rgba(168,85,247,0.15); color:var(--purple);">🚫 مكتمل الاستخدام</span>';
+          } else {
+            statusBadge = '<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--green);">🟢 متاح ونشط</span>';
+          }
+
+          let timeLeftStr = '';
+          if (c.is_expired) {
+            timeLeftStr = '<span style="color:var(--red);">انتهت الصلاحية</span>';
+          } else {
+            const h = Math.floor(c.remaining_time_ms / 3600000);
+            const d = Math.floor(h / 24);
+            const remH = h % 24;
+            timeLeftStr = d > 0 ? `${d} يوم و ${remH} ساعة` : `${h} ساعة`;
+          }
+
+          return `
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-family:'Orbitron', monospace; font-weight:800; color:var(--cyan); font-size:13px;">${esc(c.code)}</span>
+                  <button class="btn btn-secondary" style="padding:2px 6px; font-size:10px;" onclick="copyPromoCode('${esc(c.code)}')">📋 نسخ</button>
+                </div>
+              </td>
+              <td style="font-weight:700; color:#fff;">
+                إعفاء 0.1 TON ✅
+                ${c.bonus_rex > 0 ? `<div style="font-size:10px; color:var(--gold-lt);">+${Number(c.bonus_rex).toLocaleString()} REX</div>` : ''}
+              </td>
+              <td style="font-weight:700;">
+                ${c.used_count} / ${c.max_uses} مستخدم
+              </td>
+              <td style="min-width:110px;">
+                <div style="background:rgba(255,255,255,0.1); border-radius:6px; height:8px; overflow:hidden; margin-bottom:4px;">
+                  <div style="background:${pct >= 100 ? 'var(--purple)' : 'var(--cyan)'}; width:${pct}%; height:100%;"></div>
+                </div>
+                <div style="font-size:10.5px; color:var(--muted); font-family:'Orbitron', monospace;">${pct}%</div>
+              </td>
+              <td style="font-size:12px;">${timeLeftStr}</td>
+              <td>${statusBadge}</td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="toggleActivationCode(${c.id})">
+                    ${c.is_active ? 'إيقاف' : 'تفعيل'}
+                  </button>
+                  <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteActivationCode(${c.id})">
+                    🗑️ حذف
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    } catch (err) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--red);">فشل التحميل: ${err.message}</td></tr>`;
+    }
+  }
+
+  async function handleCreateActivationCode(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnCreateActCode');
+    const code = document.getElementById('actCodeInput')?.value.trim();
+    const max_uses = document.getElementById('actMaxUses')?.value;
+    const duration_hours = document.getElementById('actDurationSelect')?.value;
+    const bonus_rex = document.getElementById('actBonusRex')?.value || 0;
+
+    if (!code || !max_uses || !duration_hours) {
+      return alert('⚠️ يرجى ملء جميع الحقول المطلوبة');
+    }
+
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await api('/api/admin/activation-codes/create', 'POST', {
+        code,
+        max_uses,
+        duration_hours,
+        bonus_rex
+      });
+
+      if (res && res.success) {
+        alert('✅ ' + (res.message_ar || res.message || 'تم إنشاء كود التفعيل بنجاح!'));
+        document.getElementById('createActivationForm')?.reset();
+        generateRandomActivationCode();
+        loadAdminActivationCodes();
+      } else {
+        alert('❌ ' + (res?.message_ar || res?.message || 'فشل إنشاء كود التفعيل'));
+      }
+    } catch (err) {
+      alert('❌ فشل إنشاء الكود: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function deleteActivationCode(id) {
+    if (!confirm('هل أنت متأكد من حذف كود التفعيل هذا نهائياً؟')) return;
+    try {
+      const res = await api('/api/admin/activation-codes/delete', 'POST', { id });
+      if (res && res.success) {
+        loadAdminActivationCodes();
+      } else {
+        alert('❌ ' + (res?.message || 'فشل الحذف'));
+      }
+    } catch (err) {
+      alert('❌ فشل الحذف: ' + err.message);
+    }
+  }
+
+  async function toggleActivationCode(id) {
+    try {
+      const res = await api('/api/admin/activation-codes/toggle', 'POST', { id });
+      if (res && res.success) {
+        loadAdminActivationCodes();
+      } else {
+        alert('❌ ' + (res?.message || 'فشل التحديث'));
+      }
+    } catch (err) {
+      alert('❌ ' + err.message);
+    }
   }
 
   async function resetUserMining() {
@@ -1587,6 +1885,7 @@
     const cfg = await api('/api/admin/settings');
     if (cfg) {
       document.getElementById('cfg-min_withdrawal').value = cfg.min_withdrawal || '5000';
+      if (document.getElementById('cfg-withdrawal_fee')) document.getElementById('cfg-withdrawal_fee').value = cfg.withdrawal_fee || '500';
       document.getElementById('cfg-hold_percent').value = cfg.hold_percent || '20';
       document.getElementById('cfg-min_hold_rex').value = cfg.min_hold_rex || '5000';
       document.getElementById('cfg-min_hold_days').value = cfg.min_hold_days || '3';
@@ -1600,6 +1899,7 @@
   async function saveSettings() {
     const payload = {
       min_withdrawal: document.getElementById('cfg-min_withdrawal').value,
+      withdrawal_fee: document.getElementById('cfg-withdrawal_fee')?.value || '500',
       hold_percent: document.getElementById('cfg-hold_percent').value,
       min_hold_rex: document.getElementById('cfg-min_hold_rex').value,
       min_hold_days: document.getElementById('cfg-min_hold_days').value,
