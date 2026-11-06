@@ -249,7 +249,8 @@ const safeAlterCols = [
   { table: 'users', col: 'last_checkin_at', def: 'INTEGER DEFAULT 0' },
   { table: 'users', col: 'ref_bonus_awarded', def: 'INTEGER DEFAULT 0' },
   { table: 'withdrawals', col: 'fee', def: 'REAL DEFAULT 500.0' },
-  { table: 'withdrawals', col: 'net_amount', def: 'REAL DEFAULT NULL' }
+  { table: 'withdrawals', col: 'net_amount', def: 'REAL DEFAULT NULL' },
+  { table: 'users', col: 'is_sybil_exempt', def: 'INTEGER DEFAULT 0' }
 ];
 
 for (const m of safeAlterCols) {
@@ -600,7 +601,16 @@ module.exports = {
     } catch (e) {
       console.error('Error clearing device records on unban:', e.message);
     }
-    return db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL, device_fingerprint = NULL WHERE telegram_id = ?').run(telegram_id);
+    return db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL, device_fingerprint = NULL, is_sybil_exempt = 1 WHERE telegram_id = ?').run(telegram_id);
+  },
+  clearSybilConflict: (fingerprint) => {
+    try {
+      db.prepare('DELETE FROM device_fingerprints WHERE fingerprint = ?').run(fingerprint);
+      db.prepare('UPDATE users SET device_fingerprint = NULL, is_banned = 0, ban_reason = NULL, is_sybil_exempt = 1 WHERE device_fingerprint = ?').run(fingerprint);
+      return true;
+    } catch (e) {
+      return false;
+    }
   },
   // Admin Balance & Mining Management
   addBalance: (telegram_id, amount, admin_id = null, reason = 'Admin Adjustment') => {

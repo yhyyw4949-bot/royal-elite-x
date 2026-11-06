@@ -408,11 +408,16 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
   // Anti-Sybil Radar Check
   if (fingerprint && parseInt(telegram_id) !== ADMIN_TG_ID) {
     const isSybilAutoBan = db.getSetting('sybil_auto_ban', '1') === '1';
-    const matched = db.checkFingerprintAccounts(fingerprint);
-    const others = matched.filter(a => a.telegram_id !== telegram_id && a.telegram_id !== ADMIN_TG_ID);
-    if (others.length >= 1 && isSybilAutoBan) {
-      db.banUser(telegram_id, 'تعدد حسابات على نفس الجهاز (Anti-Sybil)');
-      return res.json({ is_banned: true, ban_reason: 'تعدد حسابات على نفس الجهاز' });
+    const isExempt = user && user.is_sybil_exempt === 1;
+
+    if (!isExempt && isSybilAutoBan) {
+      const matched = db.checkFingerprintAccounts(fingerprint);
+      const others = matched.filter(a => a.telegram_id !== telegram_id && a.telegram_id !== ADMIN_TG_ID);
+      if (others.length >= 1) {
+        db.logDevice(telegram_id, fingerprint, ip);
+        db.banUser(telegram_id, 'تعدد حسابات على نفس الجهاز (Anti-Sybil)');
+        return res.json({ is_banned: true, ban_reason: 'تعدد حسابات على نفس الجهاز' });
+      }
     }
     db.logDevice(telegram_id, fingerprint, ip);
   }
@@ -1539,6 +1544,14 @@ app.post('/api/admin/toggle-maintenance', adminAuth, (req, res) => {
 // Sybil Radar
 app.get('/api/admin/sybil-radar', adminAuth, (req, res) => {
   res.json(db.getSybilAlerts());
+});
+
+app.post('/api/admin/sybil/clear', adminAuth, (req, res) => {
+  const { fingerprint } = req.body;
+  if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
+  db.clearSybilConflict(fingerprint);
+  db.logAdminAction('CLEAR_SYBIL_CONFLICT', `مسح تعارض البصمة ${fingerprint} وفك الحظر`, ADMIN_TG_ID);
+  res.json({ success: true });
 });
 
 // Audit Logs
