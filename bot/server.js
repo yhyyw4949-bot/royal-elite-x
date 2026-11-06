@@ -538,6 +538,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     admin_wallet: ADMIN_WALLET,
     contract_address: REX_MASTER_CONTRACT,
     tasks: tasksList,
+    daily_checkin: db.getDailyCheckinStatus(telegram_id),
     vaults: userVaults,
     guild: userGuild,
     referrals_count: db.getReferralsCount(telegram_id),
@@ -1087,6 +1088,49 @@ app.post('/api/user/claim-task', telegramAuth, checkMaintenance, requireChannelS
 });
 
 // ================================================================
+
+// ================================================================
+// 11.B DAILY CHECK-IN SYSTEM (7-Day Consecutive Streak)
+// ================================================================
+app.get('/api/daily-checkin', telegramAuth, (req, res) => {
+  const tid = parseInt(req.query.id || req.body?.telegram_id || req.user?.id);
+  if (!tid) return res.status(400).json({ error: 'Missing telegram_id' });
+  const status = db.getDailyCheckinStatus(tid);
+  res.json(status);
+});
+
+app.post('/api/daily-checkin/claim', telegramAuth, checkMaintenance, requireChannelSubMiddleware, (req, res) => {
+  const { telegram_id } = req.body;
+  const tid = parseInt(telegram_id);
+  if (!tid) return sendMsg(req, res, false, 'معرف المستخدم غير صالح', 'Invalid user ID');
+
+  try {
+    const claimRes = db.claimDailyCheckin(tid);
+    sendMsg(
+      req,
+      res,
+      true,
+      '🎉 تم تسجيل حضورك لليوم ' + claimRes.day + '! حصلت على +' + claimRes.reward + ' REX و +' + claimRes.xp + ' XP! 👑',
+      '🎉 Day ' + claimRes.day + ' Check-In claimed! Received +' + claimRes.reward + ' REX and +' + claimRes.xp + ' XP! 👑',
+      claimRes
+    );
+  } catch (err) {
+    if (err.message === 'COOLDOWN_ACTIVE') {
+      const status = db.getDailyCheckinStatus(tid);
+      const waitH = Math.floor(status.cooldown_remaining / 3600000);
+      const waitM = Math.ceil((status.cooldown_remaining % 3600000) / 60000);
+      return sendMsg(
+        req,
+        res,
+        false,
+        'لقد سجلت حضورك بالفعل اليوم! انتظر ' + waitH + 'س ' + waitM + 'د للمطالبة التالية.',
+        'You have already checked in today! Please wait ' + waitH + 'h ' + waitM + 'm for your next check-in.'
+      );
+    }
+    res.json({ success: false, message: err.message });
+  }
+});
+
 // 12. ADMIN COMMAND CENTER 2.0 (WITH 2FA OTP & AUDIT)
 // ================================================================
 
@@ -1711,6 +1755,55 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
       [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
     ])
   });
+});
+
+
+// Bot Command: Daily Check-In
+bot.command(['checkin', 'daily'], async (ctx) => {
+  if (isMaintenanceActive() && ctx.from.id !== ADMIN_TG_ID) {
+    return ctx.reply('🛠 *System Under Maintenance*\n\nPlease check back shortly! 👑', { parse_mode: 'Markdown' });
+  }
+
+  const tid = ctx.from.id;
+  const status = db.getDailyCheckinStatus(tid);
+
+  if (status.can_claim) {
+    try {
+      const claimRes = db.claimDailyCheckin(tid);
+      const streakIcons = ['🪙', '💰', '💎', '⚡', '🔥', '🏆', '👑'];
+      const icon = streakIcons[claimRes.day - 1] || '🎁';
+      return ctx.reply(
+        '🎉 *تم تسجيل الحضور اليومي بنجاح!* 👑\n\n' +
+        '• اليوم المستلم: *اليوم ' + claimRes.day + '* ' + icon + '\n' +
+        '• المكافأة: *+' + claimRes.reward + ' REX*\n' +
+        '• نقاط الخبرة: *+' + claimRes.xp + ' XP*\n' +
+        '• سلسلة الحضور: *' + claimRes.new_streak + ' أيام متتالية* 🔥\n' +
+        '• رصيدك الإجمالي الآن: *' + Number(claimRes.new_balance).toLocaleString() + ' REX*\n\n' +
+        'احرص على تسجيل الحضور غداً لمكافأة أكبر! 🚀',
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([[Markup.button.webApp('📅 فتح تقويم الحضور في التطبيق', WEBAPP_URL + '?tab=quests')]])
+        }
+      );
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  const waitH = Math.floor(status.cooldown_remaining / 3600000);
+  const waitM = Math.ceil((status.cooldown_remaining % 3600000) / 60000);
+  ctx.reply(
+    '📅 *سجل الحضور الملكي اليومي (Daily Check-in)* 👑\n\n' +
+    '• سلسلة الحضور الحالية: *' + status.current_streak + ' أيام* 🔥\n' +
+    '• اليوم القادم: *اليوم ' + status.next_day + '* (+' + status.today_reward + ' REX)\n' +
+    '• حالة اليوم: *تم الاستلام بنجاح* ✅\n' +
+    '• وقت التجديد: *بعد ' + waitH + ' ساعة و ' + waitM + ' دقيقة* ⏳\n\n' +
+    'سجّل حضورك يومياً للوصول لمكافأة اليوم السابع (1,000 REX)! 🎁',
+    {
+      parse_mode: 'Markdown',
+      ...Markup.inlineKeyboard([[Markup.button.webApp('📅 فتح تقويم الحضور في التطبيق', WEBAPP_URL + '?tab=quests')]])
+    }
+  );
 });
 
 // Bot Command: Top 10 Currency Holders Leaderboard

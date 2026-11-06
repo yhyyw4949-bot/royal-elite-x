@@ -219,7 +219,9 @@ const safeAlterCols = [
   { table: 'transactions', col: 'balance_after', def: 'REAL DEFAULT 0.0' },
   { table: 'transactions', col: 'reference_id', def: 'TEXT' },
   { table: 'admin_audit_logs', col: 'admin_id', def: 'INTEGER DEFAULT 0' },
-  { table: 'admin_audit_logs', col: 'ip', def: 'TEXT' }
+  { table: 'admin_audit_logs', col: 'ip', def: 'TEXT' },
+  { table: 'users', col: 'daily_streak', def: 'INTEGER DEFAULT 0' },
+  { table: 'users', col: 'last_checkin_at', def: 'INTEGER DEFAULT 0' }
 ];
 
 for (const m of safeAlterCols) {
@@ -1309,6 +1311,153 @@ module.exports = {
 
   getLeaderboard: () => {
     return module.exports.getTopHolders(7082457308, 10);
+  },
+
+  // ── Daily Check-In System (7-Day Consecutive Streak) ──
+  getDailyCheckinStatus: (telegram_id) => {
+    const DAILY_CHECKIN_DAYS = [
+      { day: 1, reward: 50,  xp: 10, icon: '🪙', title_ar: 'اليوم 1', title_en: 'Day 1' },
+      { day: 2, reward: 100, xp: 15, icon: '💰', title_ar: 'اليوم 2', title_en: 'Day 2' },
+      { day: 3, reward: 150, xp: 20, icon: '💎', title_ar: 'اليوم 3', title_en: 'Day 3' },
+      { day: 4, reward: 250, xp: 30, icon: '⚡', title_ar: 'اليوم 4', title_en: 'Day 4' },
+      { day: 5, reward: 400, xp: 45, icon: '🔥', title_ar: 'اليوم 5', title_en: 'Day 5' },
+      { day: 6, reward: 600, xp: 60, icon: '🏆', title_ar: 'اليوم 6', title_en: 'Day 6' },
+      { day: 7, reward: 1000, xp: 100, icon: '👑', title_ar: 'اليوم 7 (مكافأة ملكية)', title_en: 'Day 7 (Grand Prize)' }
+    ];
+
+    const user = db.prepare('SELECT daily_streak, last_checkin_at, balance, xp_points FROM users WHERE telegram_id = ?').get(telegram_id);
+    const now = Date.now();
+    const lastCheckin = user?.last_checkin_at || 0;
+    let currentStreak = user?.daily_streak || 0;
+
+    const COOLDOWN_MS = 24 * 3600 * 1000; // 24 hours
+    const EXPIRE_MS = 48 * 3600 * 1000;   // 48 hours
+
+    let canClaim = false;
+    let cooldownRemaining = 0;
+
+    if (lastCheckin === 0) {
+      canClaim = true;
+      currentStreak = 0;
+    } else {
+      const elapsed = now - lastCheckin;
+      if (elapsed < COOLDOWN_MS) {
+        canClaim = false;
+        cooldownRemaining = COOLDOWN_MS - elapsed;
+      } else if (elapsed <= EXPIRE_MS) {
+        canClaim = true;
+      } else {
+        canClaim = true;
+        currentStreak = 0;
+      }
+    }
+
+    let nextDayNum = (currentStreak % 7) + 1;
+    let todayReward = DAILY_CHECKIN_DAYS[nextDayNum - 1];
+
+    const days = DAILY_CHECKIN_DAYS.map((d) => {
+      let isClaimed = false;
+      let isCurrent = false;
+      let isLocked = false;
+
+      if (!canClaim) {
+        const cycleProgress = currentStreak % 7 === 0 ? 7 : currentStreak % 7;
+        if (d.day <= cycleProgress) isClaimed = true;
+        else isLocked = true;
+      } else {
+        const cycleProgress = currentStreak % 7;
+        if (d.day <= cycleProgress) isClaimed = true;
+        else if (d.day === nextDayNum) isCurrent = true;
+        else isLocked = true;
+      }
+
+      return {
+        ...d,
+        is_claimed: isClaimed,
+        is_current: isCurrent,
+        is_locked: isLocked
+      };
+    });
+
+    return {
+      current_streak: currentStreak,
+      can_claim: canClaim,
+      cooldown_remaining: cooldownRemaining,
+      last_checkin_at: lastCheckin,
+      next_day: nextDayNum,
+      today_reward: todayReward.reward,
+      today_xp: todayReward.xp,
+      days
+    };
+  },
+
+  claimDailyCheckin: (telegram_id) => {
+    const DAILY_CHECKIN_DAYS = [
+      { day: 1, reward: 50,  xp: 10 },
+      { day: 2, reward: 100, xp: 15 },
+      { day: 3, reward: 150, xp: 20 },
+      { day: 4, reward: 250, xp: 30 },
+      { day: 5, reward: 400, xp: 45 },
+      { day: 6, reward: 600, xp: 60 },
+      { day: 7, reward: 1000, xp: 100 }
+    ];
+
+    const tx = db.transaction(() => {
+      const user = db.prepare('SELECT telegram_id, balance, xp_points, daily_streak, last_checkin_at FROM users WHERE telegram_id = ?').get(telegram_id);
+      if (!user) throw new Error('USER_NOT_FOUND');
+
+      const now = Date.now();
+      const lastCheckin = user.last_checkin_at || 0;
+      let currentStreak = user.daily_streak || 0;
+
+      const COOLDOWN_MS = 24 * 3600 * 1000;
+      const EXPIRE_MS = 48 * 3600 * 1000;
+
+      if (lastCheckin > 0) {
+        const elapsed = now - lastCheckin;
+        if (elapsed < COOLDOWN_MS) {
+          throw new Error('COOLDOWN_ACTIVE');
+        } else if (elapsed > EXPIRE_MS) {
+          currentStreak = 0;
+        }
+      }
+
+      const nextDay = (currentStreak % 7) + 1;
+      const rewardConfig = DAILY_CHECKIN_DAYS[nextDay - 1];
+      const reward = rewardConfig.reward;
+      const xp = rewardConfig.xp;
+      const newStreak = nextDay;
+
+      const newBalance = (user.balance || 0) + reward;
+
+      db.prepare(`
+        UPDATE users 
+        SET balance = balance + ?, 
+            xp_points = xp_points + ?, 
+            daily_streak = ?, 
+            last_checkin_at = ? 
+        WHERE telegram_id = ?
+      `).run(reward, xp, newStreak, now, telegram_id);
+
+      recordLedgerEntry({
+        telegram_id,
+        type: 'DAILY_CHECKIN',
+        amount: reward,
+        balance_after: newBalance,
+        reference_id: `checkin_${telegram_id}_${now}`,
+        details: `Day ${nextDay} Daily Check-In (+${reward} REX, +${xp} XP)`
+      });
+
+      return {
+        reward,
+        xp,
+        new_streak: newStreak,
+        new_balance: newBalance,
+        day: nextDay
+      };
+    });
+
+    return tx();
   },
   getWithdrawals: (telegram_id) => db.prepare('SELECT * FROM withdrawals WHERE telegram_id = ? ORDER BY created_at DESC LIMIT 15').all(telegram_id),
   getUserTasks: (telegram_id) => db.prepare('SELECT * FROM user_tasks WHERE telegram_id = ?').all(telegram_id),

@@ -954,21 +954,45 @@
     </div>
   </div>
 
-  <!-- ════ TAB: QUESTS ════ -->
+  <!-- ════ TAB: DAILY CHECK-IN ════ -->
   <div id="tab-quests" class="tab-panel">
     <div class="card">
       <div class="card-head">
         <div class="card-title">
-          <span class="card-title-icon">📜</span>
-          <span id="questsTitle">Repeatable Royal Quests</span>
+          <span class="card-title-icon">📅</span>
+          <span id="questsTitle">Daily Sovereign Check-in</span>
         </div>
-        <span style="font-size:11px;color:var(--gold-lt);font-weight:800;">Recurring</span>
+        <span class="badge" style="background:rgba(245,158,11,0.15); color:var(--gold-lt); border:1px solid rgba(245,158,11,0.3); font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:8px;">7-DAY STREAK</span>
       </div>
       <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;" id="questsDesc">
-        Complete quests to earn instant REX rewards and accelerate your platform growth.
+        Check in daily to build your streak and earn escalating REX rewards up to 1,000 REX on Day 7!
       </p>
-      <div id="questsContainer">
-        <div style="text-align:center;padding:24px;color:var(--muted)">Loading royal quests...</div>
+
+      <!-- Streak Header Banner -->
+      <div style="background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(168,85,247,0.12)); border:1px solid rgba(245,158,11,0.25); border-radius:16px; padding:14px 16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="font-size:28px;">🔥</div>
+          <div>
+            <div style="font-size:11px; color:var(--muted-lt); font-weight:700;" id="lblStreakTitle">Current Attendance Streak</div>
+            <div style="font-size:16px; font-weight:900; color:#fff;" id="checkinStreakText">0 Days Streak</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px; color:var(--gold-lt); font-weight:800;" id="lblGrandPrize">GRAND PRIZE</div>
+          <div style="font-family:'Orbitron', monospace; font-size:14px; font-weight:900; color:var(--gold-lt);">1,000 REX</div>
+        </div>
+      </div>
+
+      <!-- 7-Day Grid -->
+      <div id="checkinGrid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:14px;">
+        <div style="text-align:center;padding:24px;color:var(--muted);grid-column:span 3;">Loading daily rewards...</div>
+      </div>
+
+      <!-- Action Claim Button -->
+      <div id="checkinBtnContainer">
+        <button id="btnDailyCheckin" class="action-btn btn-gold" style="width:100%; padding:14px; font-size:14px; font-weight:900;" onclick="claimDailyCheckin()">
+          🎁 <span id="btnDailyText">Claim Today's Reward</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1486,7 +1510,7 @@
     <span class="nav-icon">⛏️</span><span id="navMineText">Mining</span>
   </div>
   <div class="nav-btn" id="btn-tab-quests" onclick="switchTab('tab-quests', this)">
-    <span class="nav-icon">📜</span><span id="navQuestsText">Quests</span>
+    <span class="nav-icon">📅</span><span id="navQuestsText">Check-in</span>
   </div>
 
   <!-- CENTER GLOW MENU BUTTON -->
@@ -1825,7 +1849,7 @@
     }
 
     // Quests & Withdrawals
-    renderQuests(d.tasks);
+    renderDailyCheckin(d.daily_checkin);
     renderWithdrawHistory(d.withdrawal_history);
 
     // Total Gatekeeper Lockdown
@@ -2025,44 +2049,85 @@
     }
   }
 
-  // ── Render Quests ──
-  function renderQuests(tasks) {
-    const container = document.getElementById('questsContainer');
-    if (!container) return;
-    if (!tasks || !tasks.length) {
-      container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);">${currentLang === 'ar' ? '⏳ جاري تجهيز المهام الملكية...' : '⏳ Preparing royal quests...'}</div>`;
+    // ── Render Daily Check-In ──
+  function renderDailyCheckin(data) {
+    const grid = document.getElementById('checkinGrid');
+    const streakEl = document.getElementById('checkinStreakText');
+    const btnContainer = document.getElementById('checkinBtnContainer');
+    const isAr = currentLang === 'ar';
+    if (!grid) return;
+
+    if (!data) {
+      grid.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);grid-column:span 3;">${isAr ? '⏳ جاري تحميل بيانات الحضور...' : '⏳ Loading check-in data...'}</div>`;
       return;
     }
-    container.innerHTML = tasks.map(t => {
-      const btnHtml = t.is_ready
-        ? `<button class="action-btn btn-gold" style="padding:7px 16px; font-size:12px; width:auto;" onclick="claimQuest('${t.id}')">✨ ${currentLang === 'ar' ? 'استلام' : 'Claim'}</button>`
-        : (() => {
-            const rem = t.cooldown_remaining || 0;
-            const h = Math.floor(rem / 3600000), m = Math.ceil((rem % 3600000) / 60000);
-            return `<button class="action-btn" style="padding:7px 16px; font-size:12px; width:auto; background:rgba(255,255,255,0.06); color:var(--muted); border:1px solid rgba(255,255,255,0.1);" disabled>⏳ ${h > 0 ? h + 'h ' : ''}${m}m</button>`;
-          })();
 
-      const qTitle = (currentLang === 'en' ? (t.name_en || t.name) : (t.name_ar || t.name));
+    if (streakEl) {
+      streakEl.textContent = isAr 
+        ? `${data.current_streak} ${data.current_streak === 1 ? 'يوم' : 'أيام'} متتالية`
+        : `${data.current_streak} Day${data.current_streak === 1 ? '' : 's'} Streak`;
+    }
+
+    const days = data.days || [];
+    grid.innerHTML = days.map((d) => {
+      const isDay7 = d.day === 7;
+      let cardBorder = 'rgba(255,255,255,0.08)';
+      let cardBg = 'rgba(14,22,42,0.65)';
+      let badgeHtml = '';
+
+      if (d.is_claimed) {
+        cardBorder = 'rgba(16,185,129,0.35)';
+        cardBg = 'rgba(16,185,129,0.08)';
+        badgeHtml = `<span style="font-size:10px; color:#10b981; font-weight:800;">✅ ${isAr ? 'تم' : 'Claimed'}</span>`;
+      } else if (d.is_current) {
+        cardBorder = 'rgba(245,158,11,0.6)';
+        cardBg = 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(168,85,247,0.15))';
+        badgeHtml = `<span style="font-size:10px; color:var(--gold-lt); font-weight:900;">🎁 ${isAr ? 'متاح الآن' : 'Ready'}</span>`;
+      } else {
+        badgeHtml = `<span style="font-size:10px; color:var(--muted); font-weight:700;">🔒 ${isAr ? 'مغلق' : 'Locked'}</span>`;
+      }
+
+      const gridSpan = isDay7 ? 'grid-column: span 3;' : '';
+
       return `
-        <div style="background:rgba(14,22,42,0.65); border:1px solid rgba(245,158,11,0.18); border-radius:16px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div style="width:42px; height:42px; border-radius:14px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); display:flex; align-items:center; justify-content:center; font-size:20px;">${t.icon}</div>
-            <div>
-              <div style="font-size:13.5px; font-weight:800; color:#fff;">${qTitle}</div>
-              <div style="font-size:11px; font-weight:800; color:var(--gold-lt);">🎁 +${t.reward} REX</div>
-            </div>
+        <div style="${gridSpan} background:${cardBg}; border:1px solid ${cardBorder}; border-radius:14px; padding:12px 10px; text-align:center; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+          <div style="font-size:11px; font-weight:800; color:${d.is_current ? 'var(--gold-lt)' : 'var(--muted-lt)'}; margin-bottom:4px;">
+            ${isAr ? `اليوم ${d.day}` : `Day ${d.day}`}
           </div>
-          ${btnHtml}
+          <div style="font-size:${isDay7 ? '28px' : '22px'}; margin:4px 0;">${d.icon || '🎁'}</div>
+          <div style="font-family:'Orbitron', monospace; font-size:${isDay7 ? '14px' : '12px'}; font-weight:900; color:${d.is_claimed ? '#10b981' : (d.is_current ? '#fff' : 'var(--gold-lt)')};">
+            +${d.reward} <span style="font-size:9px; color:var(--muted);">REX</span>
+          </div>
+          <div style="margin-top:6px;">${badgeHtml}</div>
         </div>
       `;
     }).join('');
+
+    if (btnContainer) {
+      if (data.can_claim) {
+        btnContainer.innerHTML = `
+          <button class="action-btn btn-gold" style="width:100%; padding:14px; font-size:14px; font-weight:900; box-shadow:0 0 20px rgba(245,158,11,0.3);" onclick="claimDailyCheckin()">
+            🎁 ${isAr ? `استلام مكافأة اليوم (+${data.today_reward} REX)` : `Claim Day ${data.next_day} (+${data.today_reward} REX)`}
+          </button>
+        `;
+      } else {
+        const rem = data.cooldown_remaining || 0;
+        const h = Math.floor(rem / 3600000);
+        const m = Math.ceil((rem % 3600000) / 60000);
+        btnContainer.innerHTML = `
+          <button class="action-btn" style="width:100%; padding:14px; font-size:13px; font-weight:800; background:rgba(255,255,255,0.06); color:var(--muted); border:1px solid rgba(255,255,255,0.1);" disabled>
+            ⏳ ${isAr ? `الحضور القادم متاح بعد: ${h}س ${m}د` : `Next Check-in in: ${h}h ${m}m`}
+          </button>
+        `;
+      }
+    }
   }
 
-  async function claimQuest(taskId) {
+  async function claimDailyCheckin() {
     haptic('success');
-    const r = await api('/api/user/claim-task', { telegram_id: user.id, task_id: taskId });
+    const r = await api('/api/daily-checkin/claim', { telegram_id: user.id });
     if (r.success) {
-      confetti({ particleCount: 75, spread: 60, origin: { y: 0.65 } });
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
       playWin();
       const msg = currentLang === 'en' ? (r.message_en || r.message) : (r.message_ar || r.message);
       toast(msg);
@@ -3106,8 +3171,8 @@
     
     // Immediate render to prevent white screen flash
     if (id === 'tab-quests') {
-      if (userData?.tasks?.length) {
-        renderQuests(userData.tasks);
+      if (userData?.daily_checkin) {
+        renderDailyCheckin(userData.daily_checkin);
       }
       fetchUserData();
     }
@@ -3323,8 +3388,11 @@
       setElText('mineBtnText', 'Start Royal Mining Cycle (24h)');
 
       // Quests Tab
-      setElText('questsTitle', 'Repeatable Royal Quests');
-      setElText('questsDesc', 'Complete recurring quests to earn instant REX rewards.');
+      setElText('questsTitle', 'Daily Sovereign Check-in');
+      setElText('questsDesc', 'Check in daily to build your streak and earn escalating REX rewards up to 1,000 REX on Day 7!');
+      setElText('lblStreakTitle', 'Current Attendance Streak');
+      setElText('lblGrandPrize', 'GRAND PRIZE');
+      setElText('navQuestsText', 'Check-in');
 
       // Withdraw Tab
       setElText('wdTitle', 'REX Withdrawal Center');
@@ -3452,8 +3520,11 @@
       setElText('mineBtnText', 'ابدأ دورة التعدين الملكي (24 ساعة)');
 
       // Quests Tab
-      setElText('questsTitle', 'المهام الملكية المتجددة');
-      setElText('questsDesc', 'أكمل المهام اليومية لكسب مكافآت REX فورية.');
+      setElText('questsTitle', 'تسجيل الحضور اليومي الملكي');
+      setElText('questsDesc', 'سجّل حضورك يومياً لزيادة سلسلة أيامك وربح مكافآت REX متصاعدة تصل إلى 1,000 REX في اليوم السابع!');
+      setElText('lblStreakTitle', 'سلسلة الحضور المتتالي');
+      setElText('lblGrandPrize', 'الجائزة الكبرى');
+      setElText('navQuestsText', 'تسجيل يومي');
 
       // Withdraw Tab
       setElText('wdTitle', 'مركز سحب REX الملكي');
