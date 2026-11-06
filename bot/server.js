@@ -77,6 +77,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'admin', 'index.html'));
 });
 
+// Serve Burn Tool
+app.get(['/burn', '/burn.html'], (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'public', 'burn.html'));
+});
+
 // ── Mandatory Channel Subscription Helpers ──
 function getRequiredChannel() {
   return process.env.REQUIRED_CHANNEL || db.getSetting('required_channel', '@REXCEO1A');
