@@ -770,8 +770,13 @@
       <span class="status-dot-blink"></span>
       <span id="lblHeaderNet">TON Mainnet</span>
     </div>
-    <div class="header-wallet-wrap">
-      <div id="tonConnectBtn"></div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div id="headerBalancePill" style="display:none; align-items:center; gap:5px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:3px 9px; font-family:'Orbitron', monospace; font-size:11.5px; font-weight:900; color:var(--gold-lt);">
+        👑 <span id="headerBalance">0.00</span> REX
+      </div>
+      <div class="header-wallet-wrap">
+        <div id="tonConnectBtn"></div>
+      </div>
     </div>
   </div>
 </header>
@@ -779,90 +784,6 @@
 <!-- ═══════════════════════════════ SCROLL VIEW ═══════════════════════════════ -->
 <div class="main-scroll" id="mainScroll">
 
-  <!-- ════ HERO VAULT CARD ════ -->
-  <div class="vault-card" id="vaultCard" style="display:none">
-    <div class="vault-top">
-      <div class="vault-badge" id="vaultBadgeText">👑 Available Royal Balance · REX</div>
-      <div class="vault-multiplier" id="vaultMultiplierPill">⚡ <span id="multLabel">Multiplier:</span> <span id="multVal">1.0</span>x</div>
-    </div>
-
-    <div class="vault-balance-wrap">
-      <img src="https://iili.io/nsECVNn.jpg" class="vault-coin-img" alt="REX">
-      <div class="vault-balance-num" id="heroBalance">0.00</div>
-      <div class="vault-balance-symbol">REX</div>
-    </div>
-
-    <div class="vault-rates-row">
-      <div class="rate-pill">
-        <span class="pulse-dot"></span>
-        <strong id="hourlyRateVal">4.17</strong>
-        <span id="hourlyRateUnit">REX / hour</span>
-      </div>
-      <div class="rate-pill">
-        <span class="pulse-dot"></span>
-        <strong id="dailyRateVal">100.0</strong>
-        <span id="dailyRateUnit">REX / day</span>
-      </div>
-    </div>
-
-    <!-- Sovereign Holding Tier Banner & Interactive Progress -->
-    <div class="vault-tier-bar" id="vaultTierBar" onclick="openModal('tiersModal')" title="10% Daily HODL Yield">
-      <div class="tier-badge-row">
-        <div class="tier-badge-pill" id="tierBadgePill">
-          <span id="tierBadgeIcon">💎</span>
-          <span id="tierBadgeName">10% Daily HODL Yield</span>
-          <span class="tier-mult-tag" id="tierBadgeMult">10%/day</span>
-        </div>
-        <div class="tier-tap-hint" id="tierTapHint">Yield Calculator ❯</div>
-      </div>
-      <div class="tier-progress-track">
-        <div class="tier-progress-fill" id="tierProgressFill" style="width: 0%;"></div>
-      </div>
-      <div class="tier-progress-sub" id="tierProgressSub">Hold REX in your TON wallet to earn 10% daily mining yield!</div>
-    </div>
-
-    <!-- Dual On-Chain Asset Bar -->
-    <div class="vault-onchain-bar">
-      <div class="onchain-item">
-        <span class="label" id="lblOnChainWallet">TON Wallet:</span>
-        <span class="val" id="onChainTon">— TON</span>
-      </div>
-      <div class="onchain-item">
-        <span class="label">REX On-Chain:</span>
-        <span class="val rex" id="onChainRex">— REX</span>
-      </div>
-    </div>
-
-    <!-- Live Market Ticker & Chart Pill -->
-    <div class="market-price-pill" onclick="openChartModal()" style="margin-top: 12px; padding: 10px 14px; background: rgba(15,23,42,0.85); border: 1px solid rgba(234,179,8,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 16px;">📈</span>
-        <div>
-          <div style="font-size: 10.5px; color: var(--muted); font-weight: 700;" id="lblLivePriceTitle">سعر REX المباشر:</div>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-family: Orbitron; font-size: 13px; font-weight: 900; color: #fff;" id="livePriceUsd">$0.000626</span>
-            <span style="font-size: 10.5px; color: var(--cyan);" id="livePriceTon">(0.00057 TON)</span>
-          </div>
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span id="livePriceChange" class="badge-green" style="font-size: 11px; font-weight: 800; padding: 3px 7px;">+8.28% 🟢</span>
-        <span style="color: var(--gold-lt); font-size: 11px; font-weight: 800;" id="lblTapChartHint">الشارت ❯</span>
-      </div>
-    </div>
-
-    <!-- Royal Promo Code Fast Redeem Banner -->
-    <div class="promo-quick-banner" onclick="openModal('redeemPromoModal')" style="margin-top: 10px; padding: 11px 14px; background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(168,85,247,0.18)); border: 1px solid rgba(245,158,11,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.12); transition: all 0.2s ease;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 20px;">🎟️</span>
-        <div>
-          <div style="font-size: 12px; font-weight: 900; color: #fff;" id="bannerRedeemTitle">استرداد كود الهدية (Promo Code)</div>
-          <div style="font-size: 10px; color: var(--gold-lt); font-weight: 700;" id="bannerRedeemSub">لديك كود ترويجي؟ اضغط هنا للحصول على عملات REX فوراً ❯</div>
-        </div>
-      </div>
-      <span class="badge" style="background: rgba(245,158,11,0.25); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.4);">REDEEM</span>
-    </div>
-  </div>
 
   <!-- ════ CHANNEL SUBSCRIPTION GATE (SOVEREIGN CHANNEL LOCK) ════ -->
   <div id="channelGateScreen" style="display:none; padding: 32px 18px 24px; margin: 20px auto; max-width: 440px; text-align: center; background: rgba(13,20,38,0.95); border: 1px solid rgba(234,179,8,0.3); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
@@ -933,6 +854,79 @@
 
   <!-- ════ TAB: MINING ════ -->
   <div id="tab-mine" class="tab-panel">
+    <!-- ════ HERO VAULT CARD ════ -->
+    <div class="vault-card" id="vaultCard" style="display:none">
+      <div class="vault-top">
+        <div class="vault-badge" id="vaultBadgeText">👑 Available Royal Balance · REX</div>
+        <div class="vault-multiplier" id="vaultMultiplierPill">⚡ <span id="multLabel">Multiplier:</span> <span id="multVal">1.0</span>x</div>
+      </div>
+  
+      <div class="vault-balance-wrap">
+        <img src="https://iili.io/nsECVNn.jpg" class="vault-coin-img" alt="REX">
+        <div class="vault-balance-num" id="heroBalance">0.00</div>
+        <div class="vault-balance-symbol">REX</div>
+      </div>
+  
+      <div class="vault-rates-row">
+        <div class="rate-pill">
+          <span class="pulse-dot"></span>
+          <strong id="hourlyRateVal">4.17</strong>
+          <span id="hourlyRateUnit">REX / hour</span>
+        </div>
+        <div class="rate-pill">
+          <span class="pulse-dot"></span>
+          <strong id="dailyRateVal">100.0</strong>
+          <span id="dailyRateUnit">REX / day</span>
+        </div>
+      </div>
+  
+      <!-- Sovereign Holding Tier Banner & Interactive Progress -->
+      <div class="vault-tier-bar" id="vaultTierBar" onclick="openModal('tiersModal')" title="10% Daily HODL Yield">
+        <div class="tier-badge-row">
+          <div class="tier-badge-pill" id="tierBadgePill">
+            <span id="tierBadgeIcon">💎</span>
+            <span id="tierBadgeName">10% Daily HODL Yield</span>
+            <span class="tier-mult-tag" id="tierBadgeMult">10%/day</span>
+          </div>
+          <div class="tier-tap-hint" id="tierTapHint">Yield Calculator ❯</div>
+        </div>
+        <div class="tier-progress-track">
+          <div class="tier-progress-fill" id="tierProgressFill" style="width: 0%;"></div>
+        </div>
+        <div class="tier-progress-sub" id="tierProgressSub">Hold REX in your TON wallet to earn 10% daily mining yield!</div>
+      </div>
+  
+      <!-- Dual On-Chain Asset Bar -->
+      <div class="vault-onchain-bar">
+        <div class="onchain-item">
+          <span class="label" id="lblOnChainWallet">TON Wallet:</span>
+          <span class="val" id="onChainTon">— TON</span>
+        </div>
+        <div class="onchain-item">
+          <span class="label">REX On-Chain:</span>
+          <span class="val rex" id="onChainRex">— REX</span>
+        </div>
+      </div>
+  
+      <!-- Live Market Ticker & Chart Pill -->
+      <div class="market-price-pill" onclick="openChartModal()" style="margin-top: 12px; padding: 10px 14px; background: rgba(15,23,42,0.85); border: 1px solid rgba(234,179,8,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 16px;">📈</span>
+          <div>
+            <div style="font-size: 10.5px; color: var(--muted); font-weight: 700;" id="lblLivePriceTitle">سعر REX المباشر:</div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-family: Orbitron; font-size: 13px; font-weight: 900; color: #fff;" id="livePriceUsd">$0.000626</span>
+              <span style="font-size: 10.5px; color: var(--cyan);" id="livePriceTon">(0.00057 TON)</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="livePriceChange" class="badge-green" style="font-size: 11px; font-weight: 800; padding: 3px 7px;">+8.28% 🟢</span>
+          <span style="color: var(--gold-lt); font-size: 11px; font-weight: 800;" id="lblTapChartHint">الشارت ❯</span>
+        </div>
+      </div>
+  
+    </div>
     <div id="miningCore" style="display:none">
 
       <div class="orbit-stage" onclick="tapCore()">
@@ -969,14 +963,7 @@
         ⚡ <span id="mineBtnText">Start Royal Mining Cycle (24h)</span>
       </button>
 
-      <div style="margin-top: 10px; display: flex; gap: 8px;">
-        <button class="action-btn" style="flex:1; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); color:var(--gold-lt); font-size:12px; font-weight:800; padding:11px; border-radius:14px;" onclick="openModal('redeemPromoModal')">
-          🎟️ <span id="btnQuickRedeem">استرداد كود هدية</span>
-        </button>
-        <button class="action-btn" style="flex:1; background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.3); color:var(--cyan); font-size:12px; font-weight:800; padding:11px; border-radius:14px;" onclick="openChartModal()">
-          📊 <span id="btnQuickChart">شارت وسعر السوق</span>
-        </button>
-      </div>
+      
 
     </div>
   </div>
@@ -1058,7 +1045,7 @@
         </div>
       </div>
 
-      <div id="refOfferBanner"></div>
+      
       <div class="metric-grid-dual">
         <div class="metric-box">
           <div class="metric-box-label" id="lblBotBal">Platform Balance</div>
@@ -1168,6 +1155,7 @@
 
   <!-- ════ TAB: FRIENDS ════ -->
   <div id="tab-friends" class="tab-panel">
+    <div id="refOfferBanner"></div>
     <div class="card">
       <div class="card-head">
         <div class="card-title">
@@ -3304,6 +3292,10 @@
       target.style.display = 'block';
     }
     if (el) el.classList.add('active');
+
+    // Scroll smoothly to top of newly active full page
+    const ms = document.getElementById('mainScroll');
+    if (ms) ms.scrollTop = 0;
     
     // Immediate render to prevent white screen flash
     if (id === 'tab-quests') {
@@ -3561,7 +3553,7 @@
 
       // Bottom Nav
       setElText('navMineText', 'Mining');
-      setElText('navQuestsText', 'Rewards & Codes');
+      setElText('navQuestsText', 'Rewards');
       setElText('bannerRedeemTitle', 'Redeem Promo Code 🎟️');
       setElText('bannerRedeemSub', 'Have a promo code? Tap here to claim instant REX rewards ❯');
       setElText('centerMenuLabel', typeof isHubOpen !== 'undefined' && isHubOpen ? 'Close' : 'Menu');
@@ -3711,7 +3703,7 @@
 
       // Bottom Nav
       setElText('navMineText', 'التعدين');
-      setElText('navQuestsText', 'الهدايا والأكواد');
+      setElText('navQuestsText', 'الهدايا');
       setElText('bannerRedeemTitle', 'استرداد كود الهدية (Promo Code) 🎟️');
       setElText('bannerRedeemSub', 'لديك كود ترويجي؟ اضغط هنا للحصول على عملات REX فوراً ❯');
       setElText('centerMenuLabel', typeof isHubOpen !== 'undefined' && isHubOpen ? 'إغلاق' : 'القائمة');
