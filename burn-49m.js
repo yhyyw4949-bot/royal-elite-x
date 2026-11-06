@@ -7,7 +7,7 @@ const { TonClient, WalletContractV5R1, internal, toNano, beginCell, Address } = 
 const { mnemonicToPrivateKey } = require('@ton/crypto');
 require('dotenv').config();
 
-// User's Jetton Wallet for REX Master EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH
+// User's Jetton Wallet for REX Master EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53
 const JETTON_WALLET = 'EQCXg7AHCnD_H583YOXCpyKtEBmBzI0qxjs1owABt7itRYzg';
 const AMOUNT_REX = 49_000_000n;
 const DECIMALS = 9n;

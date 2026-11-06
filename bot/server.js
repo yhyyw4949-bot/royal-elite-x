@@ -26,7 +26,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN || '9206918976:AAEiNUzrcB_RwhyYuMzCLZsym
 const ADMIN_WALLET = process.env.ADMIN_WALLET || 'UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz';
 const ADMIN_TG_ID = parseInt(process.env.ADMIN_TG_ID || '7082457308', 10);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'REX_ADMIN_2026';
-const REX_MASTER_CONTRACT = process.env.REX_MASTER_CONTRACT || 'EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH';
+const REX_MASTER_CONTRACT = process.env.REX_MASTER_CONTRACT || 'EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53';
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://royal-elite-x.onrender.com';
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const TONCENTER_ENDPOINT = process.env.TONCENTER_ENDPOINT || 'https://toncenter.com/api/v2/jsonRPC';
@@ -2106,7 +2106,7 @@ bot.command(['whitepaper', 'wp'], (ctx) => {
       ...Markup.inlineKeyboard([
         [Markup.button.webApp('📖 Open Whitepaper in Mini App', `${WEBAPP_URL}?modal=whitepaper`)],
         [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')],
-        [Markup.button.url('🦄 Trade REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')]
+        [Markup.button.url('🦄 Trade REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53')]
       ])
     }
   );
@@ -2138,7 +2138,7 @@ bot.command(['tiers', 'levels', 'boost', 'holding', 'yield'], (ctx) => {
     parse_mode: 'Markdown',
     ...Markup.inlineKeyboard([
       [Markup.button.webApp('💎 Open Yield Calculator in Mini App', `${WEBAPP_URL}?modal=tiers`)],
-      [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')],
+      [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53')],
       [Markup.button.url('📊 Live DexScreener Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
     ])
   });
@@ -2336,7 +2336,7 @@ bot.command(['top', 'leaderboard', 'holders', 'top10', 'whales'], (ctx) => {
     parse_mode: 'Markdown',
     ...Markup.inlineKeyboard([
       [Markup.button.webApp('🏆 View Full Leaderboard in App', `${WEBAPP_URL}?tab=friends`)],
-      [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH')],
+      [Markup.button.url('🛒 Buy REX on STON.fi DEX', 'https://app.ston.fi/swap?chartVisible=true&ft=EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c&tt=EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53')],
       [Markup.button.url('📊 DexScreener Live Chart', 'https://dexscreener.com/ton/eqaknyk6b1pgiecbwkxg5d7c137epx_iaqnb6zcivu7e4inr')]
     ])
   });

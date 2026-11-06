@@ -279,7 +279,7 @@ html_content = """<!DOCTYPE html>
 
   <div class="cover-footer">
     <strong>عقد الصك والتوزيع الذكي (Jetton Master Minter):</strong><br>
-    <span class="mono">EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH</span><br><br>
+    <span class="mono">EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53</span><br><br>
     <strong>محفظة الخزينة والإدارة المعتمدة (Admin Master Wallet):</strong><br>
     <span class="mono">UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz</span><br><br>
     تاريخ الإصدار: نوفمبر 2026 · إصدار الإنتاج السيادي (Mainnet Live Edition)
@@ -327,7 +327,7 @@ html_content = """<!DOCTYPE html>
     </tr>
     <tr>
       <td><strong>العقد الذكي الرئيسي (Minter)</strong></td>
-      <td><span class="mono" style="font-size:7.5pt;">EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH</span></td>
+      <td><span class="mono" style="font-size:7.5pt;">EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53</span></td>
       <td>عقد صك الرمز وتوزيع المحافظ الفرعية على الشبكة</td>
     </tr>
     <tr>
@@ -745,7 +745,7 @@ html_content = """<!DOCTYPE html>
   </li>
   <li><strong>كلمة سر الإدارة السرية:</strong> <span class="mono">REX_ADMIN_2026</span></li>
   <li><strong>مستكشف بلوكشين TON الرسمي (TonViewer Explorer):</strong><br>
-    <a href="https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH" style="color:#0284c7;font-size:9pt;font-family:monospace;">https://tonviewer.com/EQCSsfG6xm-7g2-PQkvQWHAlMW3OXwsOdg2_VSAVlmBgr6GH ↗</a>
+    <a href="https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53" style="color:#0284c7;font-size:9pt;font-family:monospace;">https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53 ↗</a>
   </li>
 </ul>
 

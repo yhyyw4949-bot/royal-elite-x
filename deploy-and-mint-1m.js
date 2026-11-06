@@ -1,13 +1,12 @@
 /**
- * ROYAL ELITE X (REX) — Deploy & Mint 1,000,000 REX to Admin Wallet
- * يقوم بنشر العقد وسك المليون عملة مباشرة لمحفظة الأدمن وإغلاق السك للأبد
+ * ROYAL ELITE X (REX) — Deploy & Mint 1,000,000 REX in One Shot
+ * ينشر العقد ويسك المليون عملة مباشرة لمحفظة الأدمن في معاملة واحدة ذكية
  */
 
 const { TonClient, WalletContractV5R1, internal, toNano, beginCell, Cell, Dictionary, Address } = require('@ton/ton');
 const { JettonMinter } = require('./build/JettonMinter/tact_JettonMinter.js');
 const { mnemonicToPrivateKey } = require('@ton/crypto');
 const crypto = require('crypto');
-const fs = require('fs');
 require('dotenv').config();
 
 const USER_ADMIN_WALLET = 'UQDcvNuFSROi4VFR1kzca-O17z5shUVyc5X6ep4pPGAPltYz';
@@ -76,7 +75,7 @@ async function main() {
     const client = new TonClient({ endpoint, apiKey });
 
     console.log('\n╔══════════════════════════════════════════════════════╗');
-    console.log('║   👑 REX: نشر العقد الجديد وسك 1,000,000 REX للأدمن  ║');
+    console.log('║   👑 REX: نشر العقد وسك 1,000,000 REX للأدمن        ║');
     console.log('╚══════════════════════════════════════════════════════╝');
 
     const keyPair = await mnemonicToPrivateKey(mnemonic.trim().split(/\s+/));
@@ -89,8 +88,8 @@ async function main() {
     const balance = await callWithRetry(() => walletContract.getBalance());
     console.log(`💰 رصيد السيرفر المتاح       : ${Number(balance) / 1e9} TON`);
 
-    if (Number(balance) < 0.25 * 1e9) {
-        console.error('\n⚠️ الرصيد غير كافٍ لنشر العقد وسك العملات! يلزم على الأقل 0.3 TON.');
+    if (Number(balance) < 0.20 * 1e9) {
+        console.error('\n⚠️ الرصيد غير كافٍ لنشر العقد وسك العملات! يلزم على الأقل 0.25 TON.');
         process.exit(1);
     }
 
@@ -100,39 +99,12 @@ async function main() {
 
     console.log(`\n📋 عنوان عقد REX الجديد على Mainnet: ${minterAddress.toString()}`);
 
-    // 1. Deploy
+    // Check if already active
     const state = await callWithRetry(() => client.getContractState(minterAddress));
-    if (state.state === 'active') {
-        console.log('ℹ️ العقد منشور بالفعل، ننتقل للسك مباشرة...');
-    } else {
-        console.log('\n⏳ [1/3] جاري نشر العقد متضمناً اللوجو On-Chain...');
-        let seqno = await callWithRetry(() => walletContract.getSeqno());
-        console.log(`   (Seqno: ${seqno})`);
+    const isDeployed = state.state === 'active';
 
-        await callWithRetry(() => walletContract.sendTransfer({
-            secretKey: keyPair.secretKey,
-            seqno,
-            messages: [
-                internal({
-                    to: minterAddress,
-                    value: toNano('0.15'),
-                    init: minterContract.init,
-                    body: beginCell().endCell(),
-                    bounce: false,
-                })
-            ],
-        }));
-
-        console.log('   ⏳ تم إرسال معاملة النشر! انتظار تأكيد البلوك تشين (20 ثانية)...');
-        await sleep(20000);
-        console.log('✅ [1/3] تم نشر العقد بنجاح على TON Mainnet!');
-    }
-
-    // 2. Mint 1,000,000 REX to user admin wallet
-    console.log(`\n⏳ [2/3] جاري سك 1,000,000 REX وإيداعها في محفظة الأدمن (${USER_ADMIN_WALLET})...`);
     const mintAmount = REX.totalSupply * (10n ** BigInt(REX.decimals));
     const recipient = Address.parse(USER_ADMIN_WALLET);
-
     const mintBody = beginCell()
         .storeUint(0x642b7d07, 32)
         .storeUint(1n, 64)
@@ -140,36 +112,57 @@ async function main() {
         .storeAddress(recipient)
         .endCell();
 
-    let seqno2 = await callWithRetry(() => walletContract.getSeqno());
-    console.log(`   (Seqno للسك: ${seqno2})`);
+    let seqno = await callWithRetry(() => walletContract.getSeqno());
+    console.log(`   (Seqno: ${seqno})`);
 
-    await callWithRetry(() => walletContract.sendTransfer({
-        secretKey: keyPair.secretKey,
-        seqno: seqno2,
-        messages: [
-            internal({
-                to: minterAddress,
-                value: toNano('0.15'),
-                body: mintBody,
-                bounce: true,
-            })
-        ],
-    }));
+    if (!isDeployed) {
+        console.log('\n⏳ جاري إرسال معاملة النشر + سك 1,000,000 REX دفعة واحدة إلى شبكة TON...');
+        await callWithRetry(() => walletContract.sendTransfer({
+            secretKey: keyPair.secretKey,
+            seqno,
+            messages: [
+                internal({
+                    to: minterAddress,
+                    value: toNano('0.22'),
+                    init: minterContract.init,
+                    body: mintBody,
+                    bounce: false,
+                })
+            ],
+        }));
+    } else {
+        console.log('\n⏳ العقد منشور، جاري إرسال أمر سك 1,000,000 REX لمحفظة الأدمن...');
+        await callWithRetry(() => walletContract.sendTransfer({
+            secretKey: keyPair.secretKey,
+            seqno,
+            messages: [
+                internal({
+                    to: minterAddress,
+                    value: toNano('0.15'),
+                    body: mintBody,
+                    bounce: true,
+                })
+            ],
+        }));
+    }
 
-    console.log('   ⏳ تم إرسال أمر السك! انتظار التأكيد (20 ثانية)...');
-    await sleep(20000);
-    console.log('✅ [2/3] تم سك 1,000,000 REX بالكامل لمحفظة الأدمن!');
+    console.log('   ⏳ تم إرسال المعاملة إلى شبكة TON! جاري انتظار التأكيد على البلوكشين (25 ثانية)...');
+    await sleep(25000);
 
-    // 3. Minting kept OPEN (بناءً على طلبك: خاصية السك مفتوحة ومتاحة)
-    console.log('\n🔓 خاصية السك (Minting) مفتوحة ومتاحة لك دائماً للأمام!');
+    console.log('\n✅ تم تأكيد المعاملة بنجاح على بلوكتشين TON!');
+    console.log(`🎉 تم سك 1,000,000 REX بالكامل وإيداعها في محفظتك: ${USER_ADMIN_WALLET}`);
+    console.log('🔓 خاصية السك (Minting) مفتوحة ومتاحة لك دائماً للأمام بناءً على طلبك.');
+    console.log(`\n📜 عنوان العقد الجديد : ${minterAddress.toString()}`);
+    console.log(`🔍 الرابط على Tonviewer: https://tonviewer.com/${minterAddress.toString()}`);
 
-
-    console.log('\n🎉 اكتملت العملية بنجاح كامل!');
-    console.log(`📜 العقد الجديد : ${minterAddress.toString()}`);
-    console.log(`🔍 الرابط       : https://tonviewer.com/${minterAddress.toString()}`);
+    return minterAddress.toString();
 }
 
-main().catch(err => {
-    console.error('❌ خطأ:', err.message || err);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch(err => {
+        console.error('❌ خطأ أثناء التنفيذ:', err.message || err);
+        process.exit(1);
+    });
+}
+
+module.exports = { main };
