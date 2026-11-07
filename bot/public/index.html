@@ -2528,6 +2528,17 @@
     const isPassed = userData?.is_hold_passed;
     const holdStart = userData?.onchain_hold_start || 0;
 
+    const banner = document.getElementById('holdRuleBanner');
+    const notice = document.getElementById('wdNotice');
+    if (userData && !userData.enable_holding_rule) {
+      if (banner) banner.style.display = 'none';
+      if (notice) notice.style.display = 'none';
+      return;
+    } else {
+      if (banner) banner.style.display = 'block';
+      if (notice) notice.style.display = 'block';
+    }
+
     if (userData?.is_hold_exempt) {
       if (badge) {
         badge.className = 'badge badge-green';
@@ -2685,32 +2696,35 @@
       return;
     }
 
-    const reqWalletHold = amt * 0.20;
+    const isHoldRequired = Boolean(userData?.enable_holding_rule && !userData?.is_hold_exempt);
+    const holdPct = (userData?.hold_percent !== undefined ? parseFloat(userData.hold_percent) : 20) / 100;
+    const reqWalletHold = amt * holdPct;
     const botBal = userData?.balance || 0;
     const walletBal = userData?.on_chain_rex || 0;
-    const minHoldRex = userData?.min_hold_rex || 5000;
-    const isHoldPassed = userData?.is_hold_passed;
+    const minHoldRex = userData?.min_hold_rex || 0;
+    const isHoldPassed = !isHoldRequired || Boolean(userData?.is_hold_passed);
     const hasBotBal = botBal >= amt;
-    const hasWalletHold = walletBal >= reqWalletHold;
-    const isMinValid = amt >= 5000;
-    const hasMinHoldBal = walletBal >= minHoldRex;
+    const hasWalletHold = !isHoldRequired || (holdPct === 0) || (walletBal >= reqWalletHold);
+    const minWd = userData?.min_withdrawal || 5000;
+    const isMinValid = amt >= minWd;
+    const hasMinHoldBal = !isHoldRequired || (minHoldRex === 0) || (walletBal >= minHoldRex);
 
     let statusMsg = '';
     if (!isMinValid) {
-      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? 'الحد الأدنى للسحب هو 5,000 REX' : 'Min withdrawal is 5,000 REX'}</span>`;
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `الحد الأدنى للسحب هو ${minWd.toLocaleString()} REX` : `Min withdrawal is ${minWd.toLocaleString()} REX`}</span>`;
     } else if (!hasBotBal) {
       statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `رصيدك غير كافٍ (${botBal.toLocaleString()} REX)` : `Insufficient balance (${botBal.toLocaleString()} REX)`}</span>`;
-    } else if (!hasMinHoldBal) {
-      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `شرط الاحتفاظ: يجب حيازة 5,000 REX على الأقل في محفظتك On-Chain (متوفر: ${walletBal.toLocaleString()} REX).` : `Holding rule: must hold 5,000+ REX in wallet.`}</span>`;
-    } else if (!isHoldPassed) {
+    } else if (isHoldRequired && !hasMinHoldBal) {
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `شرط الاحتفاظ: يجب حيازة ${minHoldRex.toLocaleString()} REX على الأقل في محفظتك On-Chain (متوفر: ${walletBal.toLocaleString()} REX).` : `Holding rule: must hold ${minHoldRex.toLocaleString()}+ REX in wallet.`}</span>`;
+    } else if (isHoldRequired && !isHoldPassed) {
       const remMs = userData?.hold_remaining_ms || 0;
       const remDays = Math.floor(remMs / (24 * 3600 * 1000));
       const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
       const remMins = Math.ceil((remMs % 3600000) / 60000);
       statusMsg = `<span style="color:var(--gold-lt)">⏳ ${currentLang === 'ar' ? `شرط مدة الاحتفاظ (3 أيام) جاري: متبقي ${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة.` : `3-Day holding period in progress: ${remDays > 0 ? remDays + 'd ' : ''}${remHours}h ${remMins}m remaining.`}</span>`;
-    } else if (!hasWalletHold) {
+    } else if (isHoldRequired && !hasWalletHold) {
       const shortfall = reqWalletHold - walletBal;
-      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `ينقصك <strong>${shortfall.toLocaleString()} REX</strong> في محفظتك On-Chain (شرط الـ 20%).` : `Shortfall: ${shortfall.toLocaleString()} REX in TON wallet (20% hold rule).`}</span>`;
+      statusMsg = `<span style="color:var(--red)">❌ ${currentLang === 'ar' ? `ينقصك <strong>${shortfall.toLocaleString()} REX</strong> في محفظتك On-Chain (شرط الـ ${(holdPct*100).toFixed(0)}%).` : `Shortfall: ${shortfall.toLocaleString()} REX in TON wallet.`}</span>`;
     } else {
       statusMsg = `<span style="color:var(--green)">✅ ${currentLang === 'ar' ? 'جميع شروط السحب مستوفاة ومحفظتك مؤهلة فوراً! 👑' : 'All conditions met! Eligible for withdrawal. 👑'}</span>`;
     }

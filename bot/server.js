@@ -527,30 +527,33 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     canClaim = elapsed >= MINING_24H_DURATION;
   }
 
-  // 3-Day 5,000 REX Holding Condition Tracker
-  const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
-  const minHoldDays = parseFloat(db.getSetting('min_hold_days', '3'));
+  // Holding Condition Tracker (Controlled globally by enable_holding_rule)
+  const enableHoldingRule = db.getSetting('enable_holding_rule', '0') === '1';
+  const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '0'));
+  const minHoldDays = parseFloat(db.getSetting('min_hold_days', '0'));
   const minHoldDurationMs = minHoldDays * 24 * 3600 * 1000;
 
-  const isHoldExempt = Boolean(user.is_hold_exempt);
+  const isHoldExempt = Boolean(user.is_hold_exempt) || !enableHoldingRule;
   let onchainHoldStart = user.onchain_hold_start || 0;
-  if (onChainRex >= minHoldRex) {
-    if (!onchainHoldStart) {
-      onchainHoldStart = Date.now();
-      db.updateHoldStart(telegram_id, onchainHoldStart);
-      user.onchain_hold_start = onchainHoldStart;
-    }
-  } else {
-    if (onchainHoldStart > 0 && !isHoldExempt) {
-      onchainHoldStart = 0;
-      db.updateHoldStart(telegram_id, 0);
-      user.onchain_hold_start = 0;
+  if (enableHoldingRule && !isHoldExempt && minHoldRex > 0) {
+    if (onChainRex >= minHoldRex) {
+      if (!onchainHoldStart) {
+        onchainHoldStart = Date.now();
+        db.updateHoldStart(telegram_id, onchainHoldStart);
+        user.onchain_hold_start = onchainHoldStart;
+      }
+    } else {
+      if (onchainHoldStart > 0) {
+        onchainHoldStart = 0;
+        db.updateHoldStart(telegram_id, 0);
+        user.onchain_hold_start = 0;
+      }
     }
   }
 
   const holdingElapsed = onchainHoldStart > 0 ? (Date.now() - onchainHoldStart) : 0;
-  const isHoldPassed = isHoldExempt || ((onchainHoldStart > 0) && (holdingElapsed >= minHoldDurationMs));
-  const holdRemainingMs = isHoldExempt ? 0 : Math.max(0, minHoldDurationMs - holdingElapsed);
+  const isHoldPassed = !enableHoldingRule || isHoldExempt || (minHoldRex === 0) || ((onchainHoldStart > 0) && (holdingElapsed >= minHoldDurationMs));
+  const holdRemainingMs = (!enableHoldingRule || isHoldExempt || minHoldRex === 0) ? 0 : Math.max(0, minHoldDurationMs - holdingElapsed);
 
   // Evaluate & Unlock Achievements
   db.checkAndUnlockAchievements(telegram_id);
@@ -624,6 +627,7 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
     withdrawal_history: withdrawalHistory,
     recent_transactions: recentTransactions,
     tokenomics: tokenomicsSummary,
+    enable_holding_rule: enableHoldingRule,
     min_withdrawal: minWithdrawal,
     withdrawal_fee: parseFloat(db.getSetting('withdrawal_fee', '500')),
     hold_percent: holdPercent,
@@ -927,56 +931,65 @@ app.post('/api/user/withdraw', telegramAuth, checkMaintenance, requireChannelSub
     return sendMsg(req, res, false, `رصيدك في المنصة غير كافٍ! رصيدك المتاح: ${user.balance.toLocaleString()} REX والمطلوب: ${reqAmount.toLocaleString()} REX.`, `Insufficient platform balance! Available: ${user.balance.toLocaleString()} REX, Requested: ${reqAmount.toLocaleString()} REX.`);
   }
 
-  // On-Chain Hold Verification (Bypass cache for withdrawal check)
-  security.OnChainBalanceCache.invalidate(user.wallet_address);
-  const requiredOnChain = reqAmount * holdPercent;
-  const onChainBalance = await getOnChainRexBalance(user.wallet_address);
+  // Holding Condition Evaluation (Controlled by enable_holding_rule toggle)
+  const enableHoldingRule = db.getSetting('enable_holding_rule', '0') === '1';
+  const isHoldExempt = Boolean(user.is_hold_exempt) || !enableHoldingRule;
 
-  if (onChainBalance < requiredOnChain) {
-    const shortfall = requiredOnChain - onChainBalance;
-    const arMsg = `❌ شرط الأمان الملكي: يجب أن تكون مشتري ومحتفظ في محفظتك الخارجية (On-Chain) بـ ${(holdPercent*100).toFixed(0)}% على الأقل من قيمة السحب!\n\n• المطلوب في محفظتك: ${requiredOnChain.toLocaleString()} REX\n• رصيدك الفعلي في المحفظة: ${onChainBalance.toLocaleString()} REX\n• ينقصك: ${shortfall.toLocaleString()} REX في محفظتك.\n\nاشترِ REX واحتفظ بها في محفظتك لتفعيل السحب.`;
-    const enMsg = `❌ Royal Security Rule: You must hold at least 20% of the withdrawal amount in on-chain REX Jettons in your TON wallet!\n\n• Required On-Chain: ${requiredOnChain.toLocaleString()} REX\n• Your Wallet Balance: ${onChainBalance.toLocaleString()} REX\n• Shortfall: ${shortfall.toLocaleString()} REX in wallet.\n\nPlease buy REX on STON.fi and hold in your wallet.`;
-    return sendMsg(req, res, false, arMsg, enMsg, {
-      code: 'INSUFFICIENT_ONCHAIN_HOLD',
-      required_hold: requiredOnChain,
-      wallet_balance: onChainBalance,
-      shortfall: shortfall
-    });
-  }
+  if (enableHoldingRule && !isHoldExempt) {
+    // 1. On-Chain Hold Verification (Bypass cache for withdrawal check)
+    const holdPercent = parseFloat(db.getSetting('hold_percent', '0')) / 100;
+    if (holdPercent > 0) {
+      security.OnChainBalanceCache.invalidate(user.wallet_address);
+      const requiredOnChain = reqAmount * holdPercent;
+      const onChainBalance = await getOnChainRexBalance(user.wallet_address);
 
-  // 3-Day 5,000 REX Mandatory Holding Condition Enforcement
-  const isHoldExempt = Boolean(user.is_hold_exempt);
-  const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
-  const minHoldDays = parseFloat(db.getSetting('min_hold_days', '3'));
-  const minHoldDurationMs = minHoldDays * 24 * 3600 * 1000;
-
-  if (!isHoldExempt) {
-    if (onChainBalance < minHoldRex) {
-      if (user.onchain_hold_start > 0) {
-        db.updateHoldStart(telegram_id, 0);
-        user.onchain_hold_start = 0;
+      if (onChainBalance < requiredOnChain) {
+        const shortfall = requiredOnChain - onChainBalance;
+        const arMsg = `❌ شرط الأمان الملكي: يجب أن تكون مشتري ومحتفظ في محفظتك الخارجية (On-Chain) بـ ${(holdPercent*100).toFixed(0)}% على الأقل من قيمة السحب!\n\n• المطلوب في محفظتك: ${requiredOnChain.toLocaleString()} REX\n• رصيدك الفعلي في المحفظة: ${onChainBalance.toLocaleString()} REX\n• ينقصك: ${shortfall.toLocaleString()} REX في محفظتك.\n\nاشترِ REX واحتفظ بها في محفظتك لتفعيل السحب.`;
+        const enMsg = `❌ Royal Security Rule: You must hold at least ${(holdPercent*100).toFixed(0)}% of the withdrawal amount in on-chain REX Jettons in your TON wallet!\n\n• Required On-Chain: ${requiredOnChain.toLocaleString()} REX\n• Your Wallet Balance: ${onChainBalance.toLocaleString()} REX\n• Shortfall: ${shortfall.toLocaleString()} REX in wallet.`;
+        return sendMsg(req, res, false, arMsg, enMsg, {
+          code: 'INSUFFICIENT_ONCHAIN_HOLD',
+          required_hold: requiredOnChain,
+          wallet_balance: onChainBalance,
+          shortfall: shortfall
+        });
       }
-      const arMsg = `❌ شرط الأمان الملكي: يجب شراء والاحتفاظ بـ ${minHoldRex.toLocaleString()} REX كحد أدنى في محفظتك On-Chain لمدة ${minHoldDays} أيام متتالية قبل السحب!\n• رصيدك الفعلي في المحفظة: ${onChainBalance.toLocaleString()} REX.\n⚠️ تم تصفير عداد الأيام لعدم استيفاء الحد الأدنى.`;
-      const enMsg = `❌ Royal Security Rule: You must hold at least ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days before withdrawing!\n• Current Wallet Balance: ${onChainBalance.toLocaleString()} REX.\n⚠️ Timer reset to 0 due to balance shortfall.`;
-      return sendMsg(req, res, false, arMsg, enMsg, { code: 'INSUFFICIENT_HOLD_BALANCE' });
     }
 
-    let onchainHoldStart = user.onchain_hold_start || 0;
-    if (!onchainHoldStart) {
-      onchainHoldStart = Date.now();
-      db.updateHoldStart(telegram_id, onchainHoldStart);
-      user.onchain_hold_start = onchainHoldStart;
-    }
+    // 2. Mandatory Duration Holding Condition
+    const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '0'));
+    const minHoldDays = parseFloat(db.getSetting('min_hold_days', '0'));
+    if (minHoldRex > 0 && minHoldDays > 0) {
+      const minHoldDurationMs = minHoldDays * 24 * 3600 * 1000;
+      const onChainBalance = await getOnChainRexBalance(user.wallet_address);
 
-    const holdingElapsed = Date.now() - onchainHoldStart;
-    if (holdingElapsed < minHoldDurationMs) {
-      const remMs = minHoldDurationMs - holdingElapsed;
-      const remDays = Math.floor(remMs / (24 * 3600 * 1000));
-      const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
-      const remMins = Math.ceil((remMs % 3600000) / 60000);
-      const arMsg = `⏳ شرط الأمان الملكي: يجب الاحتفاظ بـ ${minHoldRex.toLocaleString()} REX في محفظتك لمدة ${minHoldDays} أيام متتالية!\n\n• الوقت المتبقي لإتمام فترة الحيازة: ${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة.\n\nاستمر بالاحتفاظ بها في محفظتك وسيتم فتح السحب تلقائياً بمجرد اكتمال الـ 3 أيام.`;
-      const enMsg = `⏳ Royal Security Rule: You must hold ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days!\n\n• Remaining Holding Time: ${remDays > 0 ? remDays + 'd ' : ''}${remHours}h ${remMins}m.\n\nKeep holding in your wallet; withdrawal will unlock automatically once 3 days complete.`;
-      return sendMsg(req, res, false, arMsg, enMsg, { code: 'HOLD_PERIOD_NOT_ELAPSED' });
+      if (onChainBalance < minHoldRex) {
+        if (user.onchain_hold_start > 0) {
+          db.updateHoldStart(telegram_id, 0);
+          user.onchain_hold_start = 0;
+        }
+        const arMsg = `❌ شرط الأمان الملكي: يجب شراء والاحتفاظ بـ ${minHoldRex.toLocaleString()} REX كحد أدنى في محفظتك On-Chain لمدة ${minHoldDays} أيام متتالية قبل السحب!\n• رصيدك الفعلي في المحفظة: ${onChainBalance.toLocaleString()} REX.\n⚠️ تم تصفير عداد الأيام لعدم استيفاء الحد الأدنى.`;
+        const enMsg = `❌ Royal Security Rule: You must hold at least ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days before withdrawing!\n• Current Wallet Balance: ${onChainBalance.toLocaleString()} REX.`;
+        return sendMsg(req, res, false, arMsg, enMsg, { code: 'INSUFFICIENT_HOLD_BALANCE' });
+      }
+
+      let onchainHoldStart = user.onchain_hold_start || 0;
+      if (!onchainHoldStart) {
+        onchainHoldStart = Date.now();
+        db.updateHoldStart(telegram_id, onchainHoldStart);
+        user.onchain_hold_start = onchainHoldStart;
+      }
+
+      const holdingElapsed = Date.now() - onchainHoldStart;
+      if (holdingElapsed < minHoldDurationMs) {
+        const remMs = minHoldDurationMs - holdingElapsed;
+        const remDays = Math.floor(remMs / (24 * 3600 * 1000));
+        const remHours = Math.floor((remMs % (24 * 3600 * 1000)) / 3600000);
+        const remMins = Math.ceil((remMs % 3600000) / 60000);
+        const arMsg = `⏳ شرط الأمان الملكي: يجب الاحتفاظ بـ ${minHoldRex.toLocaleString()} REX في محفظتك لمدة ${minHoldDays} أيام متتالية!\n\n• الوقت المتبقي لإتمام فترة الحيازة: ${remDays > 0 ? remDays + ' يوم و ' : ''}${remHours} ساعة و ${remMins} دقيقة.`;
+        const enMsg = `⏳ Royal Security Rule: You must hold ${minHoldRex.toLocaleString()} REX in your TON wallet for ${minHoldDays} consecutive days!`;
+        return sendMsg(req, res, false, arMsg, enMsg, { code: 'HOLD_PERIOD_NOT_ELAPSED' });
+      }
     }
   }
 

@@ -658,6 +658,16 @@
           <label>رسوم معالجة وشبكة السحب (REX Fee):</label>
           <input type="number" class="form-item-input" id="cfg-withdrawal_fee" placeholder="500">
         </div>
+        <div class="form-item-row" style="background:rgba(245,158,11,0.08); padding:10px; border-radius:10px; border:1px solid rgba(245,158,11,0.3);">
+          <label style="color:var(--gold-lt); font-weight:bold;">⚡ تفعيل شرط الاحتفاظ بالسحب (Holding Rule):</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <select class="form-item-input" id="cfg-enable_holding_rule" style="font-weight:bold; color:#fff;">
+              <option value="0">معطّل بالكامل ❌ (السحب فوري بدون أي احتفاظ)</option>
+              <option value="1">مفعّل ✅ (إلزام المستخدمين بحيازة REX في المحفظة)</option>
+            </select>
+            <button class="btn btn-reject" type="button" style="white-space:nowrap; font-size:11px; padding:6px 10px;" onclick="disableHoldingRuleCompletely()">إلغاء الشرط فوراً</button>
+          </div>
+        </div>
         <div class="form-item-row">
           <label>نسبة الاحتفاظ المطلوبة في المحفظة On-Chain (%):</label>
           <input type="number" class="form-item-input" id="cfg-hold_percent">
@@ -1941,6 +1951,7 @@
     checkMaintenanceStatus();
     const cfg = await api('/api/admin/settings');
     if (cfg) {
+      document.getElementById('cfg-enable_holding_rule').value = cfg.enable_holding_rule !== undefined ? cfg.enable_holding_rule : '0';
       document.getElementById('cfg-min_withdrawal').value = cfg.min_withdrawal || '5000';
       if (document.getElementById('cfg-withdrawal_fee')) document.getElementById('cfg-withdrawal_fee').value = cfg.withdrawal_fee || '500';
       document.getElementById('cfg-hold_percent').value = cfg.hold_percent || '20';
@@ -1953,8 +1964,18 @@
     }
   }
 
+  async function disableHoldingRuleCompletely() {
+    if (!confirm('⚠️ هل تريد إلغاء شرط الاحتفاظ بالكامل لجميع المستخدمين؟\nسيتمكن أي مستخدم من سحب أرباحه فوراً دون اشتراط حيازة أي عملات REX في محفظته.')) return;
+    document.getElementById('cfg-enable_holding_rule').value = '0';
+    document.getElementById('cfg-hold_percent').value = '0';
+    document.getElementById('cfg-min_hold_rex').value = '0';
+    document.getElementById('cfg-min_hold_days').value = '0';
+    await saveSettings();
+  }
+
   async function saveSettings() {
     const payload = {
+      enable_holding_rule: document.getElementById('cfg-enable_holding_rule')?.value || '0',
       min_withdrawal: document.getElementById('cfg-min_withdrawal').value,
       withdrawal_fee: document.getElementById('cfg-withdrawal_fee')?.value || '500',
       hold_percent: document.getElementById('cfg-hold_percent').value,

@@ -263,7 +263,7 @@ async function sendOnChainRexPayout({ recipientAddress, amountRex, memo = 'REX W
   // 4. Build TEP-74 Jetton Transfer Payload
   const DECIMALS = 9n;
   const jettonAmount = BigInt(Math.floor(amountRex)) * (10n ** DECIMALS);
-  const forwardPayload = beginCell().storeUint(0, 32).storeStringTail(memo).endCell();
+  const forwardPayload = beginCell().storeUint(0, 32).storeStringTail(memo || 'REX Payout').endCell();
 
   const transferBody = beginCell()
     .storeUint(0x0f8a7ea5, 32)                // op::transfer (TEP-74)
@@ -273,7 +273,8 @@ async function sendOnChainRexPayout({ recipientAddress, amountRex, memo = 'REX W
     .storeAddress(senderWallet.address)        // response_destination
     .storeBit(false)                           // custom_payload: None
     .storeCoins(toNano('0.05'))                // forward_ton_amount (to notify receiver)
-    .storeSlice(forwardPayload.asSlice())      // forward_payload
+    .storeBit(true)                            // Either Cell ^Cell: true = 1 = reference (^Cell)
+    .storeRef(forwardPayload)                  // forward_payload in reference cell to prevent BitBuilder overflow
     .endCell();
 
   // 5. Send Transfer
