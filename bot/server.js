@@ -538,19 +538,38 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
 
   // Anti-Sybil Radar Check
   if (fingerprint && parseInt(telegram_id) !== ADMIN_TG_ID) {
+    db.logDevice(telegram_id, fingerprint, ip);
+
     const isSybilAutoBan = db.getSetting('sybil_auto_ban', '1') === '1';
-    const isExempt = user && user.is_sybil_exempt === 1;
+    const isExempt = user && (user.is_sybil_exempt === 1 || parseInt(telegram_id) === ADMIN_TG_ID);
 
     if (!isExempt && isSybilAutoBan) {
       const matched = db.checkFingerprintAccounts(fingerprint);
-      const others = matched.filter(a => a.telegram_id !== telegram_id && a.telegram_id !== ADMIN_TG_ID);
+      const others = matched.filter(a => parseInt(a.telegram_id) !== parseInt(telegram_id) && parseInt(a.telegram_id) !== ADMIN_TG_ID);
       if (others.length >= 1) {
-        db.logDevice(telegram_id, fingerprint, ip);
-        db.banUser(telegram_id, 'تعدد حسابات على نفس الجهاز (Anti-Sybil)');
-        return res.json({ is_banned: true, ban_reason: 'تعدد حسابات على نفس الجهاز' });
+        // Defer ban until user satisfies the 3 onboarding requirements:
+        // 1. Linked TON wallet
+        // 2. Paid activation fee / redeemed activation code (is_activated === 1)
+        // 3. Subscribed to mandatory official channel
+        const hasWallet = !!(user && user.wallet_address);
+        const hasActivated = !!(user && user.is_activated === 1);
+        const hasChannelSub = await isUserSubscribedToChannel(telegram_id);
+
+        if (hasWallet && hasActivated && hasChannelSub) {
+          const conflictIds = others.map(o => o.telegram_id).join(', ');
+          db.banUser(telegram_id, `تعدد حسابات على نفس الجهاز (Anti-Sybil): متطابق مع (${conflictIds})`);
+          db.logAdminAction('SYBIL_AUTO_BAN', `حظر الحساب المتعدد ${telegram_id} بعد استيفاء الرسوم والربط والاشتراك لتطابقه مع (${conflictIds})`, ADMIN_TG_ID);
+          bot.telegram.sendMessage(telegram_id,
+            `⛔ *تم تجميد حسابك في منصة ROYAL ELITE X!*\n\n` +
+            `السبب: تم اكتشاف استخدام أكثر من حساب على نفس الجهاز أو المتصفح.\n` +
+            `قوانين المنظمة الصارمة تمنع تعدد الحسابات لمنع الاحتيال وضمان عدالة التوزيع.`,
+            { parse_mode: 'Markdown' }
+          ).catch(() => {});
+          cloudSync.triggerCloudBackup();
+          return res.json({ is_banned: true, ban_reason: 'تعدد حسابات على نفس الجهاز (Anti-Sybil)' });
+        }
       }
     }
-    db.logDevice(telegram_id, fingerprint, ip);
   }
 
   // 1. Check On-Chain REX Balance & Multiplier Boost (FIRST)
@@ -926,6 +945,30 @@ app.post('/api/user/start-mining', telegramAuth, checkMaintenance, requireChanne
   if (!user || user.is_banned) return sendMsg(req, res, false, 'حساب محظور', 'Account suspended');
   if (!user.is_activated || !user.wallet_address) return sendMsg(req, res, false, 'فعّل حسابك أولاً!', 'Activate your account and connect wallet first!');
   if (user.is_mining) return sendMsg(req, res, false, 'التعدين يعمل بالفعل!', 'Mining is already active!');
+
+  // Anti-Sybil Radar Check at Mining Start (Safety net)
+  const fp = req.body.fingerprint || user.device_fingerprint;
+  if (fp && parseInt(telegram_id) !== ADMIN_TG_ID) {
+    const isSybilAutoBan = db.getSetting('sybil_auto_ban', '1') === '1';
+    const isExempt = user && (user.is_sybil_exempt === 1 || parseInt(telegram_id) === ADMIN_TG_ID);
+    if (!isExempt && isSybilAutoBan) {
+      const matched = db.checkFingerprintAccounts(fp);
+      const others = matched.filter(a => parseInt(a.telegram_id) !== parseInt(telegram_id) && parseInt(a.telegram_id) !== ADMIN_TG_ID);
+      if (others.length >= 1) {
+        const conflictIds = others.map(o => o.telegram_id).join(', ');
+        db.banUser(telegram_id, `تعدد حسابات على نفس الجهاز (Anti-Sybil): متطابق مع (${conflictIds})`);
+        db.logAdminAction('SYBIL_AUTO_BAN', `حظر الحساب المتعدد ${telegram_id} عند بدء التعدين لتطابقه مع (${conflictIds})`, ADMIN_TG_ID);
+        bot.telegram.sendMessage(telegram_id,
+          `⛔ *تم تجميد حسابك في منصة ROYAL ELITE X!*\n\n` +
+          `السبب: تم كشف استخدام أكثر من حساب على نفس الجهاز أو المتصفح.\n` +
+          `قوانين المنظمة الصارمة تمنع تعدد الحسابات لمنع الاحتيال وضمان عدالة التوزيع.`,
+          { parse_mode: 'Markdown' }
+        ).catch(() => {});
+        cloudSync.triggerCloudBackup();
+        return sendMsg(req, res, false, '⛔ تم حظر الحساب لتعدد الحسابات على نفس الجهاز (Anti-Sybil)', 'Account suspended for multi-accounting');
+      }
+    }
+  }
 
   const now = Date.now();
   db.updateMining(telegram_id, 1, now);
