@@ -2133,6 +2133,7 @@
     const btn = document.getElementById('mineActionBtn');
 
     if (!d.is_mining || !d.last_mining_start) {
+      if (userData) userData.can_claim = false;
       document.getElementById('liveAccrual').textContent = '0.0000';
       document.getElementById('timeLeft').textContent = '24:00:00';
       document.getElementById('progFill').style.width = '0%';
@@ -2186,25 +2187,46 @@
     haptic('medium');
 
     if (!userData.is_mining) {
-      const r = await api('/api/user/start-mining', { telegram_id: user.id });
-      if (r.success) {
-        playChime();
-        toast(currentLang === 'ar' ? '⚡ انطلقت دورة التعدين الملكية بنجاح!' : '⚡ 24h Mining Cycle Started!');
-        fetchUserData();
-      } else {
-        toast('⚠️ ' + r.message);
+      const btn = document.getElementById('mineActionBtn');
+      if (btn) btn.disabled = true;
+      try {
+        const r = await api('/api/user/start-mining', { telegram_id: user.id });
+        if (r.success) {
+          playChime();
+          toast(currentLang === 'ar' ? '⚡ انطلقت دورة التعدين الملكية بنجاح!' : '⚡ 24h Mining Cycle Started!');
+          await fetchUserData();
+        } else {
+          toast('⚠️ ' + r.message);
+        }
+      } catch (e) {
+        toast('❌ ' + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
       }
     } else if (userData.can_claim) {
+      userData.can_claim = false;
+      const btn = document.getElementById('mineActionBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ <span>' + (currentLang === 'ar' ? 'جاري جمع الأرباح...' : 'Claiming Rewards...') + '</span>';
+      }
       confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 } });
       haptic('success');
       playWin();
 
-      const r = await api('/api/user/claim-mining', { telegram_id: user.id, idempotency_key: `CLAIM_${user.id}_${Date.now()}` });
-      if (r.success) {
-        toast(currentLang === 'ar' ? `🎉 تم جمع ${Number(r.claimed_amount).toFixed(2)} REX بنجاح!` : `🎉 Successfully claimed ${Number(r.claimed_amount).toFixed(2)} REX!`);
-        fetchUserData();
-      } else {
-        toast('⚠️ ' + r.message);
+      try {
+        const r = await api('/api/user/claim-mining', { telegram_id: user.id, idempotency_key: `CLAIM_${user.id}_${Date.now()}` });
+        if (r.success) {
+          toast(currentLang === 'ar' ? `🎉 تم جمع ${Number(r.claimed_amount).toFixed(2)} REX بنجاح!` : `🎉 Successfully claimed ${Number(r.claimed_amount).toFixed(2)} REX!`);
+          await fetchUserData();
+        } else {
+          toast('⚠️ ' + r.message);
+          await fetchUserData();
+        }
+      } catch (e) {
+        toast('❌ ' + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
   }
@@ -2242,7 +2264,7 @@
       if (res && res.success) {
         toast(currentLang === 'ar' ? '👑 تهانينا! تم تفعيل الحساب وإعفاء الرسوم بنجاح!' : '👑 Congratulations! Account activated and fee waived!');
         input.value = '';
-        syncUserData();
+        fetchUserData();
       } else {
         toast(res?.message_ar || res?.message_en || res?.message || '❌ كود التفعيل غير صالح');
       }

@@ -11,6 +11,7 @@
  */
 
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
@@ -2584,6 +2585,21 @@ bot.on('chat_member', async (ctx) => {
 app.listen(PORT, () => {
   console.log(`🚀 ROYAL ELITE X Enterprise Server running on port ${PORT}`);
 });
+
+// ── Render Free-Tier Anti-Sleep Keep-Alive Engine ──
+// Render hibernates free web services after 15m idle. This self-pings every 9m to maintain persistent active state.
+if (WEBAPP_URL && !WEBAPP_URL.includes('localhost')) {
+  setInterval(() => {
+    try {
+      const pingUrl = `${WEBAPP_URL}/api/public/tokenomics`;
+      fetch(pingUrl, { headers: { 'User-Agent': 'REX-KeepAlive/1.0' } })
+        .then(res => {
+          if (!res.ok) console.log(`[KeepAlive] Ping status: ${res.status}`);
+        })
+        .catch(err => console.log(`[KeepAlive] Ping error: ${err.message}`));
+    } catch (e) {}
+  }, 9 * 60 * 1000);
+}
 
 // ── Background Watchdog: Anti-Dump Sentinel (scans every 60s) ──
 setInterval(async () => {

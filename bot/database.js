@@ -11,8 +11,28 @@
 
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
+const { Address } = require('@ton/ton');
 
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'royal_bot.db');
+let dbPath = process.env.DATABASE_PATH;
+if (!dbPath) {
+  const customDataDir = process.env.DATA_DIR || (fs.existsSync('/data') ? '/data' : null);
+  if (customDataDir) {
+    dbPath = path.join(customDataDir, 'royal_bot.db');
+    const seedPath = path.join(__dirname, 'royal_bot.db');
+    if (!fs.existsSync(dbPath) && fs.existsSync(seedPath)) {
+      try {
+        fs.copyFileSync(seedPath, dbPath);
+        console.log(`[Database] Initialized persistent database at ${dbPath}`);
+      } catch (err) {
+        console.error(`[Database] Failed to copy seed DB to ${dbPath}:`, err.message);
+      }
+    }
+  } else {
+    dbPath = path.join(__dirname, 'royal_bot.db');
+  }
+}
+
 const db = new Database(dbPath);
 
 // Enable WAL mode for high concurrency & reliability
@@ -612,7 +632,17 @@ module.exports = {
 
   // User Core
   getUser: (id) => db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(id),
-  getUserByWallet: (wallet) => db.prepare('SELECT * FROM users WHERE wallet_address = ?').get(wallet),
+  getUserByWallet: (wallet) => {
+    if (!wallet) return null;
+    let nonBounce = wallet;
+    let bounce = wallet;
+    try {
+      const parsed = Address.parse(wallet);
+      nonBounce = parsed.toString({ bounceable: false });
+      bounce = parsed.toString({ bounceable: true });
+    } catch (e) {}
+    return db.prepare('SELECT * FROM users WHERE wallet_address = ? OR wallet_address = ?').get(nonBounce, bounce);
+  },
   createUser: (data) => {
     const stmt = db.prepare(`
       INSERT OR IGNORE INTO users 
@@ -622,7 +652,13 @@ module.exports = {
     return stmt.run(data);
   },
   updateWallet: (telegram_id, wallet) => {
-    return db.prepare('UPDATE users SET wallet_address = ? WHERE telegram_id = ?').run(wallet, telegram_id);
+    let normalized = wallet;
+    try {
+      if (wallet) {
+        normalized = Address.parse(wallet).toString({ bounceable: false });
+      }
+    } catch (e) {}
+    return db.prepare('UPDATE users SET wallet_address = ? WHERE telegram_id = ?').run(normalized, telegram_id);
   },
   setActivated: (telegram_id) => {
     return db.prepare('UPDATE users SET is_activated = 1 WHERE telegram_id = ?').run(telegram_id);
