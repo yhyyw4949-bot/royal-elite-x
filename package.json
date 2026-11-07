@@ -6,7 +6,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node bot/server.js",
+    "start": "node bot/cloudSync.js restore && node bot/server.js",
     "build": "echo 'Build complete'",
     "build:contracts": "blueprint build",
     "test": "blueprint test",

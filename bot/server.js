@@ -21,7 +21,16 @@ const cors = require('cors');
 const db = require('./database');
 const security = require('./security');
 const payout = require('./payout');
+const cloudSync = require('./cloudSync');
 const { TonClient, Address, beginCell } = require('@ton/ton');
+
+// Initialize cloud auto-backup daemon (Supabase)
+cloudSync.initAutoBackup();
+
+function sanitizeName(name) {
+  if (!name) return 'Knight';
+  return String(name).replace(/[_*`[\]()~>#+=|{}.!\\]/g, ' ').trim() || 'Knight';
+}
 
 // ── Environment & Secrets Management ──
 const BOT_TOKEN = process.env.BOT_TOKEN || '9206918976:AAEiNUzrcB_RwhyYuMzCLZsymx0J3p94gLU';
@@ -141,6 +150,8 @@ function getRequiredChannel() {
   return process.env.REQUIRED_CHANNEL || db.getSetting('required_channel', '@REXCEO1A');
 }
 
+const channelSubCache = new Map();
+
 async function isUserSubscribedToChannel(userId) {
   if (!userId || parseInt(userId) === ADMIN_TG_ID) return true;
 
@@ -150,17 +161,27 @@ async function isUserSubscribedToChannel(userId) {
   const rawChannel = getRequiredChannel();
   if (!rawChannel || rawChannel.trim() === '') return true;
 
+  const now = Date.now();
+  const cached = channelSubCache.get(userId);
+  if (cached && (now - cached.ts < 90000)) {
+    return cached.status;
+  }
+
   const channel = rawChannel.startsWith('@') ? rawChannel : `@${rawChannel}`;
 
   try {
     const member = await bot.telegram.getChatMember(channel, userId);
     const validStatuses = ['creator', 'administrator', 'member', 'restricted'];
-    return validStatuses.includes(member.status);
+    const isSub = validStatuses.includes(member.status);
+    channelSubCache.set(userId, { status: isSub, ts: now });
+    return isSub;
   } catch (err) {
     if (err.message && (err.message.includes('user not found') || err.message.includes('PARTICIPANT_ID_INVALID') || err.message.includes('USER_NOT_PARTICIPANT'))) {
+      channelSubCache.set(userId, { status: false, ts: now });
       return false;
     }
     console.error(`[FORCE SUB CHECK] Error checking user ${userId} in ${channel}:`, err.message);
+    if (cached) return cached.status;
     return false;
   }
 }
@@ -743,7 +764,11 @@ app.post('/api/user/connect-wallet', telegramAuth, checkMaintenance, async (req,
     }
 
     sendMsg(req, res, true, 'تم ربط المحفظة وتوثيقها بنجاح!', 'Wallet verified and connected successfully!', { friendlyAddr, multiplier, onChainBalance });
+    cloudSync.triggerCloudBackup();
   } catch (e) {
+    if (e.message && e.message.includes('UNIQUE constraint failed')) {
+      return sendMsg(req, res, false, 'هذه المحفظة مرتبطة بحساب آخر بالفعل! محفظة واحدة فقط لكل حساب.', 'This wallet is already linked to another account!');
+    }
     sendMsg(req, res, false, 'عنوان المحفظة غير صالح', 'Invalid TON wallet address');
   }
 });
@@ -819,6 +844,7 @@ app.post('/api/user/confirm-activation', telegramAuth, checkMaintenance, async (
   } catch(e) {}
 
   db.setActivated(telegram_id);
+  cloudSync.triggerCloudBackup();
   await checkAndAwardReferralOffer(telegram_id, user.first_name);
   sendMsg(req, res, true, '🎉 تم التحقق من المعاملة على البلوكتشين وتفعيل الحساب بنجاح!', '🎉 On-chain fee payment confirmed and account activated successfully!', { tx_hash: verifyRes.txHash });
 });
@@ -841,6 +867,7 @@ app.post('/api/user/redeem-activation-code', telegramAuth, checkMaintenance, asy
 
   try {
     const actRes = db.redeemActivationCode(telegram_id, code);
+    cloudSync.triggerCloudBackup();
     await checkAndAwardReferralOffer(telegram_id, user.first_name);
 
     // Notify on Telegram
@@ -934,6 +961,7 @@ app.post('/api/user/claim-mining', telegramAuth, checkMaintenance, requireChanne
 
   try {
     const claimRes = db.atomicClaimMining(telegram_id, dailyRate, idempKey);
+    cloudSync.triggerCloudBackup();
 
     // Referral commission
     if (user.referrer_id) {
@@ -1053,6 +1081,7 @@ app.post('/api/user/withdraw', telegramAuth, checkMaintenance, requireChannelSub
   const idempKey = idempotency_key || `WD_${telegram_id}_${Date.now()}`;
   try {
     const reserveRes = db.atomicReserveWithdrawal(telegram_id, user.wallet_address, reqAmount, idempKey, withdrawalFee);
+    cloudSync.triggerCloudBackup();
 
     // Notify Admin Telegram
     bot.telegram.sendMessage(ADMIN_TG_ID,
@@ -1377,9 +1406,13 @@ app.post('/api/user/claim-task', telegramAuth, checkMaintenance, requireChannelS
 
   const idempKey = idempotency_key || `TASK_${telegram_id}_${task_id}_${Math.floor(now / 10000)}`;
   try {
-    const taskRes = db.atomicClaimTask(telegram_id, task_id, reward, idempKey);
+    const taskRes = db.atomicClaimTask(telegram_id, task_id, reward, idempKey, def.cooldown);
+    cloudSync.triggerCloudBackup();
     sendMsg(req, res, true, `🎉 حصلت على ${reward} REX من "${def.name_ar || def.name}"!`, `🎉 Earned ${reward} REX from "${def.name_en || def.name}"!`, { reward, balance: taskRes.balance });
   } catch (err) {
+    if (err.message === 'TASK_COOLDOWN_ACTIVE') {
+      return sendMsg(req, res, false, 'هذه المهمة قيد الانتظار حالياً، يرجى الانتظار حتى انتهاء الوقت المحدد.', 'Quest cooldown active.');
+    }
     res.json({ success: false, message: err.message });
   }
 });
@@ -1403,6 +1436,7 @@ app.post('/api/daily-checkin/claim', telegramAuth, checkMaintenance, requireChan
 
   try {
     const claimRes = db.claimDailyCheckin(tid);
+    cloudSync.triggerCloudBackup();
     sendMsg(
       req,
       res,
@@ -1802,6 +1836,7 @@ app.post('/api/admin/withdrawals/status', adminAuth, async (req, res) => {
       ).catch(() => {});
     }
 
+    cloudSync.triggerCloudBackup();
     res.json({ success: true, new_status });
   } catch (err) {
     res.json({ success: false, message: err.message });
@@ -1878,6 +1913,7 @@ app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
     }
 
     db.logAdminAction('AUTO_PAYOUT_SUCCESS', `تم صرف سحب #${id} بقيمة ${withdrawal.amount} REX إلى ${recipientWallet}`, ADMIN_TG_ID);
+    cloudSync.triggerCloudBackup();
 
     return res.json({
       success: true,
@@ -1921,6 +1957,7 @@ app.post('/api/admin/settings', adminAuth, (req, res) => {
       db.updateSetting(k, String(v));
     }
     db.logAdminAction('UPDATE_SETTINGS', JSON.stringify(settings), ADMIN_TG_ID);
+    cloudSync.triggerCloudBackup();
     return res.json({ success: true });
   }
   res.json({ success: false });
@@ -1998,6 +2035,7 @@ app.post('/api/admin/add-balance', adminAuth, (req, res) => {
       ).catch(() => {});
     }
 
+    cloudSync.triggerCloudBackup();
     res.json({ success: true, new_balance: result.balance, added: amt });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -2016,7 +2054,7 @@ app.post('/api/admin/set-balance', adminAuth, (req, res) => {
   try {
     const result = db.setBalance(tid, amt, ADMIN_TG_ID, reason);
     db.logAdminAction('SET_BALANCE', `تعيين رصيد المستخدم ${tid} إلى ${amt} REX`, ADMIN_TG_ID);
-
+    cloudSync.triggerCloudBackup();
     res.json({ success: true, new_balance: result.balance });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -2029,6 +2067,7 @@ app.post('/api/admin/reset-mining', adminAuth, (req, res) => {
   const tid = parseInt(telegram_id, 10);
   db.resetMining(tid);
   db.logAdminAction('RESET_MINING', `إعادة تعيين دورة التعدين للمستخدم ${tid}`, ADMIN_TG_ID);
+  cloudSync.triggerCloudBackup();
   res.json({ success: true });
 });
 
@@ -2038,7 +2077,25 @@ app.post('/api/admin/clear-reserved-balance', adminAuth, (req, res) => {
   const tid = parseInt(telegram_id, 10);
   db.clearReservedBalance(tid);
   db.logAdminAction('CLEAR_RESERVED_BALANCE', `تصفير الرصيد المحجوز للمستخدم ${tid}`, ADMIN_TG_ID);
+  cloudSync.triggerCloudBackup();
   res.json({ success: true });
+});
+
+// Admin Cloud Backup & Persistence Controls (Supabase)
+app.post('/api/admin/cloud-sync/backup', adminAuth, async (req, res) => {
+  const success = await cloudSync.backupToCloud();
+  res.json({
+    success,
+    message: success ? 'تم أخذ نسخة احتياطية سحابية كاملة وحفظها في Supabase بنجاح! ☁️' : 'فشل أخذ النسخة السحابية'
+  });
+});
+
+app.post('/api/admin/cloud-sync/restore', adminAuth, async (req, res) => {
+  const success = await cloudSync.restoreFromCloud();
+  res.json({
+    success,
+    message: success ? 'تم استرجاع قاعدة البيانات بنجاح من سحابة Supabase! ☁️' : 'لم يتم العثور على نسخة سحابية جديدة أو فشل الاسترجاع'
+  });
 });
 
 // Direct Admin DM to User
@@ -2107,6 +2164,7 @@ app.post('/api/admin/broadcast', adminAuth, async (req, res) => {
 // Endpoint for Web Verification of Channel Subscription
 app.post('/api/user/check-channel', telegramAuth, async (req, res) => {
   const telegram_id = req.telegramUser?.id || req.body?.telegram_id;
+  if (telegram_id) channelSubCache.delete(parseInt(telegram_id));
   const isSub = await isUserSubscribedToChannel(telegram_id);
   const chan = getRequiredChannel();
   return res.json({

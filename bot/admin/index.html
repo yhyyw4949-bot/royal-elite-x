@@ -398,6 +398,7 @@
       <div class="section-header">
         <div class="section-heading"><span>📊</span> لوحة المؤشرات العامة واقتصاد REX</div>
         <div class="header-actions">
+          <button class="btn-action-header" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#60a5fa;" onclick="triggerCloudBackupAdmin()">☁️ حفظ سحابي (Supabase)</button>
           <button class="btn-action-header" onclick="loadOverview()">🔄 تحديث لحظي</button>
         </div>
       </div>
@@ -2005,6 +2006,17 @@
   }
 
   // ── Broadcast ──
+  async function triggerCloudBackupAdmin() {
+    if (!confirm('هل تريد أخذ نسخة احتياطية سحابية كاملة من قاعدة البيانات وحفظها في Supabase الآن؟')) return;
+    toast('⏳ جاري الحفظ السحابي...');
+    const r = await api('/api/admin/cloud-sync/backup', 'POST');
+    if (r?.success) {
+      toast('☁️ ' + (r.message || 'تم الحفظ السحابي بنجاح!'));
+    } else {
+      toast('❌ ' + (r?.message || 'فشل الحفظ السحابي'));
+    }
+  }
+
   async function sendBroadcastMsg() {
     const msg = document.getElementById('broadcastContent').value.trim();
     if (!msg) return toast('⚠️ يرجى كتابة الرسالة أولاً');

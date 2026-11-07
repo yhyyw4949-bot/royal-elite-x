@@ -918,11 +918,14 @@ module.exports = {
   },
 
   // Atomic Task Reward
-  atomicClaimTask: (telegram_id, task_id, reward, idempotency_key) => {
+  atomicClaimTask: (telegram_id, task_id, reward, idempotency_key, cooldownMs = 0) => {
     const tx = db.transaction(() => {
       const now = Date.now();
       const existing = db.prepare('SELECT * FROM user_tasks WHERE telegram_id = ? AND task_id = ?').get(telegram_id, task_id);
       if (existing) {
+        if (cooldownMs > 0 && (now - (existing.last_completed_at || 0) < cooldownMs)) {
+          throw new Error('TASK_COOLDOWN_ACTIVE');
+        }
         db.prepare('UPDATE user_tasks SET completed_count = completed_count + 1, last_completed_at = ? WHERE telegram_id = ? AND task_id = ?').run(now, telegram_id, task_id);
       } else {
         db.prepare('INSERT INTO user_tasks (telegram_id, task_id, completed_count, last_completed_at) VALUES (?, ?, 1, ?)').run(telegram_id, task_id, now);
