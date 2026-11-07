@@ -636,9 +636,11 @@ app.post('/api/user/connect-wallet', telegramAuth, checkMaintenance, async (req,
 
     db.setMultiplier(telegram_id, multiplier);
 
-    // Award referral offer ONLY after wallet verification!
+    // Award referral offer ONLY if wallet is connected AND account is fully activated/verified!
     const userObj = db.getUser(telegram_id);
-    await checkAndAwardReferralOffer(telegram_id, userObj?.first_name);
+    if (userObj && userObj.is_activated === 1) {
+      await checkAndAwardReferralOffer(telegram_id, userObj.first_name);
+    }
 
     sendMsg(req, res, true, 'تم ربط المحفظة وتوثيقها بنجاح!', 'Wallet verified and connected successfully!', { friendlyAddr, multiplier, onChainBalance });
   } catch (e) {
@@ -646,12 +648,13 @@ app.post('/api/user/connect-wallet', telegramAuth, checkMaintenance, async (req,
   }
 });
 
-app.post('/api/user/confirm-activation', telegramAuth, checkMaintenance, (req, res) => {
+app.post('/api/user/confirm-activation', telegramAuth, checkMaintenance, async (req, res) => {
   const { telegram_id } = req.body;
   const user = db.getUser(telegram_id);
   if (!user) return res.json({ success: false });
   if (!user.wallet_address) return sendMsg(req, res, false, 'ارتبط بمحفظة أولاً', 'Connect TON wallet first');
   db.setActivated(telegram_id);
+  await checkAndAwardReferralOffer(telegram_id, user.first_name);
   sendMsg(req, res, true, 'تم تفعيل الحساب بنجاح!', 'Account activated successfully!');
 });
 
@@ -673,6 +676,7 @@ app.post('/api/user/redeem-activation-code', telegramAuth, checkMaintenance, asy
 
   try {
     const actRes = db.redeemActivationCode(telegram_id, code);
+    await checkAndAwardReferralOffer(telegram_id, user.first_name);
 
     // Notify on Telegram
     bot.telegram.sendMessage(
@@ -1942,8 +1946,10 @@ async function checkAndAwardReferralOffer(newUserId, firstName) {
     if (!offer || !offer.enabled) return;
 
     const user = db.getUser(newUserId);
-    if (!user || !user.referrer_id || user.ref_bonus_awarded === 1) return;
-    if (!user.wallet_address) return; // Referral only counted & awarded after wallet connection!
+    if (!user || !user.referrer_id) return;
+    if (user.ref_bonus_awarded === 1) return;
+    if (!user.wallet_address || user.wallet_address.trim() === '') return;
+    if (user.is_activated !== 1) return; // STRICT: Referral reward ONLY awarded after account verification/activation!
 
     const refBonus = offer.referrer_rex;
     const newBonus = offer.referee_rex;
@@ -2177,6 +2183,7 @@ bot.command(['activate', 'vip', 'pass', 'free'], async (ctx) => {
 
   try {
     const actRes = db.redeemActivationCode(tid, code);
+    await checkAndAwardReferralOffer(tid, ctx.from.first_name);
     return ctx.reply(
       `👑 *Royal Activation Successful, ${ctx.from.first_name || 'Knight'}!* 🎉\n\n` +
       `• Code: \`${actRes.code}\`\n` +

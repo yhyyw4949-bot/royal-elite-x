@@ -222,6 +222,13 @@ db.exec(`
     UNIQUE(code_id, telegram_id)
   );
 
+  CREATE TABLE IF NOT EXISTS referral_reward_records (
+    referee_id INTEGER PRIMARY KEY,
+    referrer_id INTEGER NOT NULL,
+    reward_amount REAL NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS activation_codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT UNIQUE COLLATE NOCASE,
@@ -1352,11 +1359,19 @@ module.exports = {
   },
 
 
-  // ── Dual Referral Bonus Promotion Engine ──
+  // ── Dual Referral Bonus Promotion Engine (STRICT ONE-TIME LOCK & ACTIVATION CHECK) ──
   atomicAwardReferralOffer: (newUserId, referrerId, newBonus, refBonus) => {
     const tx = db.transaction(() => {
-      const newUser = db.prepare('SELECT telegram_id, first_name, username, balance, ref_bonus_awarded, wallet_address FROM users WHERE telegram_id = ?').get(newUserId);
-      if (!newUser || newUser.ref_bonus_awarded === 1 || !newUser.wallet_address) return null;
+      // 1. Strict duplicate check in dedicated records table
+      const already = db.prepare('SELECT referee_id FROM referral_reward_records WHERE referee_id = ?').get(newUserId);
+      if (already) return null;
+
+      // 2. Strict verification of referee: must have wallet AND is_activated === 1 AND ref_bonus_awarded === 0
+      const newUser = db.prepare('SELECT telegram_id, first_name, username, balance, ref_bonus_awarded, wallet_address, is_activated FROM users WHERE telegram_id = ?').get(newUserId);
+      if (!newUser) return null;
+      if (newUser.ref_bonus_awarded === 1) return null;
+      if (!newUser.wallet_address || newUser.wallet_address.trim() === '') return null;
+      if (newUser.is_activated !== 1) return null; // STRICT: Verification and activation required!
 
       const referrer = db.prepare('SELECT telegram_id, first_name, username, balance FROM users WHERE telegram_id = ?').get(referrerId);
       if (!referrer) return null;
@@ -1367,6 +1382,9 @@ module.exports = {
 
       const newBalUser = (newUser.balance || 0) + nBonus;
       const newBalRef = (referrer.balance || 0) + rBonus;
+
+      // 3. Insert into immutable records table (PRIMARY KEY guarantees it can never be awarded twice)
+      db.prepare('INSERT INTO referral_reward_records (referee_id, referrer_id, reward_amount, created_at) VALUES (?, ?, ?, ?)').run(newUserId, referrerId, rBonus, now);
 
       db.prepare('UPDATE users SET balance = balance + ?, ref_bonus_awarded = 1 WHERE telegram_id = ?').run(nBonus, newUserId);
       db.prepare('UPDATE users SET balance = balance + ? WHERE telegram_id = ?').run(rBonus, referrerId);
@@ -1396,7 +1414,12 @@ module.exports = {
       };
     });
 
-    return tx();
+    try {
+      return tx();
+    } catch (e) {
+      console.error('[ATOMIC REFERRAL AWARD ERROR]:', e.message);
+      return null;
+    }
   },
 
   getReferralOfferDetails: () => {
