@@ -2840,4 +2840,12 @@ async function startBotWithRetry(retries = 15) {
     }
   }
 }
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught Exception caught by enterprise handler:', err.message);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRITICAL] Unhandled Rejection caught by enterprise handler:', reason);
+});
+
 startBotWithRetry();
