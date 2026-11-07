@@ -28,6 +28,7 @@
   "dependencies": {
     "@ton/ton": "^16.3.0",
     "better-sqlite3": "^13.0.3",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",

@@ -38,6 +38,9 @@ const db = new Database(dbPath);
 // Enable WAL mode for high concurrency & reliability
 db.pragma('journal_mode = WAL');
 db.pragma('synchronous = NORMAL');
+db.pragma('temp_store = MEMORY');
+db.pragma('cache_size = -64000'); // 64MB memory page cache
+db.pragma('mmap_size = 268435456'); // 256MB memory-mapped I/O
 
 // ── 1. Schema Initialization & Migrations ──
 db.exec(`
@@ -279,6 +282,23 @@ db.exec(`
     redeemed_at INTEGER,
     UNIQUE(code_id, telegram_id)
   );
+
+  -- High-Performance B-Tree Indexes for Instant Lookups
+  CREATE INDEX IF NOT EXISTS idx_users_wallet ON users(wallet_address);
+  CREATE INDEX IF NOT EXISTS idx_users_referrer ON users(referrer_id);
+  CREATE INDEX IF NOT EXISTS idx_users_mining ON users(is_mining, last_mining_start);
+  CREATE INDEX IF NOT EXISTS idx_users_activated ON users(is_activated);
+  CREATE INDEX IF NOT EXISTS idx_users_created ON users(created_at);
+  CREATE INDEX IF NOT EXISTS idx_withdrawals_tid ON withdrawals(telegram_id);
+  CREATE INDEX IF NOT EXISTS idx_withdrawals_status ON withdrawals(status);
+  CREATE INDEX IF NOT EXISTS idx_transactions_tid ON transactions(telegram_id);
+  CREATE INDEX IF NOT EXISTS idx_user_tasks_tid ON user_tasks(telegram_id, task_id);
+  CREATE INDEX IF NOT EXISTS idx_device_fingerprints ON device_fingerprints(fingerprint);
+  CREATE INDEX IF NOT EXISTS idx_ip_logs_tid ON ip_logs(telegram_id);
+  CREATE INDEX IF NOT EXISTS idx_activation_codes_code ON activation_codes(code);
+  CREATE INDEX IF NOT EXISTS idx_act_redemptions_tid ON activation_code_redemptions(telegram_id);
+  CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
+  CREATE INDEX IF NOT EXISTS idx_promo_redemptions_tid ON promo_code_redemptions(telegram_id);
 `);
 
 // ── 2. Safe Column Additions for Existing Databases ──
@@ -1988,6 +2008,68 @@ module.exports = {
     return db.prepare('SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?').all(limit, offset);
   },
   getUserCount: () => db.prepare('SELECT COUNT(*) as c FROM users').get().c,
+  getAdminDashboardStats: () => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const startMs = startOfToday.getTime();
+
+    const uRow = db.prepare(`
+      SELECT 
+        COUNT(*) as total_users,
+        COALESCE(SUM(balance), 0) as total_balance,
+        COALESCE(SUM(reserved_balance), 0) as total_reserved,
+        COALESCE(SUM(CASE WHEN is_banned = 0 THEN mined_total ELSE 0 END), 0) as total_mined,
+        COALESCE(SUM(total_withdrawn), 0) as total_withdrawn,
+        COALESCE(SUM(CASE WHEN is_activated = 1 THEN 1 ELSE 0 END), 0) as activated,
+        COALESCE(SUM(CASE WHEN is_banned = 1 THEN 1 ELSE 0 END), 0) as banned,
+        COALESCE(SUM(CASE WHEN is_mining = 1 THEN 1 ELSE 0 END), 0) as active_miners,
+        COALESCE(SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END), 0) as new_today
+      FROM users
+    `).get(startMs);
+
+    const wRows = db.prepare(`
+      SELECT 
+        status,
+        COUNT(*) as count,
+        COALESCE(SUM(amount), 0) as sum_amount
+      FROM withdrawals
+      GROUP BY status
+    `).all();
+
+    const wStats = {
+      pending: { c: 0, s: 0 },
+      confirmed: { c: 0, s: 0 },
+      rejected: { c: 0, s: 0 }
+    };
+    for (const r of wRows) {
+      if (['pending', 'reviewing', 'approved', 'processing'].includes(r.status)) {
+        wStats.pending.c += r.count;
+        wStats.pending.s += r.sum_amount;
+      } else if (r.status === 'confirmed') {
+        wStats.confirmed.c += r.count;
+        wStats.confirmed.s += r.sum_amount;
+      } else if (['rejected', 'failed'].includes(r.status)) {
+        wStats.rejected.c += r.count;
+        wStats.rejected.s += r.sum_amount;
+      }
+    }
+
+    const tok = module.exports.getPublicTokenomicsStats();
+
+    return {
+      users:           uRow.total_users,
+      activated:       uRow.activated,
+      active_miners:   uRow.active_miners,
+      banned:          uRow.banned,
+      new_today:       uRow.new_today,
+      total_balance:   uRow.total_balance,
+      total_reserved:  uRow.total_reserved,
+      total_mined:     uRow.total_mined,
+      total_withdrawn: uRow.total_withdrawn,
+      withdrawals:     wStats,
+      tokenomics:      tok
+    };
+  },
   getActiveMiners: () => db.prepare('SELECT COUNT(*) as c FROM users WHERE is_mining = 1').get().c,
   getTotalBalance: () => db.prepare('SELECT COALESCE(SUM(balance),0) as s FROM users').get().s,
   getTotalReserved: () => db.prepare('SELECT COALESCE(SUM(reserved_balance),0) as s FROM users').get().s,

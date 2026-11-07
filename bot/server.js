@@ -16,6 +16,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
 const express = require('express');
+const compression = require('compression');
 const cors = require('cors');
 const db = require('./database');
 const security = require('./security');
@@ -40,6 +41,7 @@ const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 
 // ── Middleware Pipeline ──
+app.use(compression({ threshold: 1024 }));
 app.use(cors());
 app.use(express.json());
 // Ironclad Anti-Cache Middleware for real-time mobile WebView sync
@@ -50,7 +52,14 @@ app.use('/api', (req, res, next) => {
   next();
 });
 app.use(security.createRateLimiter(60000, 180)); // 180 req/min limit per IP
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 // Telegram initData Authentication Middleware (Strict Tamper-Proof Session Verification)
 function telegramAuth(req, res, next) {
@@ -100,7 +109,14 @@ function adminAuth(req, res, next) {
 }
 
 // Serve Admin Dashboard
-app.use('/admin', express.static(path.join(__dirname, 'admin')));
+app.use('/admin', express.static(path.join(__dirname, 'admin'), {
+  maxAge: '1d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 app.get('/admin', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'admin', 'index.html'));
 });
@@ -177,16 +193,23 @@ async function getOnChainRexBalance(walletAddrStr) {
   if (cached !== null) return cached;
 
   try {
-    const parsedAddr = Address.parse(walletAddrStr);
-    const minter = Address.parse(REX_MASTER_CONTRACT);
-    const walletAddrResult = await tonClient.runMethod(minter, 'get_wallet_address', [
-      { type: 'slice', cell: beginCell().storeAddress(parsedAddr).endCell() }
-    ]);
-    const userJettonWallet = walletAddrResult.stack.readAddress();
-    const walletData = await tonClient.runMethod(userJettonWallet, 'get_wallet_data');
-    const balance = Number(walletData.stack.readBigNumber() / 10n**9n);
-    security.OnChainBalanceCache.set(walletAddrStr, balance);
-    return balance;
+    const rpcPromise = (async () => {
+      const parsedAddr = Address.parse(walletAddrStr);
+      const minter = Address.parse(REX_MASTER_CONTRACT);
+      const walletAddrResult = await tonClient.runMethod(minter, 'get_wallet_address', [
+        { type: 'slice', cell: beginCell().storeAddress(parsedAddr).endCell() }
+      ]);
+      const userJettonWallet = walletAddrResult.stack.readAddress();
+      const walletData = await tonClient.runMethod(userJettonWallet, 'get_wallet_data');
+      const balance = Number(walletData.stack.readBigNumber() / 10n**9n);
+      security.OnChainBalanceCache.set(walletAddrStr, balance);
+      return balance;
+    })();
+
+    // 2500ms safety timeout to prevent stalling API responses on TON RPC lags
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
+    const result = await Promise.race([rpcPromise, timeoutPromise]);
+    return result !== null ? result : 0;
   } catch (err) {
     return 0;
   }
@@ -1561,21 +1584,20 @@ app.post('/api/admin/verify-otp', adminAuth, (req, res) => {
   res.status(401).json({ success: false, message: 'رمز الأمان غير صالح أو منتهي الصلاحية.' });
 });
 
-// Admin Stats
+// Admin Stats with High-Speed In-Memory Cache (4s TTL) and Single-Pass DB Aggregation
+let adminStatsCache = { data: null, timestamp: 0 };
 app.get('/api/admin/stats', adminAuth, (req, res) => {
-  res.json({
-    users:           db.getUserCount(),
-    activated:       db.getActivatedCount(),
-    active_miners:   db.getActiveMiners(),
-    banned:          db.getBannedCount(),
-    new_today:       db.getNewUsersToday(),
-    total_balance:   db.getTotalBalance(),
-    total_reserved:  db.getTotalReserved(),
-    total_mined:     db.getTotalMined(),
-    total_withdrawn: db.getTotalWithdrawn(),
-    withdrawals:     db.getWithdrawalStats(),
-    tokenomics:      db.getPublicTokenomicsStats()
-  });
+  const now = Date.now();
+  if (adminStatsCache.data && (now - adminStatsCache.timestamp < 4000)) {
+    return res.json(adminStatsCache.data);
+  }
+  try {
+    const stats = db.getAdminDashboardStats();
+    adminStatsCache = { data: stats, timestamp: now };
+    res.json(stats);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Admin User Inspector
@@ -1780,10 +1802,16 @@ app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
   }
 });
 
-// Admin Bot Payout Wallet Status
+// Admin Bot Payout Wallet Status (Cached for 30s for lightning dashboard loading)
+let botWalletCache = { data: null, timestamp: 0 };
 app.get('/api/admin/bot-wallet', adminAuth, async (req, res) => {
+  const now = Date.now();
+  if (botWalletCache.data && (now - botWalletCache.timestamp < 30000)) {
+    return res.json(botWalletCache.data);
+  }
   try {
     const info = await payout.getBotWalletInfo();
+    botWalletCache = { data: info, timestamp: now };
     res.json(info);
   } catch (err) {
     res.json({ configured: false, error: err.message });
@@ -2624,7 +2652,9 @@ setInterval(async () => {
 async function startBotWithRetry(retries = 15) {
   for (let i = 0; i < retries; i++) {
     try {
-      await bot.launch();
+      await bot.launch({
+        allowedUpdates: ['message', 'callback_query', 'chat_member']
+      });
       console.log('🤖 Telegram Bot @Royalelitexbot is LIVE with Enterprise Security v4.0!');
       try {
         await bot.telegram.setChatMenuButton({

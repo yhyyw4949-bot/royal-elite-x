@@ -1172,7 +1172,12 @@
     }
   }
 
-  function switchNav(id, el) {
+  const tabLastLoaded = {};
+  function switchNav(id, el, force = false) {
+    const now = Date.now();
+    const last = tabLastLoaded[id] || 0;
+    if (!force && curNav === id && (now - last < 12000)) return;
+    tabLastLoaded[id] = now;
     curNav = id;
     document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
     if (el) el.classList.add('active');

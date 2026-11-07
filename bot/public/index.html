@@ -4104,7 +4104,18 @@
   }
 
   // Periodic Live Sync & Continuous Subscription Watchdog (every 30s)
-  setInterval(fetchUserData, 30000);
+  // Visibility-Aware Live Sync (Conserves battery, network & server resources)
+  setInterval(() => {
+    if (document.visibilityState !== 'hidden') {
+      fetchUserData();
+    }
+  }, 30000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      fetchUserData();
+    }
+  });
 </script>
 </body>
 </html>
