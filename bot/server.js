@@ -1941,6 +1941,15 @@ app.post('/api/admin/reset-mining', adminAuth, (req, res) => {
   res.json({ success: true });
 });
 
+app.post('/api/admin/clear-reserved-balance', adminAuth, (req, res) => {
+  const { telegram_id } = req.body;
+  if (!telegram_id) return res.status(400).json({ success: false, message: 'معرف المستخدم مطلوب' });
+  const tid = parseInt(telegram_id, 10);
+  db.clearReservedBalance(tid);
+  db.logAdminAction('CLEAR_RESERVED_BALANCE', `تصفير الرصيد المحجوز للمستخدم ${tid}`, ADMIN_TG_ID);
+  res.json({ success: true });
+});
+
 // Direct Admin DM to User
 app.post('/api/admin/send-message', adminAuth, async (req, res) => {
   const { telegram_id, message } = req.body;

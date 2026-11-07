@@ -721,7 +721,7 @@ module.exports = {
       const parsedAmt = parseFloat(amount);
       if (isNaN(parsedAmt)) throw new Error('Invalid amount');
 
-      db.prepare('UPDATE users SET balance = balance + ? WHERE telegram_id = ?').run(parsedAmt, telegram_id);
+      db.prepare('UPDATE users SET balance = MAX(0, balance + ?) WHERE telegram_id = ?').run(parsedAmt, telegram_id);
       const updated = db.prepare('SELECT balance FROM users WHERE telegram_id = ?').get(telegram_id);
       if (!updated) throw new Error('User not found');
 
@@ -767,6 +767,10 @@ module.exports = {
 
   resetMining: (telegram_id) => {
     return db.prepare('UPDATE users SET is_mining = 0, last_mining_start = 0 WHERE telegram_id = ?').run(telegram_id);
+  },
+
+  clearReservedBalance: (telegram_id) => {
+    return db.prepare('UPDATE users SET reserved_balance = 0 WHERE telegram_id = ?').run(telegram_id);
   },
 
   // ── Post-Withdrawal Anti-Dump Surveillance Engine ──

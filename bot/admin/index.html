@@ -1012,12 +1012,13 @@
           </div>
         </div>
 
-        <!-- Add Amount to Balance -->
+        <!-- Add or Deduct Balance -->
         <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:10px;">
-          <div style="font-size:11px; color:var(--muted); margin-bottom:5px; font-weight:700;">إضافة رصيد إضافي (Credit REX):</div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:5px; font-weight:700;">إضافة أو خصم رصيد (Credit / Debit):</div>
           <div style="display:flex; gap:6px;">
-            <input type="number" id="inspAddBalInput" placeholder="+المبلغ" step="any" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); border-radius:8px; padding:6px 10px; color:#fff; font-size:12px; font-family:'Orbitron', monospace;">
-            <button class="btn btn-approve" style="padding:6px 12px; font-size:11.5px; white-space:nowrap;" onclick="executeAddBalance()">➕ إضافة</button>
+            <input type="number" id="inspAddBalInput" placeholder="المبلغ" step="any" min="0" style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--border-subtle); border-radius:8px; padding:6px 8px; color:#fff; font-size:12px; font-family:'Orbitron', monospace;">
+            <button class="btn btn-approve" style="padding:6px 10px; font-size:11px; white-space:nowrap;" onclick="executeAddBalance(1)">➕ إضافة</button>
+            <button class="btn btn-reject" style="padding:6px 10px; font-size:11px; white-space:nowrap;" onclick="executeAddBalance(-1)">➖ خصم</button>
           </div>
         </div>
       </div>
@@ -1027,6 +1028,7 @@
       <button class="btn btn-ban" id="insp-ban-btn" onclick="toggleUserBan()">⛔ حظر الحساب</button>
       <button class="btn btn-secondary" id="insp-hold-btn" onclick="toggleUserHoldExemption()">⚡ إعفاء من شرط الـ 3 أيام</button>
       <button class="btn btn-ghost" onclick="resetUserMining()">⚡ إعادة تعيين التعدين</button>
+      <button class="btn btn-reject" onclick="clearUserReservedBalance()">🗑️ تصفير الرصيد المحجوز للسحب</button>
     </div>
 
     <div style="background:rgba(255,255,255,0.02); border-radius:14px; padding:12px; margin-bottom:14px;">
@@ -1596,23 +1598,41 @@
     }
   }
 
-  async function executeAddBalance() {
+  async function executeAddBalance(multiplier = 1) {
     if (!curInspectTid) return toast('⚠️ لم يتم اختيار مستخدم');
     const input = document.getElementById('inspAddBalInput');
     const val = input?.value;
-    if (!val) return toast('⚠️ أدخل المبلغ المراد إضافته');
-    const amt = parseFloat(val);
-    if (isNaN(amt) || amt === 0) return toast('⚠️ قيمة غير صالحة');
+    if (!val) return toast('⚠️ أدخل المبلغ المطلوب');
+    const rawAmt = parseFloat(val);
+    if (isNaN(rawAmt) || rawAmt <= 0) return toast('⚠️ قيمة غير صالحة');
+    const amt = rawAmt * multiplier;
 
     try {
       const res = await api('/api/admin/add-balance', 'POST', { telegram_id: curInspectTid, amount: amt });
       if (res && res.success) {
-        toast('✅ تمت إضافة ' + amt.toLocaleString() + ' REX للرصيد بنجاح!');
+        toast(amt > 0 ? ('✅ تمت إضافة ' + amt.toLocaleString() + ' REX للرصيد بنجاح!') : ('✅ تم خصم ' + Math.abs(amt).toLocaleString() + ' REX من الرصيد بنجاح!'));
         input.value = '';
         inspectUser(curInspectTid);
         loadUsers(usersPage);
       } else {
-        toast('❌ فشل إضافة الرصيد: ' + (res?.message || 'خطأ غير معروف'));
+        toast('❌ فشل تعديل الرصيد: ' + (res?.message || 'خطأ غير معروف'));
+      }
+    } catch (err) {
+      toast('❌ خطأ في الاتصال: ' + err.message);
+    }
+  }
+
+  async function clearUserReservedBalance() {
+    if (!curInspectTid) return;
+    if (!confirm('⚠️ هل أنت متأكد من تصفير الرصيد المحجوز للسحب لهذا المستخدم؟\n(لن يتمكن المستخدم من استرجاع هذا المبلغ إذا كان لديه طلب سحب قيد الانتظار)')) return;
+    try {
+      const res = await api('/api/admin/clear-reserved-balance', 'POST', { telegram_id: curInspectTid });
+      if (res && res.success) {
+        toast('✅ تم تصفير الرصيد المحجوز بنجاح');
+        inspectUser(curInspectTid);
+        loadUsers(usersPage);
+      } else {
+        toast('❌ فشل: ' + (res?.message || 'خطأ'));
       }
     } catch (err) {
       toast('❌ خطأ في الاتصال: ' + err.message);
