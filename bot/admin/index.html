@@ -658,7 +658,14 @@
           <label>رسوم معالجة وشبكة السحب (REX Fee):</label>
           <input type="number" class="form-item-input" id="cfg-withdrawal_fee" placeholder="500">
         </div>
-        <div class="form-item-row" style="background:rgba(245,158,11,0.08); padding:10px; border-radius:10px; border:1px solid rgba(245,158,11,0.3);">
+                <div class="form-item-row" style="background:rgba(239,68,68,0.08); padding:10px; border-radius:10px; border:1px solid rgba(239,68,68,0.3);">
+          <label style="color:#f87171; font-weight:bold;">🛡️ تفعيل نظام حظر بيع العملات بعد السحب (Anti-Dump):</label>
+          <select class="form-item-input" id="cfg-enable_anti_dump" style="font-weight:bold; color:#fff;">
+            <option value="0">معطّل ❌ (عدم حظر أو مراقبة المحافظ بعد استلام السحب لتجنب البلاغات الخاطئة)</option>
+            <option value="1">مفعّل ✅ (مراقبة بيع العملات وحظر المستخدمين خلال 24 ساعة)</option>
+          </select>
+        </div>
+<div class="form-item-row" style="background:rgba(245,158,11,0.08); padding:10px; border-radius:10px; border:1px solid rgba(245,158,11,0.3);">
           <label style="color:var(--gold-lt); font-weight:bold;">⚡ تفعيل شرط الاحتفاظ بالسحب (Holding Rule):</label>
           <div style="display:flex; gap:8px; align-items:center;">
             <select class="form-item-input" id="cfg-enable_holding_rule" style="font-weight:bold; color:#fff;">
@@ -1952,6 +1959,7 @@
     const cfg = await api('/api/admin/settings');
     if (cfg) {
       document.getElementById('cfg-enable_holding_rule').value = cfg.enable_holding_rule !== undefined ? cfg.enable_holding_rule : '0';
+      document.getElementById('cfg-enable_anti_dump').value = cfg.enable_anti_dump !== undefined ? cfg.enable_anti_dump : '0';
       document.getElementById('cfg-min_withdrawal').value = cfg.min_withdrawal || '5000';
       if (document.getElementById('cfg-withdrawal_fee')) document.getElementById('cfg-withdrawal_fee').value = cfg.withdrawal_fee || '500';
       document.getElementById('cfg-hold_percent').value = cfg.hold_percent || '20';
@@ -1967,6 +1975,7 @@
   async function disableHoldingRuleCompletely() {
     if (!confirm('⚠️ هل تريد إلغاء شرط الاحتفاظ بالكامل لجميع المستخدمين؟\nسيتمكن أي مستخدم من سحب أرباحه فوراً دون اشتراط حيازة أي عملات REX في محفظته.')) return;
     document.getElementById('cfg-enable_holding_rule').value = '0';
+    document.getElementById('cfg-enable_anti_dump').value = '0';
     document.getElementById('cfg-hold_percent').value = '0';
     document.getElementById('cfg-min_hold_rex').value = '0';
     document.getElementById('cfg-min_hold_days').value = '0';
@@ -1976,6 +1985,7 @@
   async function saveSettings() {
     const payload = {
       enable_holding_rule: document.getElementById('cfg-enable_holding_rule')?.value || '0',
+      enable_anti_dump: document.getElementById('cfg-enable_anti_dump')?.value || '0',
       min_withdrawal: document.getElementById('cfg-min_withdrawal').value,
       withdrawal_fee: document.getElementById('cfg-withdrawal_fee')?.value || '500',
       hold_percent: document.getElementById('cfg-hold_percent').value,

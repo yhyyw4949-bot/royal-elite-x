@@ -206,12 +206,16 @@ async function getOnChainRexBalance(walletAddrStr) {
       return balance;
     })();
 
-    // 2500ms safety timeout to prevent stalling API responses on TON RPC lags
-    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
+    // 3500ms safety timeout to prevent stalling API responses on TON RPC lags
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3500));
     const result = await Promise.race([rpcPromise, timeoutPromise]);
-    return result !== null ? result : 0;
+    return result;
   } catch (err) {
-    return 0;
+    if (err.message && (err.message.includes('exit_code: -13') || err.message.includes('cannot find') || err.message.includes('exit_code: -11'))) {
+      security.OnChainBalanceCache.set(walletAddrStr, 0);
+      return 0;
+    }
+    return null;
   }
 }
 
@@ -381,26 +385,67 @@ function calculateHoldingTier(onChainRex) {
 // ANTI-DUMP SENTINEL (حظر تلقائي في حال بيع العملات بعد السحب خلال 24 ساعة)
 // ================================================================
 async function checkAntiDumpViolation(user, currentOnChain) {
-  if (!user || user.is_banned || !user.post_wd_monitored_until) return false;
-  const now = Date.now();
-  if (now > user.post_wd_monitored_until) return false;
+  if (!user || user.is_banned) return false;
 
-  const baseline = user.post_wd_baseline_rex || 5000;
-  // If user acquired more tokens, raise the baseline
-  if (currentOnChain > baseline) {
-    db.updatePostWdBaseline(user.telegram_id, currentOnChain);
-    user.post_wd_baseline_rex = currentOnChain;
+  // 1. Admin and exempt accounts are completely immune
+  if (parseInt(user.telegram_id) === ADMIN_TG_ID || user.is_hold_exempt || user.is_sybil_exempt) {
+    if (user.post_wd_monitored_until) db.clearPostWdMonitoring(user.telegram_id);
     return false;
   }
 
-  // Check if balance dropped by more than 5 REX (protection against selling/dumping on STON.fi)
-  if (currentOnChain < baseline - 5) {
-    const soldAmount = Math.max(0, baseline - currentOnChain);
+  // 2. Controlled strictly by global master settings
+  const enableHoldingRule = db.getSetting('enable_holding_rule', '0') === '1';
+  const enableAntiDump = db.getSetting('enable_anti_dump', '0') === '1';
+  if (!enableHoldingRule || !enableAntiDump) {
+    if (user.post_wd_monitored_until) db.clearPostWdMonitoring(user.telegram_id);
+    return false;
+  }
+
+  if (!user.post_wd_monitored_until) return false;
+  const now = Date.now();
+  if (now > user.post_wd_monitored_until) {
+    db.clearPostWdMonitoring(user.telegram_id);
+    return false;
+  }
+
+  // 3. CRITICAL: Never ban on null/undefined/NaN or RPC network error
+  if (currentOnChain === null || currentOnChain === undefined || isNaN(currentOnChain)) {
+    return false;
+  }
+
+  const baseline = user.post_wd_baseline_rex || 0;
+  if (baseline <= 0) return false;
+
+  // If user acquired more tokens, raise the baseline
+  if (currentOnChain >= baseline) {
+    if (currentOnChain > baseline) {
+      db.updatePostWdBaseline(user.telegram_id, currentOnChain);
+      user.post_wd_baseline_rex = currentOnChain;
+    }
+    return false;
+  }
+
+  // Check if balance dropped by more than 15 REX (protection against fee jitter / micro-transfers)
+  if (currentOnChain < baseline - 15) {
+    // 4. RETRY VERIFICATION: Never ban on a single RPC reading!
+    await new Promise(r => setTimeout(r, 2000));
+    security.OnChainBalanceCache.invalidate(user.wallet_address);
+    const retryBal = await getOnChainRexBalance(user.wallet_address);
+
+    // If retry failed (null) or balance is restored/above threshold: FALSE ALARM!
+    if (retryBal === null || retryBal >= baseline - 15) {
+      console.log(`[ANTI-DUMP SENTINEL] False alarm prevented for ${user.telegram_id}: initial=${currentOnChain}, retry=${retryBal}`);
+      return false;
+    }
+
+    const soldAmount = Math.max(0, baseline - retryBal);
+    if (soldAmount < 15) return false;
+
     const reason = `حظر تلقائي: بيع/تحويل عملات REX (${soldAmount.toFixed(0)} REX) خلال 24 ساعة من استلام السحب (نظام مكافحة الإغراق Anti-Dump)`;
     
     // 1. Ban user immediately
     db.banUser(user.telegram_id, reason);
-    db.logAdminAction('AUTO_BAN_ANTI_DUMP', `حظر تلقائي للمستخدم ${user.telegram_id}: بيع ${soldAmount.toFixed(0)} REX بعد السحب (كان: ${baseline.toFixed(0)} -> الآن: ${currentOnChain.toFixed(0)})`, ADMIN_TG_ID);
+    db.logAdminAction('AUTO_BAN_ANTI_DUMP', `حظر تلقائي للمستخدم ${user.telegram_id}: بيع ${soldAmount.toFixed(0)} REX بعد السحب (كان: ${baseline.toFixed(0)} -> الآن: ${retryBal.toFixed(0)})`, ADMIN_TG_ID);
 
     // 2. Clear monitoring
     db.clearPostWdMonitoring(user.telegram_id);
@@ -412,7 +457,7 @@ async function checkAntiDumpViolation(user, currentOnChain) {
       `Your account has been permanently suspended from *ROYAL ELITE X* for violating tokenomics and anti-dump protection policies.\n\n` +
       `• *Reason:* Selling or transferring REX tokens within 24 hours of receiving a withdrawal (Anti-Dump Sentinel violation).\n` +
       `• *Monitored Baseline Balance:* ${Number(baseline).toLocaleString()} REX\n` +
-      `• *Balance After Transfer:* ${Number(currentOnChain).toLocaleString()} REX\n` +
+      `• *Balance After Transfer:* ${Number(retryBal).toLocaleString()} REX\n` +
       `• *Transferred Amount:* -${soldAmount.toLocaleString()} REX\n\n` +
       `Your account has been permanently frozen and access revoked.`,
       { parse_mode: 'Markdown' }
@@ -427,7 +472,7 @@ async function checkAntiDumpViolation(user, currentOnChain) {
       `🆔 Telegram ID: \`${user.telegram_id}\`\n` +
       `💼 Wallet: \`${user.wallet_address}\`\n` +
       `📊 Monitored Baseline: *${Number(baseline).toLocaleString()} REX*\n` +
-      `📉 Balance After Transfer: *${Number(currentOnChain).toLocaleString()} REX*\n` +
+      `📉 Balance After Transfer: *${Number(retryBal).toLocaleString()} REX*\n` +
       `⚠️ Amount Transferred: *${soldAmount.toLocaleString()} REX*\n` +
       `⏱️ Timing: Within 24-hour post-withdrawal hold lock.\n\n` +
       `✅ *Account banned automatically.* Liquidity pool protected 🛡️`,
@@ -488,9 +533,12 @@ app.post('/api/user/sync', telegramAuth, async (req, res) => {
   }
 
   // 1. Check On-Chain REX Balance & Multiplier Boost (FIRST)
-  let onChainRex = 0;
+  let onChainRex = user.on_chain_rex || 0;
   if (user.wallet_address) {
-    onChainRex = await getOnChainRexBalance(user.wallet_address);
+    const freshBal = await getOnChainRexBalance(user.wallet_address);
+    if (freshBal !== null) {
+      onChainRex = freshBal;
+    }
   }
 
   // Anti-Dump Surveillance Check (Within 24h of withdrawal)
@@ -1700,31 +1748,45 @@ app.post('/api/admin/withdrawals/status', adminAuth, async (req, res) => {
     db.logAdminAction('UPDATE_WITHDRAWAL_STATUS', `سحب #${id} إلى ${new_status} (${audit_note || ''})`, ADMIN_TG_ID);
 
     if (new_status === 'confirmed') {
-      // Initialize 24h Anti-Dump Monitoring
+      const enableHoldingRule = db.getSetting('enable_holding_rule', '0') === '1';
+      const enableAntiDump = db.getSetting('enable_anti_dump', '0') === '1';
       const user = db.getUser(telegram_id);
-      let onChainBal = 0;
-      if (user?.wallet_address) {
-        security.OnChainBalanceCache.invalidate(user.wallet_address);
-        try { onChainBal = await getOnChainRexBalance(user.wallet_address); } catch(e) {}
-      }
-      const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
+      const isExempt = !user || parseInt(telegram_id) === ADMIN_TG_ID || user.is_hold_exempt || user.is_sybil_exempt;
       const withdrawal = db.db.prepare('SELECT * FROM withdrawals WHERE id = ?').get(id);
       const wdAmt = withdrawal ? withdrawal.amount : 0;
-      const baselineRex = Math.max(onChainBal, minHoldRex + wdAmt);
 
-      db.setPostWithdrawalMonitoring(telegram_id, id, baselineRex, 24);
-      db.logAdminAction('ANTI_DUMP_MONITOR_START', `بدء مراقبة مكافحة الإغراق للمستخدم ${telegram_id} لـ 24 ساعة برصيد ${baselineRex} REX`, ADMIN_TG_ID);
+      if (enableHoldingRule && enableAntiDump && !isExempt) {
+        let onChainBal = 0;
+        if (user?.wallet_address) {
+          security.OnChainBalanceCache.invalidate(user.wallet_address);
+          try { onChainBal = (await getOnChainRexBalance(user.wallet_address)) || 0; } catch(e) {}
+        }
+        const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '0'));
+        const baselineRex = Math.max(onChainBal, minHoldRex + wdAmt);
 
-      bot.telegram.sendMessage(telegram_id,
-        `✅ *Your Withdrawal Has Been Confirmed & Dispatched On-Chain!* 👑\n\n` +
-        `💰 *Amount Received:* *+${wdAmt.toLocaleString()} REX*\n` +
-        (tx_hash ? `🔗 *Transaction Hash:* \`${tx_hash}\`\n` : '') +
-        (explorer_url ? `🌐 *Explorer Link:* [View Transaction on Tonviewer](${explorer_url})\n\n` : '\n') +
-        `🛡️ *Royal Security Law (Anti-Dump Protection — 24h):*\n` +
-        `Selling or transferring any part of your REX tokens (locked baseline: *${baselineRex.toLocaleString()} REX*) is strictly forbidden for the next *24 hours* to safeguard tokenomics stability.\n\n` +
-        `⚠️ *Strict Warning:* Selling any tokens within 24h will trigger an **instant permanent ban** from the platform!`,
-        { parse_mode: 'Markdown' }
-      ).catch(() => {});
+        db.setPostWithdrawalMonitoring(telegram_id, id, baselineRex, 24);
+        db.logAdminAction('ANTI_DUMP_MONITOR_START', `بدء مراقبة مكافحة الإغراق للمستخدم ${telegram_id} لـ 24 ساعة برصيد ${baselineRex} REX`, ADMIN_TG_ID);
+
+        bot.telegram.sendMessage(telegram_id,
+          `✅ *Your Withdrawal Has Been Confirmed & Dispatched On-Chain!* 👑\n\n` +
+          `💰 *Amount Received:* *+${wdAmt.toLocaleString()} REX*\n` +
+          (tx_hash ? `🔗 *Transaction Hash:* \`${tx_hash}\`\n` : '') +
+          (explorer_url ? `🌐 *Explorer Link:* [View Transaction on Tonviewer](${explorer_url})\n\n` : '\n') +
+          `🛡️ *Royal Security Law (Anti-Dump Protection — 24h):*\n` +
+          `Selling or transferring any part of your REX tokens (locked baseline: *${baselineRex.toLocaleString()} REX*) is strictly forbidden for the next *24 hours* to safeguard tokenomics stability.\n\n` +
+          `⚠️ *Strict Warning:* Selling any tokens within 24h will trigger an **instant permanent ban** from the platform!`,
+          { parse_mode: 'Markdown' }
+        ).catch(() => {});
+      } else {
+        bot.telegram.sendMessage(telegram_id,
+          `✅ *تم تأكيد وإرسال سحب أرباحك بنجاح On-Chain!* 👑\n\n` +
+          `💰 *المبلغ المستلم:* *+${wdAmt.toLocaleString()} REX*\n` +
+          (tx_hash ? `🔗 *رمز المعاملة:* \`${tx_hash}\`\n` : '') +
+          (explorer_url ? `🌐 *عرض المعاملة في المستكشف:* [Tonviewer](${explorer_url})\n\n` : '\n') +
+          `🎉 تهانينا لك ومبروك أرباحك في منصة ROYAL ELITE X!`,
+          { parse_mode: 'Markdown' }
+        ).catch(() => {});
+      }
     } else if (new_status === 'approved') {
       bot.telegram.sendMessage(telegram_id,
         `✅ *Your Withdrawal Request Has Been Approved!* 👑\n\n` +
@@ -1780,24 +1842,40 @@ app.post('/api/admin/withdrawals/auto-payout', adminAuth, async (req, res) => {
       audit_note: `تم الصرف الآلي على البلوكتشين من محفظة البوت (${txResult.sender})`
     });
 
-    // Anti-Dump Monitoring for 24h
-    const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '5000'));
-    let onChainBal = 0;
-    try { onChainBal = await getOnChainRexBalance(recipientWallet); } catch(e) {}
-    const baselineRex = Math.max(onChainBal, minHoldRex + withdrawal.amount);
-    db.setPostWithdrawalMonitoring(withdrawal.telegram_id, id, baselineRex, 24);
+    // Anti-Dump Monitoring for 24h (Only if both holding and anti-dump are enabled and not admin/exempt)
+    const enableHoldingRule = db.getSetting('enable_holding_rule', '0') === '1';
+    const enableAntiDump = db.getSetting('enable_anti_dump', '0') === '1';
+    const isExempt = !user || parseInt(withdrawal.telegram_id) === ADMIN_TG_ID || user.is_hold_exempt || user.is_sybil_exempt;
 
-    bot.telegram.sendMessage(withdrawal.telegram_id,
-      `✅ *Your Withdrawal Was Dispatched Automatically On-Chain!* 👑\n\n` +
-      `💰 *Net Amount Received:* *+${netPayout.toLocaleString()} REX*\n` +
-      `🏷️ *Withdrawal Fee:* *${(withdrawal.fee || 500).toLocaleString()} REX*\n` +
-      `📥 *Recipient Wallet:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
-      `🌐 *Verification Link:* [View Transaction on Tonviewer](${explorerUrl})\n\n` +
-      `🛡️ *Royal Security Law (Anti-Dump Protection — 24h):*\n` +
-      `Selling or transferring any part of your REX tokens (monitored baseline: *${baselineRex.toLocaleString()} REX*) is strictly prohibited for the next *24 hours* to protect liquidity stability.\n\n` +
-      `⚠️ *Strict Warning:* Selling any tokens within 24h will trigger an **instant permanent ban** from the platform!`,
-      { parse_mode: 'Markdown' }
-    ).catch(() => {});
+    if (enableHoldingRule && enableAntiDump && !isExempt) {
+      const minHoldRex = parseFloat(db.getSetting('min_hold_rex', '0'));
+      let onChainBal = 0;
+      try { onChainBal = (await getOnChainRexBalance(recipientWallet)) || 0; } catch(e) {}
+      const baselineRex = Math.max(onChainBal, minHoldRex + withdrawal.amount);
+      db.setPostWithdrawalMonitoring(withdrawal.telegram_id, id, baselineRex, 24);
+
+      bot.telegram.sendMessage(withdrawal.telegram_id,
+        `✅ *Your Withdrawal Was Dispatched Automatically On-Chain!* 👑\n\n` +
+        `💰 *Net Amount Received:* *+${netPayout.toLocaleString()} REX*\n` +
+        `🏷️ *Withdrawal Fee:* *${(withdrawal.fee || 500).toLocaleString()} REX*\n` +
+        `📥 *Recipient Wallet:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
+        `🌐 *Verification Link:* [View Transaction on Tonviewer](${explorerUrl})\n\n` +
+        `🛡️ *Royal Security Law (Anti-Dump Protection — 24h):*\n` +
+        `Selling or transferring any part of your REX tokens (monitored baseline: *${baselineRex.toLocaleString()} REX*) is strictly prohibited for the next *24 hours* to protect liquidity stability.\n\n` +
+        `⚠️ *Strict Warning:* Selling any tokens within 24h will trigger an **instant permanent ban** from the platform!`,
+        { parse_mode: 'Markdown' }
+      ).catch(() => {});
+    } else {
+      bot.telegram.sendMessage(withdrawal.telegram_id,
+        `✅ *تم الصرف الآلي لسحبك بنجاح على البلوكتشين!* 👑\n\n` +
+        `💰 *الصافي المستلم:* *+${netPayout.toLocaleString()} REX*\n` +
+        `🏷️ *رسوم المعالجة والشبكة:* *${(withdrawal.fee || 500).toLocaleString()} REX*\n` +
+        `📥 *محفظة الاستلام:* \`${recipientWallet.slice(0,8)}...${recipientWallet.slice(-6)}\`\n` +
+        `🌐 *رابط المعاملة:* [عرض في Tonviewer](${explorerUrl})\n\n` +
+        `🎉 تهانينا لك! تم إرسال العملات مباشرة لمحفظتك بنجاح وبدون أي قيود أو شروط حظر.`,
+        { parse_mode: 'Markdown' }
+      ).catch(() => {});
+    }
 
     db.logAdminAction('AUTO_PAYOUT_SUCCESS', `تم صرف سحب #${id} بقيمة ${withdrawal.amount} REX إلى ${recipientWallet}`, ADMIN_TG_ID);
 
@@ -2654,14 +2732,24 @@ if (WEBAPP_URL && !WEBAPP_URL.includes('localhost')) {
 // ── Background Watchdog: Anti-Dump Sentinel (scans every 60s) ──
 setInterval(async () => {
   try {
+    const isHolding = db.getSetting('enable_holding_rule', '0') === '1';
+    const isAntiDump = db.getSetting('enable_anti_dump', '0') === '1';
+    if (!isHolding || !isAntiDump) return;
+
     const monitoredUsers = db.getUsersUnderWithdrawalMonitoring();
     if (!monitoredUsers || monitoredUsers.length === 0) return;
 
     for (const u of monitoredUsers) {
+      if (parseInt(u.telegram_id) === ADMIN_TG_ID || u.is_hold_exempt || u.is_sybil_exempt) {
+        db.clearPostWdMonitoring(u.telegram_id);
+        continue;
+      }
       try {
         security.OnChainBalanceCache.invalidate(u.wallet_address);
         const liveBal = await getOnChainRexBalance(u.wallet_address);
-        await checkAntiDumpViolation(u, liveBal);
+        if (liveBal !== null) {
+          await checkAntiDumpViolation(u, liveBal);
+        }
       } catch (err) {
         console.error(`[ANTI-DUMP SCAN] Error checking ${u.telegram_id}:`, err.message);
       }

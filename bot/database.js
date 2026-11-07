@@ -354,6 +354,7 @@ const defaultSettings = [
   { key: 'max_daily_emission', val: '50000', description: 'الحد الأقصى للانبعاث اليومي لمكافآت التعدين (REX)' },
   { key: 'mining_reserve_cap', val: '20000000', description: 'سقف احتياطي التعدين الإجمالي المخصص (REX)' },
   { key: 'enable_holding_rule', val: '0', description: 'تفعيل شرط الاحتفاظ بالسحب (1: مفعل, 0: معطل كلياً)' },
+  { key: 'enable_anti_dump', val: '0', description: 'تفعيل نظام مكافحة الإغراق وحظر البيع بعد السحب (1: مفعل, 0: معطل كلياً)' },
   { key: 'min_hold_rex', val: '0', description: 'الحد الأدنى لحيازة المحفظة On-Chain لشرط المدة (REX)' },
   { key: 'min_hold_days', val: '0', description: 'المدة الإلزامية لحيازة العملة في المحفظة قبل السحب (أيام)' },
   { key: 'required_channel', val: '@REXCEO1A', description: 'قناة التيليجرام الإلزامية للاشتراك قبل الدخول' },
@@ -705,7 +706,7 @@ module.exports = {
     } catch (e) {
       console.error('Error clearing device records on unban:', e.message);
     }
-    return db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL, device_fingerprint = NULL, is_sybil_exempt = 1 WHERE telegram_id = ?').run(telegram_id);
+    return db.prepare('UPDATE users SET is_banned = 0, ban_reason = NULL, device_fingerprint = NULL, is_sybil_exempt = 1, post_wd_monitored_until = 0, post_wd_baseline_rex = 0 WHERE telegram_id = ?').run(telegram_id);
   },
   clearSybilConflict: (fingerprint) => {
     try {
@@ -787,12 +788,18 @@ module.exports = {
   },
 
   getUsersUnderWithdrawalMonitoring: () => {
+    const isHolding = module.exports.getSetting('enable_holding_rule', '0') === '1';
+    const isAntiDump = module.exports.getSetting('enable_anti_dump', '0') === '1';
+    if (!isHolding || !isAntiDump) return [];
+
     const now = Date.now();
     return db.prepare(`
       SELECT * FROM users 
       WHERE is_banned = 0 
         AND post_wd_monitored_until > ? 
         AND wallet_address IS NOT NULL
+        AND is_hold_exempt = 0
+        AND is_sybil_exempt = 0
     `).all(now);
   },
 
