@@ -19,7 +19,7 @@ services:
       - key: ADMIN_TG_ID
         value: "7082457308"
       - key: ADMIN_SECRET
-        value: REX_ADMIN_2026
+        sync: false
       - key: REX_MASTER_CONTRACT
         value: EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53
       - key: WEBAPP_URL

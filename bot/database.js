@@ -222,6 +222,14 @@ db.exec(`
     UNIQUE(code_id, telegram_id)
   );
 
+    CREATE TABLE IF NOT EXISTS processed_fee_transactions (
+    tx_hash TEXT PRIMARY KEY,
+    telegram_id INTEGER NOT NULL,
+    sender_address TEXT NOT NULL,
+    amount_coins TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS referral_reward_records (
     referee_id INTEGER PRIMARY KEY,
     referrer_id INTEGER NOT NULL,

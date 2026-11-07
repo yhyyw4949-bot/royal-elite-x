@@ -51,24 +51,48 @@ app.use('/api', (req, res, next) => {
 app.use(security.createRateLimiter(60000, 180)); // 180 req/min limit per IP
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Telegram initData Authentication Middleware
+// Telegram initData Authentication Middleware (Strict Tamper-Proof Session Verification)
 function telegramAuth(req, res, next) {
-  const initData = req.headers['x-telegram-init-data'] || req.body?.initData;
+  const initData = req.headers['x-telegram-init-data'] || req.body?.initData || req.query?.initData;
   if (initData) {
     const verified = security.verifyTelegramInitData(initData, BOT_TOKEN);
     if (verified && verified.user) {
       req.telegramUser = verified.user;
-      // Guarantee server-verified Telegram ID
+      // Guarantee server-verified Telegram ID to prevent account impersonation
+      req.body = req.body || {};
       req.body.telegram_id = verified.user.id;
+      return next();
+    } else {
+      // Invalid or forged signature
+      return res.status(401).json({
+        success: false,
+        message: 'جلسة تيليجرام غير صالحة أو تم التلاعب بها.',
+        error: 'TAMPERED_TELEGRAM_SESSION'
+      });
     }
   }
+
+  // If in production, strictly require verified session for all state-changing requests
+  if (process.env.NODE_ENV === 'production' && req.method === 'POST') {
+    return res.status(401).json({
+      success: false,
+      message: 'يرجى فتح التطبيق من داخل تيليجرام حصراً لتوثيق الجلسة.',
+      error: 'UNAUTHORIZED_TELEGRAM_SESSION'
+    });
+  }
+
   next();
 }
 
-// Admin Authentication Middleware (with 2FA Session Support)
+// Admin Authentication Middleware (Constant-Time Safe Comparison against timing attacks)
 function adminAuth(req, res, next) {
   const secret = req.headers['x-admin-secret'] || req.query.secret;
-  if (secret !== ADMIN_SECRET) {
+  if (!secret || !ADMIN_SECRET) {
+    return res.status(403).json({ error: 'Unauthorized: Missing Admin Secret' });
+  }
+  const secretBuf = Buffer.from(String(secret));
+  const adminBuf = Buffer.from(String(ADMIN_SECRET));
+  if (secretBuf.length !== adminBuf.length || !crypto.timingSafeEqual(secretBuf, adminBuf)) {
     return res.status(403).json({ error: 'Unauthorized: Invalid Admin Secret' });
   }
   next();
@@ -648,14 +672,79 @@ app.post('/api/user/connect-wallet', telegramAuth, checkMaintenance, async (req,
   }
 });
 
+// ── Strict On-Chain 0.1 TON Verification Helper ──
+async function verifyOnChainFeePayment(walletAddress) {
+  if (!walletAddress) return { verified: false, reason: 'NO_WALLET' };
+
+  try {
+    const userAddr = Address.parse(walletAddress);
+    const adminAddr = Address.parse(ADMIN_WALLET);
+
+    // Query last 20 transactions on ADMIN_WALLET from TON Blockchain
+    const txs = await tonClient.getTransactions(adminAddr, { limit: 20 });
+    const now = Math.floor(Date.now() / 1000);
+
+    for (const t of txs) {
+      const inMsg = t.inMessage;
+      if (!inMsg || !inMsg.info || inMsg.info.type !== 'internal') continue;
+
+      const srcAddr = inMsg.info.src;
+      // Compare raw strings to be independent of user-friendly bounceable variants
+      if (srcAddr && srcAddr.toRawString() === userAddr.toRawString()) {
+        const coins = inMsg.info.value.coins;
+        // 0.1 TON = 100,000,000 nanoTON. Accept >= 80,000,000 (0.08 TON) to account for forward fees/gas
+        if (coins >= 80000000n) {
+          // Transaction must be recent (within last 3 hours = 10800 seconds)
+          if (now - t.now < 10800) {
+            const txHash = t.hash().toString('hex');
+
+            // Check if this txHash was already claimed by any account
+            const existing = db.db.prepare('SELECT tx_hash FROM processed_fee_transactions WHERE tx_hash = ?').get(txHash);
+            if (!existing) {
+              return {
+                verified: true,
+                txHash,
+                coins: coins.toString(),
+                timestamp: t.now
+              };
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[ON-CHAIN FEE VERIFY ERROR]:', err.message);
+  }
+
+  return { verified: false, reason: 'NO_CONFIRMED_TX_FOUND' };
+}
+
 app.post('/api/user/confirm-activation', telegramAuth, checkMaintenance, async (req, res) => {
   const { telegram_id } = req.body;
   const user = db.getUser(telegram_id);
-  if (!user) return res.json({ success: false });
+  if (!user) return res.json({ success: false, message: 'حساب غير موجود' });
   if (!user.wallet_address) return sendMsg(req, res, false, 'ارتبط بمحفظة أولاً', 'Connect TON wallet first');
+  if (user.is_activated === 1) return sendMsg(req, res, true, 'حسابك مفعل بالفعل!', 'Account already activated!');
+
+  // Strict On-Chain Blockchain Verification
+  const verifyRes = await verifyOnChainFeePayment(user.wallet_address);
+  if (!verifyRes.verified) {
+    return sendMsg(req, res, false,
+      'لم يتم العثور على معاملة تحويل 0.1 TON مؤكدة من محفظتك إلى محفظة الإدارة بعد! يرجى الانتظار 10-20 ثانية لتأكيد البلوكتشين ثم المحاولة مجدداً.',
+      'No confirmed 0.1 TON transfer found on-chain from your wallet to admin wallet yet! Please wait 10-20 seconds for blockchain confirmation and try again.',
+      { code: 'TX_NOT_FOUND_ON_CHAIN' }
+    );
+  }
+
+  // Record transaction hash to permanently prevent reuse
+  try {
+    db.db.prepare('INSERT INTO processed_fee_transactions (tx_hash, telegram_id, sender_address, amount_coins, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(verifyRes.txHash, telegram_id, user.wallet_address, verifyRes.coins, Date.now());
+  } catch(e) {}
+
   db.setActivated(telegram_id);
   await checkAndAwardReferralOffer(telegram_id, user.first_name);
-  sendMsg(req, res, true, 'تم تفعيل الحساب بنجاح!', 'Account activated successfully!');
+  sendMsg(req, res, true, '🎉 تم التحقق من المعاملة على البلوكتشين وتفعيل الحساب بنجاح!', '🎉 On-chain fee payment confirmed and account activated successfully!', { tx_hash: verifyRes.txHash });
 });
 
 // Redeem Activation / Fee-Waiver Code

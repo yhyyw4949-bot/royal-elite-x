@@ -748,7 +748,7 @@ html_content = """<!DOCTYPE html>
   <li><strong>رابط لوحة تحكم الإدارة (Command Center):</strong><br>
     <span class="mono">https://wires-clerk-scsi-merchants.trycloudflare.com/admin/</span>
   </li>
-  <li><strong>كلمة سر الإدارة السرية:</strong> <span class="mono">REX_ADMIN_2026</span></li>
+  <li><strong>لوحة تحكم الإدارة:</strong> <span class="mono">محمية برمز أمان سيادي وتوثيق ثنائي (2FA OTP)</span></li>
   <li><strong>مستكشف بلوكشين TON الرسمي (TonViewer Explorer):</strong><br>
     <a href="https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53" style="color:#0284c7;font-size:9pt;font-family:monospace;">https://tonviewer.com/EQBSYVo_WE0fAlAWUSec1o42x1LiYKNFOCoaxb8Dz_vsU_53 ↗</a>
   </li>
