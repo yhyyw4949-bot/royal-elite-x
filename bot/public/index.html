@@ -822,10 +822,13 @@
       لحماية المنظومة من الحسابات الوهمية والتعدد، يجب استيفاء <strong>الشروط الثلاثة الإلزامية</strong> لفتح المنصة والتعدين:
     </p>
 
+    <!-- DYNAMIC STATUS NOTICE BANNER -->
+    <div id="gateNoticeBanner" style="display:none; margin-bottom:14px; padding:12px 14px; border-radius:14px; font-size:12px; line-height:1.6; font-weight:700; text-align:center;"></div>
+
     <!-- STEP 1: CONNECT TON WALLET -->
-    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+    <div class="gate-step-card" id="gateCard1" style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
       <div style="display:flex; align-items:center; gap:12px;">
-        <div class="gate-step-badge">1</div>
+        <div class="gate-step-badge" id="gateBadge1">1</div>
         <div class="gate-step-details" style="flex:1;">
           <h5 id="gateStep1Title">ربط محفظة TON الخارجية</h5>
           <p id="gateWalletDesc">يرجى ربط محفظة TON الخاصة بك (Tonkeeper / MyTonWallet)</p>
@@ -840,9 +843,9 @@
     </div>
 
     <!-- STEP 2: ACTIVATION FEE (0.1 TON OR ACTIVATION CODE) -->
-    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+    <div class="gate-step-card" id="gateCard2" style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
       <div style="display:flex; align-items:center; gap:12px;">
-        <div class="gate-step-badge">2</div>
+        <div class="gate-step-badge" id="gateBadge2">2</div>
         <div class="gate-step-details" style="flex:1;">
           <h5 id="gateStep2Title">رسوم التفعيل (0.1 TON) أو كود إعفاء</h5>
           <p id="gateStep2Desc">رسم رمزي لمرة واحدة أو استخدام كود تفعيل وإعفاء رسمي</p>
@@ -871,9 +874,9 @@
     </div>
 
     <!-- STEP 3: MANDATORY CHANNEL SUBSCRIPTION -->
-    <div class="gate-step-card" style="display:flex; flex-direction:column; gap:10px;">
+    <div class="gate-step-card" id="gateCard3" style="display:flex; flex-direction:column; gap:10px;">
       <div style="display:flex; align-items:center; gap:12px;">
-        <div class="gate-step-badge">3</div>
+        <div class="gate-step-badge" id="gateBadge3">3</div>
         <div class="gate-step-details" style="flex:1;">
           <h5 id="gateStep3Title">الانضمام لقناة البوت الرسمية</h5>
           <p id="gateStep3Desc">يجب أن تكون عضواً في القناة الرسمية @REXCEO1A</p>
@@ -1941,52 +1944,158 @@
       tabPanels.forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
       if (gateScreen) gateScreen.style.display = 'block';
 
+      // High-Contrast Gatekeeper State Styling
+      const isAr = currentLang === 'ar';
+      const noticeBanner = document.getElementById('gateNoticeBanner');
+      if (noticeBanner) {
+        if (isActivatedDone && (!isWalletDone || !isChannelDone)) {
+          noticeBanner.style.display = 'block';
+          noticeBanner.style.background = 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.15))';
+          noticeBanner.style.border = '1px solid rgba(16,185,129,0.4)';
+          noticeBanner.style.color = '#34d399';
+          noticeBanner.innerHTML = isAr
+            ? '💡 <strong>تنبيه ملكي:</strong> حسابك مفعل رسمياً بنجاح ✅!<br>لا تحتاج إلى أي كود أو دفع مرة أخرى. المطلوب منك فقط إكمال البند المعلم بـ <span style="color:#ef4444; font-weight:900;">❌</span> بالأسفل للدخول فوراً.'
+            : '💡 <strong>Royal Notice:</strong> Your account is officially activated ✅!<br>No extra fee or code needed. Please complete only the item marked with <span style="color:#ef4444; font-weight:900;">❌</span> below to enter immediately.';
+        } else if (!isActivatedDone) {
+          noticeBanner.style.display = 'block';
+          noticeBanner.style.background = 'rgba(239,68,68,0.1)';
+          noticeBanner.style.border = '1px solid rgba(239,68,68,0.3)';
+          noticeBanner.style.color = '#fca5a5';
+          noticeBanner.innerHTML = isAr
+            ? '⚠️ <strong>بوابة الدخول مقفولة:</strong> يرجى استيفاء البنود المطلوبة أدناه لفتح التعدين وسحب الأرباح.'
+            : '⚠️ <strong>Gatekeeper Locked:</strong> Please satisfy the required conditions below to unlock mining and withdrawals.';
+        } else {
+          noticeBanner.style.display = 'none';
+        }
+      }
+
       // Step 1: Wallet
+      const card1 = document.getElementById('gateCard1');
+      const badge1 = document.getElementById('gateBadge1');
+      const step1Title = document.getElementById('gateStep1Title');
       const step1Desc = document.getElementById('gateWalletDesc');
       const step1Icon = document.getElementById('gateIcon1');
       const step1BtnWrap = document.getElementById('gateConnectBtnWrap');
+
       if (isWalletDone) {
-        step1Desc.textContent = `✅ ${d.wallet_address?.slice(0,8)}...${d.wallet_address?.slice(-6)}`;
-        step1Icon.textContent = '✅';
+        if (card1) {
+          card1.style.border = '1px solid rgba(16,185,129,0.35)';
+          card1.style.background = 'rgba(16,185,129,0.06)';
+          card1.style.boxShadow = 'none';
+        }
+        if (badge1) {
+          badge1.textContent = '✓';
+          badge1.style.background = '#10b981';
+          badge1.style.color = '#fff';
+        }
+        if (step1Title) step1Title.innerHTML = isAr ? 'ربط محفظة TON الخارجية <span style="color:#10b981; font-size:11px; font-weight:800;">(مكتملة ✅)</span>' : 'Connect TON Wallet <span style="color:#10b981; font-size:11px; font-weight:800;">(Completed ✅)</span>';
+        if (step1Desc) step1Desc.innerHTML = `<span style="color:#34d399; font-weight:700;">✅ المحفظة متصلة:</span> <span style="font-family:monospace; color:#fff;">${d.wallet_address?.slice(0,8)}...${d.wallet_address?.slice(-6)}</span>`;
+        if (step1Icon) step1Icon.textContent = '✅';
         if (step1BtnWrap) step1BtnWrap.style.display = 'none';
       } else {
-        step1Desc.textContent = currentLang === 'ar' ? 'يرجى ربط محفظة TON للمتابعة' : 'Connect TON wallet to continue';
-        step1Icon.textContent = '⏳';
+        if (card1) {
+          card1.style.border = '1.5px solid #ef4444';
+          card1.style.background = 'rgba(239,68,68,0.08)';
+          card1.style.boxShadow = '0 0 16px rgba(239,68,68,0.25)';
+        }
+        if (badge1) {
+          badge1.textContent = '❌';
+          badge1.style.background = '#ef4444';
+          badge1.style.color = '#fff';
+        }
+        if (step1Title) step1Title.innerHTML = isAr ? 'ربط محفظة TON الخارجية <span style="color:#ef4444; font-size:11px; font-weight:800;">(مطلوب ❌)</span>' : 'Connect TON Wallet <span style="color:#ef4444; font-size:11px; font-weight:800;">(Required ❌)</span>';
+        if (step1Desc) step1Desc.innerHTML = isAr ? '<span style="color:#f87171; font-weight:700;">❌ المحفظة غير متصلة!</span> اضغط الزر بالأسفل لربط محفظتك عبر Tonkeeper.' : '<span style="color:#f87171; font-weight:700;">❌ Wallet Disconnected!</span> Tap button below to connect Tonkeeper.';
+        if (step1Icon) step1Icon.textContent = '❌';
         if (step1BtnWrap) step1BtnWrap.style.display = 'block';
       }
 
       // Step 2: Fee or Activation Code
+      const card2 = document.getElementById('gateCard2');
+      const badge2 = document.getElementById('gateBadge2');
+      const step2Title = document.getElementById('gateStep2Title');
+      const step2Desc = document.getElementById('gateStep2Desc');
       const step2Icon = document.getElementById('gateIcon2');
       const paySection = document.getElementById('gatePaySection');
       const payBtn = document.getElementById('payBtn');
+
       if (isActivatedDone) {
-        step2Icon.textContent = '✅';
+        if (card2) {
+          card2.style.border = '1px solid rgba(16,185,129,0.35)';
+          card2.style.background = 'rgba(16,185,129,0.06)';
+          card2.style.boxShadow = 'none';
+        }
+        if (badge2) {
+          badge2.textContent = '✓';
+          badge2.style.background = '#10b981';
+          badge2.style.color = '#fff';
+        }
+        if (step2Title) step2Title.innerHTML = isAr ? 'رسوم التفعيل أو كود الإعفاء <span style="color:#10b981; font-size:11px; font-weight:800;">(مفعل بنجاح ✅)</span>' : 'Activation Fee or VIP Pass <span style="color:#10b981; font-size:11px; font-weight:800;">(Activated ✅)</span>';
+        if (step2Desc) step2Desc.innerHTML = isAr ? '<span style="color:#34d399; font-weight:700;">✅ تم تفعيل حسابك وإعفاء الرسوم بنجاح لمدى الحياة</span> (لا تحتاج لدفع أو كود جديد)' : '<span style="color:#34d399; font-weight:700;">✅ Account verified & activated for life</span> (no further code or fee needed)';
+        if (step2Icon) step2Icon.textContent = '✅';
         if (paySection) paySection.style.display = 'none';
-        document.getElementById('gateStep2Desc').textContent = currentLang === 'ar' ? '✅ تم تفعيل الحساب وإعفاء الرسوم بنجاح' : '✅ Account verified & fee requirement satisfied';
       } else {
-        step2Icon.textContent = isWalletDone ? '⏳' : '🔒';
+        if (card2) {
+          card2.style.border = '1.5px solid #ef4444';
+          card2.style.background = 'rgba(239,68,68,0.08)';
+          card2.style.boxShadow = '0 0 16px rgba(239,68,68,0.25)';
+        }
+        if (badge2) {
+          badge2.textContent = '❌';
+          badge2.style.background = '#ef4444';
+          badge2.style.color = '#fff';
+        }
+        if (step2Title) step2Title.innerHTML = isAr ? 'رسوم التفعيل أو كود الإعفاء <span style="color:#ef4444; font-size:11px; font-weight:800;">(مطلوب ❌)</span>' : 'Activation Fee or VIP Pass <span style="color:#ef4444; font-size:11px; font-weight:800;">(Required ❌)</span>';
+        if (step2Desc) step2Desc.innerHTML = isAr ? '<span style="color:#f87171; font-weight:700;">❌ غير مفعل!</span> ادفع 0.1 TON أو أدخل كود تفعيل وإعفاء رسمي.' : '<span style="color:#f87171; font-weight:700;">❌ Unactivated!</span> Pay 0.1 TON or redeem an official VIP pass.';
+        if (step2Icon) step2Icon.textContent = '❌';
         if (paySection) paySection.style.display = 'flex';
         if (!isWalletDone) {
           payBtn.className = 'action-btn btn-mining-active w-100';
-          document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'يلزم ربط المحفظة أولاً للدفع' : 'Wallet connection required';
+          document.getElementById('payBtnText').textContent = isAr ? 'يلزم ربط المحفظة أولاً للدفع' : 'Wallet connection required';
           payBtn.disabled = true;
         } else {
           payBtn.className = 'action-btn btn-gold w-100';
-          document.getElementById('payBtnText').textContent = currentLang === 'ar' ? 'دفع 0.1 TON وتفعيل الحساب' : 'Pay 0.1 TON & Activate';
+          document.getElementById('payBtnText').textContent = isAr ? 'دفع 0.1 TON وتفعيل الحساب' : 'Pay 0.1 TON & Activate';
           payBtn.disabled = false;
         }
       }
 
       // Step 3: Channel Subscription
+      const card3 = document.getElementById('gateCard3');
+      const badge3 = document.getElementById('gateBadge3');
+      const step3Title = document.getElementById('gateStep3Title');
+      const step3Desc = document.getElementById('gateStep3Desc');
       const step3Icon = document.getElementById('gateIcon3');
       const step3ActionWrap = document.getElementById('gateChannelActionWrap');
+
       if (isChannelDone) {
-        step3Icon.textContent = '✅';
-        document.getElementById('gateStep3Desc').textContent = currentLang === 'ar' ? '✅ تم التحقق من الاشتراك في القناة الرسمية' : '✅ Verified subscriber of official channel';
+        if (card3) {
+          card3.style.border = '1px solid rgba(16,185,129,0.35)';
+          card3.style.background = 'rgba(16,185,129,0.06)';
+          card3.style.boxShadow = 'none';
+        }
+        if (badge3) {
+          badge3.textContent = '✓';
+          badge3.style.background = '#10b981';
+          badge3.style.color = '#fff';
+        }
+        if (step3Title) step3Title.innerHTML = isAr ? 'الانضمام لقناة البوت الرسمية <span style="color:#10b981; font-size:11px; font-weight:800;">(مكتمل وموثق ✅)</span>' : 'Official Telegram Channel <span style="color:#10b981; font-size:11px; font-weight:800;">(Verified ✅)</span>';
+        if (step3Desc) step3Desc.innerHTML = isAr ? '<span style="color:#34d399; font-weight:700;">✅ تم التحقق من اشتراكك في قناة @REXCEO1A</span>' : '<span style="color:#34d399; font-weight:700;">✅ Verified member of @REXCEO1A</span>';
+        if (step3Icon) step3Icon.textContent = '✅';
         if (step3ActionWrap) step3ActionWrap.style.display = 'none';
       } else {
-        step3Icon.textContent = '⏳';
-        document.getElementById('gateStep3Desc').textContent = currentLang === 'ar' ? 'يجب الانضمام لقناة @REXCEO1A والتحقق' : 'Must join @REXCEO1A and verify';
+        if (card3) {
+          card3.style.border = '1.5px solid #ef4444';
+          card3.style.background = 'rgba(239,68,68,0.08)';
+          card3.style.boxShadow = '0 0 16px rgba(239,68,68,0.25)';
+        }
+        if (badge3) {
+          badge3.textContent = '❌';
+          badge3.style.background = '#ef4444';
+          badge3.style.color = '#fff';
+        }
+        if (step3Title) step3Title.innerHTML = isAr ? 'الانضمام لقناة البوت الرسمية <span style="color:#ef4444; font-size:11px; font-weight:800;">(مطلوب ❌)</span>' : 'Official Telegram Channel <span style="color:#ef4444; font-size:11px; font-weight:800;">(Required ❌)</span>';
+        if (step3Desc) step3Desc.innerHTML = isAr ? '<span style="color:#f87171; font-weight:700;">❌ غير مشترك!</span> اشترك في قناة @REXCEO1A ثم اضغط "تحقق من الاشتراك".' : '<span style="color:#f87171; font-weight:700;">❌ Not Subscribed!</span> Join @REXCEO1A and tap "Verify Subscription".';
+        if (step3Icon) step3Icon.textContent = '❌';
         if (step3ActionWrap) step3ActionWrap.style.display = 'flex';
       }
     } else {
